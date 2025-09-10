@@ -1,0 +1,29 @@
+name: publish-nuget
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version to publish (e.g., 0.1.0)'
+        required: true
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    - name: Set version
+      run: |
+        echo "Using version ${{ github.event.inputs.version }}"
+        sed -i 's#<Version>.*</Version>#<Version>${{ github.event.inputs.version }}</Version>#' src/efCore.Boost/efCore.Boost.csproj
+    - name: Restore
+      run: dotnet restore
+    - name: Build
+      run: dotnet build -c Release --no-restore
+    - name: Pack
+      run: dotnet pack src/efCore.Boost/efCore.Boost.csproj -c Release --no-build -o ./artifacts
+    - name: Publish to NuGet
+      run: dotnet nuget push "./artifacts/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

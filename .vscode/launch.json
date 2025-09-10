@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ConsoleSample",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/samples/ConsoleSample/bin/Debug/net8.0/ConsoleSample.dll",
+      "cwd": "${workspaceFolder}/samples/ConsoleSample"
+    }
+  ]
+}

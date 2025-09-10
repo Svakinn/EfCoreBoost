@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "ms-dotnettools.csharp",
+    "formulahendry.dotnet-test-explorer",
+    "editorconfig.editorconfig",
+    "eamodio.gitlens"
+  ]
+}

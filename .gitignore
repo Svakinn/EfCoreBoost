@@ -1,0 +1,9 @@
+bin/
+obj/
+*.user
+*.suo
+*.snupkg
+*.nupkg
+TestResults/
+coverage/
+.vscode/ipch/
