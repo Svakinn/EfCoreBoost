@@ -1,0 +1,62 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EfCoreBoost", "EfCoreBoost", "{972B339B-045E-9564-1EA0-3E903DF3E49A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoostAnalyzer", "src\BoostAnalyzer\BoostAnalyzer.csproj", "{F5529392-65AD-4D7E-97DE-12BEA510182B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BoostCodeFixes", "BoostCodeFixes", "{ED87E4EA-324C-C0F1-7F45-A31B2E183F40}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BoostAnalizerTest", "BoostAnalizerTest", "{7F7FED61-F22E-F3E7-8697-57D070E41E32}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoostTest", "tests\BoostTest\BoostTest.csproj", "{7DA9E1CB-AD87-4BBB-A328-E3C68593F201}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0EC84E48-031C-445C-B939-9E69EB567724}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EC84E48-031C-445C-B939-9E69EB567724}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EC84E48-031C-445C-B939-9E69EB567724}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EC84E48-031C-445C-B939-9E69EB567724}.Release|Any CPU.Build.0 = Release|Any CPU
+		
+		{F5529392-65AD-4D7E-97DE-12BEA510182B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5529392-65AD-4D7E-97DE-12BEA510182B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5529392-65AD-4D7E-97DE-12BEA510182B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5529392-65AD-4D7E-97DE-12BEA510182B}.Release|Any CPU.Build.0 = Release|Any CPU
+		
+		{F9F280CF-145D-4FEA-872E-5863A65E7EF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9F280CF-145D-4FEA-872E-5863A65E7EF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9F280CF-145D-4FEA-872E-5863A65E7EF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9F280CF-145D-4FEA-872E-5863A65E7EF9}.Release|Any CPU.Build.0 = Release|Any CPU
+		
+		{55F1D19A-08AC-421F-AB3E-50FFD4687FDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55F1D19A-08AC-421F-AB3E-50FFD4687FDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55F1D19A-08AC-421F-AB3E-50FFD4687FDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55F1D19A-08AC-421F-AB3E-50FFD4687FDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		
+		{7DA9E1CB-AD87-4BBB-A328-E3C68593F201}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DA9E1CB-AD87-4BBB-A328-E3C68593F201}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DA9E1CB-AD87-4BBB-A328-E3C68593F201}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DA9E1CB-AD87-4BBB-A328-E3C68593F201}.Release|Any CPU.Build.0 = Release|Any CPU
+
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{972B339B-045E-9564-1EA0-3E903DF3E49A} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{F5529392-65AD-4D7E-97DE-12BEA510182B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{ED87E4EA-324C-C0F1-7F45-A31B2E183F40} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{7F7FED61-F22E-F3E7-8697-57D070E41E32} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{7DA9E1CB-AD87-4BBB-A328-E3C68593F201} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AnalyzerDescription" xml:space="preserve">
+    <value>Async database write operations like '{0}' should be awaited.  
+Fire-and-forget calls may cause data loss or hide database errors.</value>
+    <comment>An optional longer localizable description of the diagnostic.</comment>
+  </data>
+  <data name="RepoSyncInAsyncDescription" xml:space="preserve">
+    <value>Blocking synchronous repository operations in async code can cause deadlocks and thread starvation. Use async versions instead.</value>
+    <comment>An optional longer localizable description of the diagnostic.</comment>
+  </data>
+  <data name="RepoAsyncAwaitDescription" xml:space="preserve">
+    <value>Async database write operations like '{0}' should be awaited.  
+Fire-and-forget calls may cause data loss or hide database errors.</value>
+    <comment>An optional longer localizable description of the diagnostic.</comment>
+  </data>
+  <data name="AnalyzerMessageFormat" xml:space="preserve">
+    <value>Call to '{0}' is not awaited. Await the method to ensure database changes are applied and errors are observed.</value>
+    <comment>The format-able message the diagnostic displays.</comment>
+  </data>
+  <data name="RepoAsyncAwaitMessageFormat" xml:space="preserve">
+    <value>Call to '{0}' is not awaited. Await the method to ensure database operations are applied and errors are observed.</value>
+    <comment>The format-able message the diagnostic displays.</comment>
+  </data>
+  <data name="AnalyzerTitle" xml:space="preserve">
+    <value>Async UOW method must be awaited</value>
+    <comment>The title of the diagnostic.</comment>
+  </data>
+  <data name="RepoAsyncAwaitTitle" xml:space="preserve">
+    <value>Async Repo method must be awaited</value>
+    <comment>The title of the diagnostic.</comment>
+  </data>
+  <data name="SyncLinqInAsyncTitle" xml:space="preserve">
+    <value>Use async EF Core query methods</value>
+    <comment>Title for EFB0003 error</comment>
+  </data>
+  <data name="RepoSyncInAsyncTitle" xml:space="preserve">
+    <value>Avoid synchronous repository methods in async code</value>
+    <comment>Title for EFB0003 error</comment>
+  </data>
+  <data name="UowSyncInAsyncTitle" xml:space="preserve">
+    <value>Use async UOW method</value>
+    <comment>Title for EFB0002 error</comment>
+  </data>
+  <data name="BlockingEfQueryTaskWaitTitle" xml:space="preserve">
+    <value>Avoid blocking on EF async query tasks</value>
+    <comment>Title for EFB0003 error</comment>
+  </data>
+  <data name="BlockingEfQueryTaskWaitDescription" xml:space="preserve">
+    <value>This code blocks on an EF Core async query task using Result, Wait(), or GetAwaiter().GetResult() inside an async method. Blocking on Task defeats the benefits of asynchronous EF I/O and can cause thread starvation or deadlocks in ASP.NET applications. Prefer using 'await' on the async query method (for example 'await query.ToListAsync()') instead of blocking.</value>
+    <comment>An optional longer localizable description of the diagnostic.</comment>
+  </data>
+  <data name="SyncLinqInAsyncDescription" xml:space="preserve">
+    <value>This call executes a synchronous EF Core query inside an async method, blocking the thread. Use async EF Core query methods such as ToListAsync(), FirstAsync(), SingleAsync(), or CountAsync() to avoid potential deadlocks and improve scalability.</value>
+    <comment>An optional longer localizable description of the diagnostic.</comment>
+  </data>
+  <data name="UowSyncInAsyncDescription" xml:space="preserve">
+    <value>This call executes a synchronous UOW async method within async function.  Use relevand async method instead that does not block the trhead thus avoiding potential deadlocks and improve scalability.</value>
+    <comment>An optional longer localizable description of the diagnostic.</comment>
+  </data>
+  <data name="SyncLinqInAsyncMessageFormat" xml:space="preserve">
+    <value>Synchronous EF query operator '{0}' in async method — use async counterpart (e.g. '{0}Async').</value>
+    <comment>The format-able message the diagnostic displays.</comment>
+  </data>
+  <data name="RepoSyncInAsyncMessageFormat" xml:space="preserve">
+    <value>Call to synchronous repository method '{0}' inside an async method; use the async counterpart instead</value>
+    <comment>The format-able message the diagnostic displays.</comment>
+  </data>
+  <data name="UowSyncInAsyncMessageFormat" xml:space="preserve">
+    <value>Synchronous UOW method '{0}' in async method — use async counterpart ('{0}Async')</value>
+    <comment>The format-able message the diagnostic displays.</comment>
+  </data>
+  <data name="BlockingEfQueryTaskWaitMessageFormat" xml:space="preserve">
+    <value>Blocking on EF async query tasks using '{0}' inside an async method can cause deadlocks; use 'await' instead</value>
+    <comment>The format-able message the diagnostic displays.</comment>
+  </data>
+</root>

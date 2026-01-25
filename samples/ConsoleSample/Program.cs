@@ -1,1 +1,0 @@
-Console.WriteLine("efCore.Boost sample");

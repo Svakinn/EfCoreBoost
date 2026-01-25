@@ -1,0 +1,25 @@
+﻿using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.CSharp.Testing;
+using Microsoft.CodeAnalysis.Testing;
+
+namespace BoostAnalyzer.Test
+{
+    public static partial class CSharpAnalyzerVerifier<TAnalyzer>
+        where TAnalyzer : DiagnosticAnalyzer, new()
+    {
+        public class Test : CSharpAnalyzerTest<TAnalyzer, DefaultVerifier>
+        {
+            public Test()
+            {
+                SolutionTransforms.Add((solution, projectId) =>
+                {
+                    var project = solution.GetProject(projectId)!;
+                    var compilationOptions = project.CompilationOptions!;
+                    compilationOptions = compilationOptions.WithSpecificDiagnosticOptions(
+                        compilationOptions.SpecificDiagnosticOptions.SetItems(CSharpVerifierHelper.NullableWarnings));
+                    return solution.WithProjectCompilationOptions(projectId, compilationOptions);
+                });
+            }
+        }
+    }
+}

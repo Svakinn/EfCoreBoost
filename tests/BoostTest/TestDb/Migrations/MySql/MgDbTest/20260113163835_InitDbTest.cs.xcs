@@ -1,0 +1,113 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
+namespace BoostTest.TestDb.Migrations.MySQL.MgDbTest
+{
+    /// <inheritdoc />
+    public partial class InitDbTest : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterDatabase()
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "my_MyTable",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    RowID = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    LastChanged = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: false),
+                    LastChangedBy = table.Column<string>(type: "varchar(50)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_my_MyTable", x => x.Id);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "my_MyTableRef",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    ParentId = table.Column<long>(type: "bigint", nullable: false),
+                    MyInfo = table.Column<string>(type: "varchar(256)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    LastChanged = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: false),
+                    LastChangedBy = table.Column<string>(type: "varchar(50)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_my_MyTableRef", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_my_MyTableRef_my_MyTable_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "my_MyTable",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.InsertData(
+                table: "my_MyTable",
+                columns: new[] { "Id", "LastChanged", "LastChangedBy", "RowID" },
+                values: new object[,]
+                {
+                    { -2L, new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Stefan", new Guid("6a3bf170-797c-40ba-ad8b-76e6ac34614a") },
+                    { -1L, new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Baldr", new Guid("e781aa56-299c-4e18-91cd-89cb1544fc3a") }
+                });
+
+            migrationBuilder.InsertData(
+                table: "my_MyTableRef",
+                columns: new[] { "Id", "LastChanged", "LastChangedBy", "MyInfo", "ParentId" },
+                values: new object[,]
+                {
+                    { -3L, new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Stefan", "OtherData", -2L },
+                    { -2L, new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Baldr", "BiggerData", -1L },
+                    { -1L, new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Baldr", "BigData", -1L }
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_my_MyTable_LastChanged",
+                table: "my_MyTable",
+                column: "LastChanged");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_my_MyTable_RowID",
+                table: "my_MyTable",
+                column: "RowID",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_my_MyTableRef_MyInfo",
+                table: "my_MyTableRef",
+                column: "MyInfo");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_my_MyTableRef_ParentId",
+                table: "my_MyTableRef",
+                column: "ParentId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "my_MyTableRef");
+
+            migrationBuilder.DropTable(
+                name: "my_MyTable");
+        }
+    }
+}

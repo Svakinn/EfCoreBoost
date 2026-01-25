@@ -1,0 +1,77 @@
+﻿-- Mysql has no sequences, use table instead
+CREATE TABLE IF NOT EXISTS my_Sequences (
+    Name VARCHAR(50) NOT NULL PRIMARY KEY,
+    NextValue BIGINT NOT NULL
+);
+
+INSERT INTO my_Sequences (Name, NextValue) VALUES ('MySeqId', 1);
+
+DELIMITER $$
+CREATE PROCEDURE my_ReserveMyIds (IN IdCount INT)
+BEGIN
+    DECLARE StartBase BIGINT;
+    DECLARE i INT;
+    -- Step 1–2: Atomically update and get the starting value
+    START TRANSACTION;
+    -- Read current value
+    SELECT NextValue INTO StartBase
+    FROM my_Sequences
+    WHERE Name = 'MySeqId'
+    FOR UPDATE;
+    -- Increment the stored value by IdCount
+    UPDATE my_Sequences
+    SET NextValue = NextValue + IdCount
+    WHERE Name = 'MySeqId';
+    COMMIT;
+    -- Step 3–4: Return the list of reserved IDs
+    SET i = 0;
+    CREATE TEMPORARY TABLE tmp_ReservedIds (ReservedId BIGINT);
+    WHILE i < IdCount DO
+        INSERT INTO tmp_ReservedIds (ReservedId)
+        VALUES (StartBase + i);
+        SET i = i + 1;
+    END WHILE;
+    SELECT ReservedId FROM tmp_ReservedIds;
+    DROP TEMPORARY TABLE tmp_ReservedIds;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+-- Stored procedure test scalar result
+CREATE PROCEDURE my_GetMaxIdByChanger(IN Changer VARCHAR(50))
+BEGIN
+    SELECT MAX(Id)
+    FROM my_MyTable
+    WHERE LastChangedBy = Changer;
+END$$
+
+DELIMITER ;
+CREATE OR REPLACE VIEW my_MyTableRefView AS
+SELECT
+    r.Id           AS RefId,
+    t.Id           AS MyId,
+    t.RowID,
+    t.LastChanged,
+    t.LastChangedBy,
+    r.MyInfo,
+    r.LastChanged  AS RefLastChanged,
+    r.LastChangedBy AS RefLastChangedBy
+FROM my_MyTableRef AS r
+INNER JOIN my_MyTable AS t ON t.Id = r.ParentId;
+
+DELIMITER $$
+CREATE PROCEDURE my_GetMyTableRefViewByMyId(IN MyId BIGINT)
+BEGIN
+    SELECT
+        v.RefId,
+        v.MyId,
+        v.RowID,
+        v.LastChanged,
+        v.LastChangedBy,
+        v.MyInfo,
+        v.RefLastChanged,
+        v.RefLastChangedBy
+    FROM my_MyTableRefView AS v
+    WHERE v.MyId = MyId;
+END$$
+DELIMITER ;
