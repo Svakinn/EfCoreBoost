@@ -86,7 +86,18 @@ EfBoost enables rich read capabilities while leaving update logic to structured,
 
 ---
 
-## Security and Data Boundary Control
+## How to think about OData in EfCore.Boost
+
+EfCore.Boost supports OData in two layers:
+
+- a **convenience path** for the most common API usage
+- a **full control path** when you need explicit control over behavior and output
+
+Both paths use the same underlying mechanisms.
+
+---
+
+## Security, ODataPolicy and Data Boundary Control
 
 Raw OData exposed directly over DbSets is unsafe and potentially harmful. Without careful control, it may lead to:
 
@@ -97,6 +108,29 @@ Raw OData exposed directly over DbSets is unsafe and potentially harmful. Withou
 
 EfBoost avoids this by requiring OData to be applied on controlled query roots, not raw DbSets.
 
+`ODataPolicy` defines **what the client is allowed to ask for**.
+
+It governs:
+
+- whether filtering is allowed
+- whether ordering is allowed and on which fields
+- whether paging is allowed and its limits
+- whether `$count` is allowed
+- whether `$expand` or `$select` are allowed
+
+Example:
+
+```csharp
+var policy = new ODataPolicy(
+    AllowFilter: true,
+    AllowOrderBy: true,
+    AllowedOrderBy: [nameof(User.Name), nameof(User.Created)],
+    AllowExpand: false,
+    AllowSelect: false,
+    MaxTop: 100
+);
+```
+Secure base query could i.e. be like this:
 Example secure pattern:
 
 ```csharp
@@ -105,163 +139,88 @@ var baseQuery = _uow.Users
     .Where(u => u.TenantId == session.TenantId && u.IsActive);
 ```
 
-Then apply OData on top of the secured base dataset:
+Important distinction:
+
+- **Policy** answers: *“What is the client allowed to request?”*
+- **Query plan pipeline** answers: *“How do we execute what we accepted?”*
+
+Disallowed options are ignored and recorded in the plan report.
+
+---
+
+## The convenience path
+
+In most APIs, OData is primarily used for:
+
+- client-provided `$filter`
+- paging with `$skip` / `$top`
+- sorting with `$orderby`
+- returning results with an inline count
+
+For this scenario, EfCore.Boost provides:
+
+- **`FilterODataAsync`**
 
 ```csharp
-var result = await _uow.Users.ApplyOdataFilterAsync(options, baseQuery);
-```
-
-This model guarantees:
-
-- tenant isolation
-- enforced security boundary
-- predictable behavior
-- index‑friendly performance
-
----
-
-# OData in EfCore.Boost
-
-EfBoost provides two complementary ways to work with OData.
-
----
-
-## ApplyOdataFilterAsync
-
-This method gives maximum control. You define what data is visible, and OData can refine it.
-
-```csharp
-var baseQuery = _uow.Users
-    .QueryNoTrack()
-    .Where(u => u.IsActive);
-
-var result = await _uow.Users.ApplyOdataFilterAsync(options, baseQuery);
-```
-
-Use this when you want:
-
-- fixed mandatory filters
-- multi-tenant isolation
-- predefined business constraints
-- controlled exposure
-
-OData becomes a shaping tool, not a gateway.
-
----
-
-## QueryWithODataAsync
-
-When you want convenience and a complete OData experience:
-
-```csharp
-var result = await _uow.Users.QueryWithODataAsync(options);
-```
-
-This:
-- executes an EF query
-- applies OData
-- packages results and metadata
-- supports paging and counts
-
-You need to be more careful here since all the dataset is exposed here without base-query boundaries.
-
----
-
-## ODataPolicy
-
-`ODataPolicy` is EfBoost’s **query firewall** for OData. It defines which OData query options are allowed and enforces limits on query complexity. The intent is predictable behavior and protection against expensive or unintended queries.
-
-### What it controls
-
-- **MaxTop**  
-  Maximum value allowed for `$top`. Use this to prevent very large result sets.
-
-- **ServerPageSize**  
-  Maximum number of items returned per server-generated page. When set, this caps page size regardless of client input.
-
-- **AllowFilter**  
-  Enables or disables the `$filter` query option.
-
-- **AllowOrderBy / AllowedOrderBy**  
-  Enables `$orderby`. If `AllowedOrderBy` is specified, sorting is restricted to the listed column names only.
-
-- **AllowSelect**  
-  Enables or disables the `$select` query option.
-
-- **AllowExpand / AllowedExpand / MaxExpansionDepth**  
-  Enables `$expand`. You may optionally restrict which navigation properties can be expanded via `AllowedExpand`, and limit nesting with `MaxExpansionDepth`.
-
-- **AllowCount**  
-  Enables or disables the `$count` query option.
-
-By default, all options are allowed except `$expand` and `$orderby`. 
-
----
-
-## About $expand & $orderby
-
-`$expand` allows related entities to be included in the response. While powerful, it can:
-
-- increase payload size dramatically
-- expose unintended relationships
-- reduce query predictability
-- degrade performance
-
-Recommended guidance:
-
-- enable `$expand` only when clearly justified
-- avoid expanding large or unbounded collections
-- prefer explicit API endpoints for deep or complex object graphs
-
-`$orderby` can be expensive on large result sets, especially when applied to non-indexed columns.  
-For very large or frequently accessed datasets, it is recommended to restrict `$orderby` to indexed columns only.  
-Use **`AllowedOrderBy`** in `ODataPolicy` to explicitly whitelist safe sortable columns.
-
----
-
-## Usage example
-
-When a query uses `$expand`, you must opt in by passing a policy with `AllowExpand = true`.
-
-```csharp
-var res = await uow.MyTables.QueryWithODataAsync(options, new ODataPolicy(AllowExpand: true));
-```
-
-To restrict which navigation properties may be expanded:
-
-```csharp
-var policy = new ODataPolicy(
-    AllowExpand: true,
-    AllowedExpand: [nameof(DbTest.MyTable.MyTableRefs)],
-    MaxExpansionDepth: 2
+var result = await repo.FilterODataAsync(
+    baseQuery,
+    options,
+    policy: new ODataPolicy(
+        MaxTop: 200,
+        AllowOrderBy: true,
+        AllowCount: true
+    ),
+    forceCount: true,
+    ct
 );
+```
 
-var res = await uow.MyTables.QueryWithODataAsync(options, policy);
-```
-Of course you dont need to specify navigation property names in `AllowedExpand` if there is only 
-one navigaton available or you want to allow it for all properties.
-```csharp
-var res = await uow.MyTables.QueryWithODataAsync(options, new ODataPolicy(AllowExpand: true));
-```
+This method:
+
+- applies OData on top of a secured base query you define
+- enforces the provided `ODataPolicy`
+- returns a typed `QueryResult<T>`
+- ignores shaping (`$select` / projection `$expand`)
+
 ---
 
-## Validation behavior
+## Typed vs shaped execution
 
-All incoming OData queries are validated against the provided `ODataPolicy` before execution.
+Once policy is applied, EfCore.Boost lets you decide **how** the accepted OData options are executed.
 
-Validation fails when:
-- A disallowed query option is used (e.g. `$expand` when `AllowExpand = false`).
-- `$orderby` references a column not listed in `AllowedOrderBy`.
-- `$top` exceeds `MaxTop`.
-- `$expand` exceeds `MaxExpansionDepth` or references a navigation not listed in `AllowedExpand`.
+### Typed execution (entities)
 
-When validation fails:
-- In unit tests, an exception is thrown and the test fails.
-- In WebAPI usage, this should typically be translated to a **400 Bad Request** response.
+Typed execution keeps results materialized as `T`.
 
-This early rejection is intentional. Invalid or unsafe queries are blocked before EF Core generates SQL.
+- optional `$expand` via **expand-as-include**
+- navigation paths become EF `Include(...)`
+- nested expand options are ignored
+- result type: `QueryResult<T>`
+
+This is ideal for predictable, strongly typed responses.
 
 ---
+
+### Shaped execution (projection)
+
+Shaped execution is required when the request includes:
+
+- `$select`
+- projection-style `$expand`
+
+In this mode:
+
+- results no longer materialize as `T`
+- result type becomes `QueryResult<object>`
+- client controls payload shape (within policy)
+
+This is more flexible but should usually be more restricted.
+
+---
+
+
+
+
 
 # Using Views with OData
 ## Shaping data where it belongs
@@ -294,71 +253,66 @@ This frequently results in cleaner APIs and better performance than exposing raw
 
 ---
 
-# Parameterized Routines as an Alternative
+## Step 1: Build the query plan
 
-In some cases, a parameterized database routine can be a better choice than OData. This applies when:
-
-- query logic is well defined and not ad hoc
-- strict security constraints must always apply
-- the result depends on contextual parameters
-- execution must be highly deterministic
-- procedural logic is more suitable than query logic
-
-Example routines:
-
-- GetCurrentMenuItemsForSession(@SessionId, @CultureId)
-- GetCustomerDashboard(@CustomerId)
-
-Example usage:
 ```csharp
-var result = await _uow.RunRoutineQuery<CurrentMenuItemsV>("cms","GetCurrentMenuItemsForSession",
-        new[]  {new DbParam("@SessionId", sessionId), new DbParam("@cultureId", cultId})
-        .AsNoTracking().ToListAsync();
+var plan = repo.BuildODataQueryPlan(
+    baseQuery,
+    options,
+    policy: new ODataPolicy(
+        AllowFilter: true,
+        AllowOrderBy: true,
+        AllowExpand: true,
+        AllowSelect: true,
+        MaxTop: 200
+    ),
+    forceCount: true
+);
 ```
 
-In these cases:
+At this point:
 
-- the database ensures correct scoping
-- logic runs at optimal execution location
-- results are predictable
-- consumers receive a defined structure
-
-This does not replace OData; it is an alternative pattern for scenarios where flexibility is not the primary goal.  
-See: [Routines Documentation](../../UOW/DbUowRoutines.md) for more details.
+- policy decisions are applied
+- paging, ordering, and filtering are validated
+- no query has executed yet
 
 ---
 
-## Shared Read Models
+### Step 2A: Typed execution without expand
 
-EfBoost allows the same EF read model (view model) to be used for:
-
-- database views
-- routine result sets
-
-This means:
-- you define one read structure
-- OData can work on the view
-- routines can return the same shape
-- application remains consistent
-
-Routines should typically be treated like views internally, but not exposed as repositories when their usage is purpose‑specific.
+```csharp
+var result = await repo.MaterializeODataAsync(plan, ct);
+```
 
 ---
 
-# Practical Considerations, DTOs & $expand
+### Step 2B: Typed execution with expand-as-include
 
-## DTOs
+```csharp
+plan = repo.ApplyODataExpandAsInclude(plan);
+var result = await repo.MaterializeODataAsync(plan, ct);
+```
 
-EfBoost recommends using entities as the OData model and projecting to DTOs afterward if needed.
+Use this when:
 
-Benefits:
+- you want navigation data
+- you still want strongly typed entities
+- you accept limited expand semantics
 
-- reliable SQL translation
-- reduced complexity
-- stable behavior
-- fewer surprises
+---
 
-DTOs are ideal for output formatting, not for query semantics.
+### Step 2C: Shaped execution (select / projection expand)
+
+```csharp
+var shapedQuery = repo.ApplyODataSelectExpand(plan);
+var result = await repo.MaterializeODataShapedAsync(plan, shapedQuery, ct);
+```
+
+Use this when:
+
+- `$select` is present
+- projection-style `$expand` is present
+- you accept untyped output
 
 ---
 
@@ -399,6 +353,222 @@ This provides another layer of safety when needed.
 
 ---
 
+## EfCore.Boost OData Examples (from BoostTest Smoke Test)
+This document adds **concrete, copy-pasteable** OData examples based on the Boost test project’s `DbTest` model (`MyTable`, `MyTableRef`) and the smoke test code path.  
+See the this model here: [TestDb.cs](../../../../tests/BoostTest/TestDb/TestDb.cs).
+
+Relevant test model:
+
+- `DbTest.MyTable` (table) has a navigation collection `MyTableRefs`
+- `DbTest.MyTableRef` (table) is the child/line entity
+- OData is applied on `EfRepo<DbTest.MyTable>` from `UOWTestDb` 
+
+---
+
+### 0. Always start with a secured base query
+
+Even in tests, we start from a base query we own:
+
+```csharp
+var baseQuery = uow.MyTables.QueryNoTrack(); // your security boundary normally goes here
+```
+
+In a real API, this is where you apply tenant scoping, ACLs, soft-delete filters, etc.
+
+---
+
+### 1. The common path: Filter + paging + count (typed results)
+
+This is the “most common and most useful” path: apply `$filter` and get a typed `QueryResult<MyTable>`.
+
+From the smoke test:
+
+```csharp
+var options = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=LastChangedBy eq 'Stefan'");
+var baseQuery = uow.MyTables.QueryNoTrack();
+var result = await uow.MyTables.FilterODataAsync(
+    baseQuery,
+    options,
+    policy: null,
+    forceCount: true
+);
+Assert.True(result.InlineCount > 0 && !result.Results.Any(x => x.LastChangedBy != "Stefan"));
+``` 
+
+#### Adding security limits via `ODataPolicy`
+
+`FilterODataAsync` also accepts `ODataPolicy` directly, so you can enforce guardrails without switching to the plan-first pipeline:
+
+```csharp
+var policy = new ODataPolicy(
+    AllowFilter: true,
+    AllowOrderBy: true,
+    AllowCount: true,
+    MaxTop: 200
+    // optionally: AllowedOrderBy: ["LastChangedBy","LastChanged"]
+);
+
+var result = await uow.MyTables.FilterODataAsync(
+    baseQuery,
+    options,
+    policy,
+    forceCount: true
+);
+```
+
+If the client asks for something not allowed by policy, Boost ignores that option and records the reason (report).
+
+---
+
+### 2. Full control: Build a plan first
+
+When you want to decide **what you are going to do** with the OData request, start here:
+
+```csharp
+var plan = uow.MyTables.BuildODataQueryPlan(
+    baseQuery,
+    options,
+    policy: new ODataPolicy(
+        AllowFilter: true,
+        AllowOrderBy: true,
+        AllowCount: true,
+        MaxTop: 200
+    ),
+    forceCount: true
+);
+```
+
+At this point:
+
+- policy has been applied
+- skip/top/order/filter/count decisions are made
+- nothing has executed yet
+- you can choose **typed** vs **shaped** execution next
+
+---
+
+### 3. Typed expand: `$expand` as `Include(...)` (no inner filters)
+
+This is the “I want parent with lines” scenario, **but still typed**.
+
+In EfCore.Boost, typed expand is implemented as **expand-as-include**:
+
+- `$expand=MyTableRefs` becomes `.Include(x => x.MyTableRefs)`
+- nested expand options are ignored (`$filter` inside `$expand`, `$orderby` inside `$expand`, etc.)
+- ignored nested options are recorded to `plan.Report`
+
+From the smoke test:
+
+```csharp
+var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')"
+);
+var baseQuery = uow.MyTables.QueryNoTrack();
+var plan = uow.MyTables.BuildODataQueryPlan(
+    baseQuery,
+    options2,
+    new ODataPolicy(AllowExpand: true),
+    forceCount: true
+);
+var plan2 = uow.MyTables.ApplyODataExpandAsInclude(plan);
+// Nested expand filters are not supported in include-mode, so they are reported:
+Assert.True(
+    plan2.Report.Where(x => x == "ExpandInnerFilterIgnored:MyTableRefs").Count() == 1
+);
+var res = await uow.MyTables.MaterializeODataAsync(plan2);
+// We got MyTableRefs loaded (but unfiltered, because include-mode ignores inner expand filters)
+Assert.True(res.Results.First().MyTableRefs.Count > 0);
+``` 
+
+#### When to use this
+
+Use expand-as-include when you need:
+
+- strongly typed entities
+- navigation loading
+- predictable SQL (no nested OData surprises)
+
+---
+
+### 4. Shaped responses: `$select` (projection output)
+
+When the request uses `$select`, your query no longer materializes as `T`.
+You must switch to the shaped path.
+
+From the smoke test:
+
+```csharp
+var opts = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow,"$filter=Id eq -1&$select=Id");
+var baseQuery = uow.MyTables.QueryNoTrack();
+var plan3 = uow.MyTables.BuildODataQueryPlan(
+    baseQuery,
+    opts,
+    new ODataPolicy(AllowSelect: true),
+    forceCount: true
+);
+
+// ApplyTo produces wrapper/projection element type
+var shapedQuery3 = uow.MyTables.ApplyODataSelectExpand(plan3);
+
+// Materialize into QueryResult<object>
+var res3 = await uow.MyTables.MaterializeODataShapedAsync(plan3, shapedQuery3);
+
+var json = System.Text.Json.JsonSerializer.Serialize(res3.Results[0]);
+
+Assert.True(json.Contains("\"Id\""));
+Assert.True(!json.Contains("LastChangedBy"));
+Assert.True(!json.Contains("MyTableRefs"));
+``` 
+
+#### What you get back
+
+- `QueryResult<object>`
+- each result item is a shaped/projection object
+- you typically serialize it directly (as in the test)
+
+---
+
+### 5. Shaped expand + select: projection `$expand`
+
+If you accept projection expand (not include-mode), you still use the shaped pipeline:
+
+1) build plan with `AllowExpand` and/or `AllowSelect`  
+2) call `ApplyODataSelectExpand(plan)`  
+3) materialize via `MaterializeODataShapedAsync`
+
+The smoke test includes a shaped expand example (note: plan should be built from the same `opts4` passed in):
+
+```csharp
+var opts4 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
+var baseQuery = uow.MyTables.QueryNoTrack();
+var plan4 = uow.MyTables.BuildODataQueryPlan(
+    baseQuery,
+    opts4,
+    new ODataPolicy(AllowExpand: true),
+    forceCount: true
+);
+var shapedQuery4 = uow.MyTables.ApplyODataSelectExpand(plan4);
+var res4 = await uow.MyTables.MaterializeODataShapedAsync(plan4, shapedQuery4);
+Assert.True(res4.Results != null && res4.Results.Count > 0);
+``` 
+
+Shaped expand supports projection, but your output is untyped (`object`) and should usually be protected with stricter policy limits.
+
+---
+
+### 6. Decision cheat sheet
+
+- **Want typed entities + filter/paging/count?**  
+  Use `FilterODataAsync(baseQuery, options, policy, forceCount)`.
+
+- **Want typed entities + navigation loaded?**  
+  Use plan-first + `ApplyODataExpandAsInclude(plan)` + `MaterializeODataAsync(plan)`.
+
+- **Want `$select` / projection `$expand`?**  
+  Use plan-first + `ApplyODataSelectExpand(plan)` + `MaterializeODataShapedAsync(...)`.
+
+
+---
+
 # Summary
 
 EfBoost integrates OData as a controlled, high‑performance, secure query capability, built for:
@@ -410,7 +580,7 @@ EfBoost integrates OData as a controlled, high‑performance, secure query capab
 
 Designed correctly, OData + EfBoost provides:
 
-- performance comparable to custom APIs
+- performance superior to custom APIs
 - safer defaults
 - better structure
 - reduced endpoint complexity

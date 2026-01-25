@@ -46,7 +46,7 @@ A UOW is the controlled gateway:
 Your app **does not talk to DbContext**.  
 It talks to your UOW.  
 That makes everything saner.  
-[See more details here](./src/EfCoreBoost/UOW/DbUOW.md).
+[See more details here](./src/EfCoreBoost/UOW/DbUow.md).
 
 ---
 
@@ -263,14 +263,14 @@ EfCore.Boost helps turn it into a **robust, scalable, and well-structured data l
 
 ## 📚 Further Reading
 - [DbRepo.md](./src/EfCoreBoost/DbRepo/DbRepo.md) – Repositories, OData, raw SQL, bulk  
-- [DbUOW.md](./src/EfCoreBoost/UOS/DbUOW.md)  – Lifecycle, provider awareness, transaction control  
-- [DbUowRoutines.md](./src/EfCoreBoost/Model/DbUowRoutines.md)  – Portable routine strategies (Stored Procedures/Functions)  
+- [DbUOW.md](./src/EfCoreBoost/UOW/DbUow.md)  – Lifecycle, provider awareness, transaction control  
+- [DbUowRoutines.md](./src/EfCoreBoost/UOW/DbUowRoutines.md)  – Portable routine strategies (Stored Procedures/Functions)  
 - [ModelBuilding.md](./src/EfCoreBoost/Model/ModelBuilding.md) – conventions, attributes, portability  
 - [EfMIgrationsCMD.md](./src/EfCoreBoost/Model/EfMigrationsCMD.md) – migrations for multiple providers  
 - [BulkInserts.md](./src/EfCoreBoost/DbRepo/BulkInsert/BulkInserts.md) – bulk inserts  
 - [OData.md](./src/EfCoreBoost/DbRepo/OData/OData.md) – OData helpers  
 - [Configs.md](./src/EfCoreBoost/CFG/Configs.md) – Connection configuration
-- [Testing](./tests/BoostTest/BoostTest/Readme.md) – Testing & examples
+- [Testing](./tests/BoostTest/Readme.md) – Testing & examples
  
 ---
 

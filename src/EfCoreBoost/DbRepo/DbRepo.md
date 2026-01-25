@@ -276,14 +276,17 @@ OData is powerful — and dangerous when applied blindly to a `DbSet`.
 In typical WebAPI setups, an OData-capable controller provides an `ODataQueryOptions` instance that describes the requested filtering, ordering, and paging.  
 EfBoost deliberately does **not** expose raw `DbSet` access for OData. Instead, it offers **controlled entry points** that let you decide how much freedom the client gets.
 
-EfBoost currently provides two repository helpers for this purpose:
+EfCore.Boost currently supports two OData usage paths:
 
-- `<T>.ApplyOdataFilterAsync`
-- `<T>.QueryWithODataAsync`
+- `<T>.FilterODataAsync`
+A convenience method for the most common use case: applying client filters, paging, and optional count on top of a query boundary you define.
+- `<T>.Plan-first OData pipeline` For more advanced scenarios, use BuildODataQueryPlan and explicitly choose how the request is executed (typed results, expand-as-include, or shaped responses).
+
+Both paths enforce the same safety principles: OData is always applied on top of a query you own, and client freedom is governed by `ODataPolicy` options.
 
 ---
 
-### 🔷 ApplyOdataFilterAsync
+### 🔷 FilterODataAsync
 
 Apply OData behavior **onto a query you control**.
 
@@ -291,7 +294,17 @@ Apply OData behavior **onto a query you control**.
 var baseQuery = uow.Users.QueryNoTrack()
     .Where(u => u.IsActive);
 
-var result = await uow.Users.ApplyOdataFilterAsync(options, baseQuery);
+var result = await uow.Users.FilterODataAsync(
+    baseQuery,
+    options,
+    policy: new ODataPolicy(
+        MaxTop: 200,
+        AllowOrderBy: true,
+        AllowCount: true
+    ),
+    forceCount: true,
+    ct
+)
 ```
 
 Typical uses:
@@ -305,23 +318,20 @@ This pattern ensures that the *base query defines the boundary*, and OData can o
 
 ---
 
-### 🔷 QueryWithODataAsync
+#### 🔷 Advanced OData Pipeline
 
-Apply OData options directly at the repository level.
+For scenarios that require more control, EfCore.Boost exposes a plan-first OData pipeline.
 
-```csharp
-var result = await uow.Users.QueryWithODataAsync(options);
-```
+Instead of immediately executing a query, you first build an OData query plan using BuildODataQueryPlan.
+From that plan, you explicitly decide how the request is handled:
 
-This is useful when:
+-  materialize typed entities
+- low limited $expand via include-style loading
+- produce shaped results when $select or projection $expand is used
 
-- the repository already defines a safe default query
-- the exposed surface is intentionally broad
-- pagination, filtering, and ordering are fully delegated to OData
+This approach separates what is allowed (via ODataPolicy) from how the query is executed, making advanced OData usage explicit, predictable, and safe.
 
----
-
-See more details about OData handling and design trade-offs in  
+See more details about OData handling  in  
 [`Odata.md`](./OData/OData.md).
 
 ---
