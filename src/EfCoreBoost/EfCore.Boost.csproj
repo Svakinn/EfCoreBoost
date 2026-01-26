@@ -7,7 +7,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- NuGet basics -->
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
     <Version>1.0.0</Version>
     <Authors>Sveinn S. Erlendsson</Authors>
@@ -15,13 +15,27 @@
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Description>EfCore.Boost: EF Core helper library with Unit of Work, Repository and database utilities.</Description>
-    <PackageReleaseNotes>First public preview with UoW/Repo helpers and initial analyzer integration.</PackageReleaseNotes>
-    <PackageTags>efcore;ef-core;repository;uow;database;efboost</PackageTags>
-    <Copyright>© 2025 Sveinn S. Erlendsson</Copyright>  
+    <Description>
+EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core, plus utilities for routines, bulk operations, and OData suport.
+Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.
+	</Description>
+    <PackageReleaseNotes>First public preview with UOW/Repo helpers and initial analyzer integration.</PackageReleaseNotes>
+    <PackageTags>efcore;ef-core;repository;uow;database;efboost;cross-database</PackageTags>
+    <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
+  </PropertyGroup>
+  <PropertyGroup>
+	<OutputType>Library</OutputType>
+	<GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+	<IncludeRuntimeConfigurationFiles>false</IncludeRuntimeConfigurationFiles>
+  </PropertyGroup>
+  <PropertyGroup>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\..\LICENSE" Pack="true" PackagePath="LICENSE" />
+  </ItemGroup>
+  <ItemGroup>
+	<None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
