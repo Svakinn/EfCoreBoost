@@ -63,5 +63,8 @@ Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, M
     <PackageReference Include="System.Drawing.Common" Version="8.0.21" />
     <PackageReference Include="System.Text.Json" Version="8.0.6" />
   </ItemGroup>
-
+  <ItemGroup>
+	<ProjectReference Include="..\BoostAnalyzer\BoostAnalyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	<ProjectReference Include="..\BoostCodeFixes\BoostAnalyzer.CodeFixes.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
 </Project>

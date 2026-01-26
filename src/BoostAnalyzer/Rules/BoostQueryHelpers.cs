@@ -37,7 +37,7 @@ namespace BoostAnalyzer.Rules
         internal static bool IsEfBoostQueryable(ExpressionSyntax expr, SemanticModel model, CancellationToken ct)
         {
             var type = model.GetTypeInfo(expr, ct).Type;
-            if (IsQueryableType(type)) return true;
+            if (type != null && IsQueryableType(type)) return true;
             return false;
         }
 

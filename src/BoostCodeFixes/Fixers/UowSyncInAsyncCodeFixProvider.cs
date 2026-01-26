@@ -69,7 +69,7 @@ namespace BoostAnalyzer.Fixers
             CancellationToken cancellationToken)
         {
             // The diagnostic might be on the IdentifierName or MemberAccess; walk up to the invocation
-            InvocationExpressionSyntax invocation = node as InvocationExpressionSyntax ?? node.FirstAncestorOrSelf<InvocationExpressionSyntax>();
+            var invocation = node as InvocationExpressionSyntax ?? node.FirstAncestorOrSelf<InvocationExpressionSyntax>();
             if (invocation == null)
                 return document;
 
@@ -80,8 +80,8 @@ namespace BoostAnalyzer.Fixers
             if (!(semanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol is IMethodSymbol methodSymbol))
                 return document;
 
-            if (!AsyncCounterparts.TryGetValue(methodSymbol.Name, out string asyncName))
-                return document; // safety guard
+            if (!AsyncCounterparts.TryGetValue(methodSymbol.Name, out var asyncName) || string.IsNullOrEmpty(asyncName))
+                return document;
 
             var editor = await DocumentEditor.CreateAsync(document, cancellationToken).ConfigureAwait(false);
 
