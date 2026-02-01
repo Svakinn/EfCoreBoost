@@ -1,4 +1,6 @@
-﻿// EFB0002 tests – UowSyncInAsyncAnalyze
+﻿// Copyright © 2026  Sveinn S. Erlendsson
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+// EFB0002 tests – UowSyncInAsyncAnalyze
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
@@ -29,8 +31,8 @@ namespace BoostAnalyzer.Test.Rules
         }
 
         // EFB0002
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task SyncUowMethod_InAsyncMethod_ProducesDiagnostic(string methodName)
         {
             var test = @"
@@ -54,8 +56,8 @@ class C
         }
 
         // EFB0002
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task SyncUowMethod_InSyncMethod_ProducesNoDiagnostic(string methodName)
         {
             var test = @"

@@ -73,12 +73,12 @@ namespace BoostTest.TestDb
         public async Task<List<MyTableRefView>> GetMyTableRefViewByMyIdAsync(long myId)
         {
             var paList = new List<DbParmInfo> { new("@MyId", myId) };
-            return await SetUpRoutineQuery<MyTableRefView>("my", "GetMyTableRefViewByMyId", paList).AsNoTracking().ToListAsync();
+            return await SetUpRoutineQuery<MyTableRefView>("my", "GetMyTableRefViewByMyId", paList).ToListAsync();
         }
         public List<MyTableRefView> GetMyTableRefViewByMyIdSynchronized(long myId)
         {
             var paList = new List<DbParmInfo> { new("@MyId", myId) };
-            return SetUpRoutineQuery<MyTableRefView>("my", "GetMyTableRefViewByMyId", paList).AsNoTracking().ToList();
+            return SetUpRoutineQuery<MyTableRefView>("my", "GetMyTableRefViewByMyId", paList).ToList();
         }
         #endregion
 

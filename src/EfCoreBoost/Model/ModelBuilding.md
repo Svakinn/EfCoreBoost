@@ -24,6 +24,7 @@ EfBoost conventions are enabled with a single call inside your DbContext:
 ```csharp
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
+    base.OnModelCreating(modelBuilder);
     modelBuilder.ApplyEfBoostConventions(this);
 }
 ```

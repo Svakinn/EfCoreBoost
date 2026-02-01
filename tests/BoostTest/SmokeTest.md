@@ -161,10 +161,7 @@ After explicitly inserting IDs 10 and 11, the next generated ID should be **12**
 
 ```csharp
 await uow.MyTables.BulkDeleteByIdsAsync([10]);
-
-var currIds = await uow.MyTables.QueryNoTrack()
-    .Select(tt => tt.Id)
-    .ToListAsync();
+var currIds = await uow.MyTables.QueryNoTrack().Select(tt => tt.Id).ToListAsync();
 
 Assert.False(currIds.Where(tt => tt == 10).Any(), "Bulkdelete failed, row 10 still exists");
 Assert.True(currIds.Where(tt => tt == 11).Any(), "Bulk inserted row not found");
@@ -180,8 +177,8 @@ Both bulk insert and bulk delete execute inside transactions automatically.
 ```csharp
 await uow.MyTables.BulkDeleteByIdsAsync([11]);
 await uow.MyTables.BulkInsertAsync([tt, tt2]);
-
 var row2 = await uow.MyTables.ByKeyNoTrackAsync(13);
+
 Assert.True(row2 != null, "Bulk-insert without identities fail");
 ```
 
@@ -197,6 +194,7 @@ Validates:
 
 ```csharp
 var fId = await uow.GetMaxIdByChanger("Stefan");
+
 Assert.True(fId == -2, "Scalar routine did not return valid id");
 ```
 
@@ -226,9 +224,8 @@ try
     {
         uow.MyTables.Add(rb);
         await uow.SaveChangesAsync(ct);
+        var insideExists = await uow.MyTables.QueryNoTrack().AnyAsync(t => t.Id == rb.Id, cancellationToken: ct);
 
-        var insideExists = await uow.MyTables.QueryNoTrack()
-            .AnyAsync(t => t.Id == rb.Id, cancellationToken: ct);
         Assert.True(insideExists, "Row should be visible inside active transaction");
 
         uow.MyTables.Add(rb2);
@@ -241,8 +238,8 @@ catch (Exception) { }
 After transaction:
 
 ```csharp
-var afterRollbackExists = await uow.MyTables.QueryNoTrack()
-    .AnyAsync(t => t.Id == rb.Id);
+var afterRollbackExists = await uow.MyTables.QueryNoTrack().AnyAsync(t => t.Id == rb.Id);
+
 Assert.False(afterRollbackExists, "Row should not exist after rollback");
 ```
 
@@ -253,16 +250,16 @@ Validates full rollback and transactional consistency.
 ## 8. OData filter
 
 ```csharp
-var options = OdataTestHelper.CreateOptions<DbTest.MyTable>(
-    uow,"$filter=LastChangedBy eq 'Stefan'");
+ var options = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow,"$filter=LastChangedBy eq 'Stefan'" );
+ var baseQuery = uow.MyTables.QueryNoTrack();
+ var filtResult = await uow.MyTables.FilterODataAsync(baseQuery,options,null,true);
 
-var baseQuery = uow.MyTables.QueryNoTrack();
-var filtResult = await uow.MyTables.FilterODataAsync(baseQuery, options, null, true);
+ Assert.True(filtResult.InlineCount > 0 && !filtResult.Results.Any(x => x.LastChangedBy != "Stefan"), "We expect to find Stefans, but only Stefans" );
 
-Assert.True(
-    filtResult.InlineCount > 0 &&
-    !filtResult.Results.Any(x => x.LastChangedBy != "Stefan")
-);
+ // Verify that data exist with linQ
+ var normRow = await uow.MyTables.QueryNoTrack().Where(tt => tt.Id == -1).Include(tt => tt.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToListAsync();
+ 
+ Assert.True(normRow.Count > 0, "");
 ```
 
 Validates EDM generation, filter parsing, and translation.
@@ -272,20 +269,18 @@ Validates EDM generation, filter parsing, and translation.
 ## 9. OData expand-as-include
 
 ```csharp
-var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(
-    uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
+ var bq = uow.MyTables.QueryNoTrack();
+ var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
+ var plan = uow.MyTables.BuildODataQueryPlan(bq, options2, new ODataPolicy(AllowExpand: true), true);
+ var plan2 = uow.MyTables.ApplyODataExpandAsInclude(plan);
 
-var plan = uow.MyTables.BuildODataQueryPlan(
-    baseQuery, options2, new ODataPolicy(AllowExpand: true), true);
+ Assert.True(plan2.Report.Where(tt => tt == "ExpandInnerFilterIgnored:MyTableRefs").Count() == 1, "We did not find $filter warning within AsInclude query"); 
 
-var plan2 = uow.MyTables.ApplyODataExpandAsInclude(plan);
+ var res = await uow.MyTables.MaterializeODataAsync(plan2);
+ //we received our MyTableRefs records inline (but unfiltered)
 
-Assert.True(
-    plan2.Report.Where(tt => tt == "ExpandInnerFilterIgnored:MyTableRefs").Count() == 1
-);
-
-var res = await uow.MyTables.MaterializeODataAsync(plan2);
-Assert.True(res.Results.First().MyTableRefs.Count > 0);
+ Assert.True(res.InlineCount != null && res.InlineCount > 0 && res.Results != null &&  res.Results.FirstOrDefault() != null && res.Results.FirstOrDefault()!.MyTableRefs.Count > 0, 
+     "$expand as include failed to produce data for MyTableRefs") ;
 ```
 
 Validates expand handling and include translation.
@@ -295,19 +290,26 @@ Validates expand handling and include translation.
 ## 10. OData shaped ($select)
 
 ```csharp
-var opts = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$select=Id");
+  var opts = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$select=Id");
+  var plan3 = uow.MyTables.BuildODataQueryPlan(bq, opts, new ODataPolicy(AllowSelect: true), true);
+  var shapedQuery3 = uow.MyTables.ApplyODataSelectExpand(plan3);
+  var res3 = await uow.MyTables.MaterializeODataShapedAsync(plan3,shapedQuery3);
 
-var plan3 = uow.MyTables.BuildODataQueryPlan(
-    baseQuery, opts, new ODataPolicy(AllowSelect: true), true);
+  Assert.True(res3.Results != null && res3.Results.Count > 0, "Filtered and selected query failed");
 
-var shapedQuery3 = uow.MyTables.ApplyODataSelectExpand(plan3);
-var res3 = await uow.MyTables.MaterializeODataShapedAsync(plan3, shapedQuery3);
+  var json = System.Text.Json.JsonSerializer.Serialize(res3.Results[0]);
 
-var json = System.Text.Json.JsonSerializer.Serialize(res3.Results[0]);
+  Assert.True(json.Contains("\"Id\""), $"$select=Id expected 'Id' in shaped JSON.\nJSON: {json}");
+  Assert.True(!json.Contains("LastChangedBy"), $"$select=Id should not include 'LastChangedBy'.\nJSON: {json}");
+  Assert.True(!json.Contains("MyTableRefs"), $"$select=Id should not include navigation 'MyTableRefs'.\nJSON: {json}");
 
-Assert.True(json.Contains(""Id""));
-Assert.True(!json.Contains("LastChangedBy"));
-Assert.True(!json.Contains("MyTableRefs"));
+  //Inner filter test for shaped expansion
+  var opts4 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow,"$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
+  var plan4 = uow.MyTables.BuildODataQueryPlan(bq, opts, new ODataPolicy(AllowExpand: true), true);
+  var shapedQuery4 = uow.MyTables.ApplyODataSelectExpand(plan4);
+  var res4 = await uow.MyTables.MaterializeODataShapedAsync(plan4, shapedQuery4);
+
+  Assert.True(res4.Results != null && res4.Results.Count > 0, "Expected at least one result from $filter=Id eq -1 with expanded MyTableRefs, but none were returned.");
 ```
 
 Validates projection, shaping, and reduced payload.

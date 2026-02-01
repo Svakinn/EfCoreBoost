@@ -16,13 +16,13 @@ namespace BoostTest.TestDb
     /// <param name="options"></param>
     public partial class DbTest(DbContextOptions<DbTest> options) : DbContext(options)
     {
-
             public DbSet<MyTable> MyTables { get; set; }
             public DbSet<MyTableRef> MyTableRefs { get; set; }
             public DbSet<MyTableRefView> MyTableRefViews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyEfBoostConventions(this, "my");  //Here is where the magic happens with each db-flavor and our Boost attributes, default schema set to "my"
             OnModelData(modelBuilder); //Data Seader: TestDbData.cs
         }

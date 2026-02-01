@@ -1,4 +1,6 @@
-﻿// EFB0005 CodeFix tests – RepoAsyncAwaitCodeFixProvider
+﻿// Copyright © 2026  Sveinn S. Erlendsson
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+// EFB0005 CodeFix tests – RepoAsyncAwaitCodeFixProvider
 // Ensures async repository calls on _uow.{Repo}.METHOD(...) are wrapped in await.
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -39,8 +41,8 @@ namespace BoostAnalyzer.Test.Fixers
         }
 
         // EFB0005
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task RepoAsyncMethod_NotAwaited_IsConverted_To_Await(string methodName)
         {
             var before = @"

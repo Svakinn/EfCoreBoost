@@ -1,4 +1,6 @@
-﻿// EFB0002 CodeFix tests – UowSyncInAsyncCodeFixProvider
+﻿// Copyright © 2026  Sveinn S. Erlendsson
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+// EFB0002 CodeFix tests – UowSyncInAsyncCodeFixProvider
 // Verifies that synchronous UOW methods in async methods are rewritten to async+await.
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -14,7 +16,7 @@ namespace BoostAnalyzer.Test.Fixers
     public class UowSyncInAsyncCodeFixTests
     {
         // EFB0002
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("SaveChangesSynchronized", "SaveChangesAsync")]
         [DataRow("SaveChangesAndNewSynchronized", "SaveChangesAndNewAsync")]
         [DataRow("CommitTransactionSynchronized", "CommitTransactionAsync")]

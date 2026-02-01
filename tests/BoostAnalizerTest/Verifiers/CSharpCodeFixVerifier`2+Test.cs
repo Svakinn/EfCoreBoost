@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
+using BoostAnalyzer.Test.Verifiers;
 
 namespace BoostAnalyzer.Test
 {
@@ -15,6 +16,8 @@ namespace BoostAnalyzer.Test
             {
                 SolutionTransforms.Add((solution, projectId) =>
                 {
+                    if (solution is null)
+                        return null!;
                     var compilationOptions = solution.GetProject(projectId).CompilationOptions;
                     compilationOptions = compilationOptions.WithSpecificDiagnosticOptions(
                         compilationOptions.SpecificDiagnosticOptions.SetItems(CSharpVerifierHelper.NullableWarnings));

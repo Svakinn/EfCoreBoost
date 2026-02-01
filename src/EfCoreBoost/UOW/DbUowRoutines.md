@@ -144,11 +144,7 @@ routine: "GetMaxIdByChanger"
 - Routine name is unchanged.
 
 ```csharp 
-CREATE PROCEDURE [my].[GetMaxIdByChanger]  
-(  
-    @Changer nvarchar(50)  
-)  
-AS  
+CREATE PROCEDURE [my].[GetMaxIdByChanger](@Changer nvarchar(50)) AS  
 BEGIN  
     SET NOCOUNT ON;  
     SELECT MAX(Id) AS MaxId  
@@ -169,18 +165,16 @@ await RunRoutineLongAsync("my", "GetMaxIdByChanger",
 
 - Schema is real schema.
 - Implemented as a FUNCTION for scalar logic.
+- Function name is wrapped in double quotes.
 
 ```csharp 
-CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(changer text)  
-RETURNS bigint  
-LANGUAGE plPgSQL  
-AS $$  
+CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(Changer text) RETURNS bigint LANGUAGE plPgSQL AS $$  
 DECLARE  
     result bigint;  
 BEGIN  
     SELECT MAX("Id")  
     INTO result  
-    FROM my."MyTable" WHERE "LastChangedBy" = changer;  
+    FROM my."MyTable" WHERE "LastChangedBy" = Changer;  
     RETURN result;  
 END;  
 $$;
@@ -218,10 +212,10 @@ Implementation:
 
 ```csharp 
 DELIMITER $$
-CREATE PROCEDURE my_GetMaxIdByChanger(IN p_Changer VARCHAR(50))  
+CREATE PROCEDURE my_GetMaxIdByChanger(IN Changer VARCHAR(50))  
 BEGIN  
     SELECT MAX(Id) AS MaxId  
-    FROM my_MyTable WHERE LastChangedBy = p_Changer;  
+    FROM my_MyTable WHERE LastChangedBy = Changer;  
 END$$  
 DELIMITER ;
 ```  
@@ -246,24 +240,22 @@ END;
 ### MySQL
 ```csharp 
 DELIMITER $$  
-CREATE PROCEDURE my_GetMaxIdByChanger(IN p_Changer VARCHAR(50))  
+CREATE PROCEDURE my_GetMaxIdByChanger(IN Changer VARCHAR(50))  
 BEGIN  
     SELECT MAX(Id) AS MaxId  
-    FROM my_MyTable WHERE LastChangedBy = p_Changer;  
+    FROM my_MyTable WHERE LastChangedBy = Changer;  
 END$$  
 DELIMITER ;
 ```  
 
 ### PostgreSQL
 ```csharp 
-CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(changer text) RETURNS bigint  
-LANGUAGE plPgSQL  
-AS $$  
+CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(Changer text) RETURNS bigint LANGUAGE plPgSQL AS $$  
 DECLARE  
     result bigint;  
 BEGIN  
     SELECT MAX("Id") INTO result  
-    FROM my."MyTable" WHERE "LastChangedBy" = changer;  
+    FROM my."MyTable" WHERE "LastChangedBy" = Changer;  
     RETURN result;  
 END;  
 $$;

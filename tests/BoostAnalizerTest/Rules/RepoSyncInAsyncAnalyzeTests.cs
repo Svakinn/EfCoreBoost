@@ -1,4 +1,7 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright © 2026  Sveinn S. Erlendsson
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 
 using VerifyCS = BoostAnalyzer.Test.CSharpAnalyzerVerifier<
@@ -9,7 +12,7 @@ namespace BoostAnalyzer.Test.Rules
     [TestClass]
     public class RepoSyncInAsyncAnalyzeTests
     {
-        static readonly string[] Methods = {
+        static readonly string[] Methods = [
             "ByKeySynchronized",
             "ByKeyNoTrackSynchronized",
             "FirstNoTrackSynchronized",
@@ -25,10 +28,10 @@ namespace BoostAnalyzer.Test.Rules
             "BulkDeleteByIdsSynchronized",
             "BulkInsertSynchronized",
             "QueryWithODataSynchronized"
-        };
+        ];
 
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task SyncRepoMethod_InAsyncMethod_ProducesDiagnostic(string methodName)
         {
             var test = @"
@@ -46,8 +49,8 @@ class C {
             await VerifyCS.VerifyAnalyzerAsync(test);
         }
 
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task SyncRepoMethod_InSyncMethod_NoDiagnostic(string methodName)
         {
             var test = @"

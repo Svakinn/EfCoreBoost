@@ -13,7 +13,7 @@ namespace BoostAnalyzer.Test.Fixers
     [TestClass]
     public class UowAsyncAwaitCodeFixTests
     {
-        static readonly string[] Methods = {
+        static readonly string[] Methods = [
             "SaveChangesAsync",
             "SaveChangesAndNewAsync",
             "CommitTransactionAsync",
@@ -22,7 +22,7 @@ namespace BoostAnalyzer.Test.Fixers
             "ExecuteInTransactionAsync",
             "RollbackTransactionAsync",
             "BeginTransactionAsync"
-        };
+        ];
 
         public static System.Collections.Generic.IEnumerable<object[]> GetMethods()
         {
@@ -30,8 +30,8 @@ namespace BoostAnalyzer.Test.Fixers
                 yield return new object[] { m };
         }
 
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task AsyncDbMethod_NotAwaited_IsConverted_To_Await(string methodName)
         {
             var before = @"

@@ -164,13 +164,7 @@ public class BufferedLogPersister
     {
         if (_pending.Count == 0)
             return;
-
-        await _uow.BeginTransactionAsync();
-
         await _uow.ErrorLogs.BulkInsertAsync(_pending);
-
-        await _uow.CommitTransactionAsync();
-
         _pending.Clear();
     }
 }

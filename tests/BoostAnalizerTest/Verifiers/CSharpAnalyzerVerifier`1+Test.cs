@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
+using BoostAnalyzer.Test.Verifiers;
 
 namespace BoostAnalyzer.Test
 {

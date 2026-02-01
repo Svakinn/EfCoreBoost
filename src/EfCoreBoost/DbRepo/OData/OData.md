@@ -394,6 +394,7 @@ var result = await uow.MyTables.FilterODataAsync(
 );
 Assert.True(result.InlineCount > 0 && !result.Results.Any(x => x.LastChangedBy != "Stefan"));
 ``` 
+*Note: In the example above, `OdataTestHelper.CreateOptions` just builds the `ODataQueryOptions<T>` that the API controller would normally supply.*
 
 #### Adding security limits via `ODataPolicy`
 

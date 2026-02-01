@@ -30,8 +30,8 @@ namespace BoostAnalyzer.Test.Rules
                 yield return new object[] { m };
         }
 
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task AsyncDbMethod_NotAwaited_ProducesDiagnostic(string methodName)
         {
             var test = @"
@@ -55,8 +55,8 @@ class C
             await VerifyCS.VerifyAnalyzerAsync(test);
         }
 
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task AsyncDbMethod_Awaited_ProducesNoDiagnostic(string methodName)
         {
             var test = @"

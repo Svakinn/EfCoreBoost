@@ -5,12 +5,13 @@ This test project serves two roles:
 1. **Validation**: it verifies that EfCore.Boost behaves consistently across database providers.
 2. **Demonstration**: it shows practical, copy-pasteable examples of how to use Boost in real code.
 
-The guiding principle is simple: **same model, same Unit of Work code, different database �reality�**.
+The guiding principle is simple: **same model, same Unit of Work code, different database ´reality´**.
 
-## What�s in here
+## What´s in here
 
 ### 1) A database project, migrated to multiple providers
-The solution includes a single EF Core model (�the database project�) that is migrated and exercised on:
+
+The solution includes a single EF Core model ("the database project") that is migrated and exercised on:
 
 - PostgreSQL
 - SQL Server (incl. Azure SQL)
@@ -19,6 +20,7 @@ The solution includes a single EF Core model (�the database project�) that i
 Boost conventions and provider rules apply at runtime based on which connection/provider is active.
 
 ### 2) The same test suite runs against each provider
+
 For PostgreSQL, SQL Server, and MySQL we use **Testcontainers** to spin up ephemeral databases, apply migrations, and run the **same** smoke tests against each provider.
 
 This demonstrates the intended Boost workflow:
@@ -28,7 +30,8 @@ This demonstrates the intended Boost workflow:
 - run the same UOW + Repo operations
 - verify results and behavior consistently
 
-### 3) Smoke tests that mirror �real usage�
+### 3) Smoke tests that mirror "real usage"
+
 The smoke tests are intentionally written as a compact, end-to-end walkthrough of typical Boost usage, including:
 
 - **Unit of Work patterns** (repo access, query helpers, transaction flow)
@@ -39,14 +42,16 @@ The smoke tests are intentionally written as a compact, end-to-end walkthrough o
 In other words: if you want to understand how Boost is meant to be used, the smoke tests are the shortest path.
 
 ### 4) Ef-migrations helpers
-In the folder [TestDb/Ps/](./TestDb/Ps/) you�ll find powershell scripts that handle the model migrations for all supported providers.
+
+In the folder [TestDb/Ps/](./TestDb/Ps/) you´ll find powershell scripts that handle the model migrations for all supported providers.
 Take a look a them if you want to see examples on how to automate migrations for multiple providers.
 
 ## Usage of Testcontainers
 
-This test project uses **Testcontainers** to validate EfCore.Boost against *real database engines*, not mocks, fakes, or in-memory substitutes.
+This test project uses **Testcontainers** to validate EfCore.Boost against _real database engines_, not mocks, fakes, or in-memory substitutes.
 
 A test container is, quite literally, a database server in a box:
+
 - started on demand
 - configured programmatically
 - used for a test run
@@ -79,7 +84,7 @@ Each database flavor (PostgreSQL, SQL Server, MySQL) has:
 - the same Unit of Work and repository logic
 - the same smoke test code
 
-This structure demonstrates that Boost�s conventions allow the *same code* to run against *different database realities* without branching or provider-specific logic in the test body.
+This structure demonstrates that Boost´s conventions allow the _same code_ to run against _different database realities_ without branching or provider-specific logic in the test body.
 
 Synchronized test variants exist only to validate those execution paths. They are not intended as guidance for modern application code, where asynchronous database access should be preferred.
 
@@ -117,6 +122,5 @@ For environments where containers cannot be used (for example, Azure SQL), a dif
 ## Azure SQL note
 
 SQL Server can be tested with containers, but **Azure SQL cannot**.  
-You need a real Azure SQL database for that. Create  an emtpy database named `TestDb` in your Azure SQL server, and configure access using a managed identity or service principal.  
-See [TestAzure.md](./TestAzure.md) for more details. 
-
+You need a real Azure SQL database for that. Create an emtpy database named `TestDb` in your Azure SQL server, and configure access using a managed identity or service principal.  
+See [TestAzure.md](./TestAzure.md) for more details.

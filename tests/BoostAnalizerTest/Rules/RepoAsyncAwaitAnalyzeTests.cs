@@ -1,4 +1,6 @@
-﻿// EFB0005 tests – RepoAsyncAwaitAnalyze
+﻿// Copyright © 2026  Sveinn S. Erlendsson
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+// EFB0005 tests – RepoAsyncAwaitAnalyze
 // Async repository methods must be awaited.
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -31,8 +33,8 @@ namespace BoostAnalyzer.Test.Rules
         ];
 
         // EFB0005
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task RepoAsyncMethod_NotAwaited_InAsyncMethod_ProducesDiagnostic(string methodName)
         {
             var test = @"
@@ -63,7 +65,6 @@ class Repo<T>
 }
 
 class QueryResult<T> { }
-class QueryResult<T> { }
 class ODataQueryOptions<T> { }
 class ODataPolicy { }
 
@@ -88,8 +89,8 @@ class C
         }
 
         // EFB0005
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task RepoAsyncMethod_Awaited_InAsyncMethod_ProducesNoDiagnostic(string methodName)
         {
             var test = @"
@@ -119,7 +120,6 @@ class Repo<T>
     public Task<QueryResult<T>> QueryWithODataAsync(ODataQueryOptions<T> odata, ODataPolicy policy = null, IQueryable<T> source = null) => Task.FromResult<QueryResult<T>>(null);
 }
 
-class QueryResult<T> { }
 class QueryResult<T> { }
 class ODataQueryOptions<T> { }
 class ODataPolicy { }

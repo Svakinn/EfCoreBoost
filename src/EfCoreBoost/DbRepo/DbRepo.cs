@@ -28,7 +28,7 @@ using System.Xml;
 
 namespace EfCore.Boost;
 
-/// 
+///
 /// Enumeration to define the supported database engines.
 /// Used to adapt quoting and raw SQL execution based on provider
 public enum DatabaseType
@@ -42,7 +42,7 @@ public enum DatabaseType
     InMemory
 }
 
-/// 
+///
 /// Read-only repository interface supporting async operations and OData.
 /// This provides non-tracking queries for efficiency and safety in readonly contexts.
 public interface IReadRepo<T> where T : class
@@ -308,7 +308,7 @@ public interface IReadRepo<T> where T : class
     /// <remarks>
     /// The SQL passed to this method is executed verbatim against the underlying database provider and may not be portable across different database engines.
     /// For cross-database compatibility, prefer using mapped routines (views, functions, or procedures) exposed through the repository instead of raw SQL.
-    /// </remarks>  
+    /// </remarks>
     /// <param name="query">SQL query expected to return a single scalar value.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <param name="parameters">Provider parameters (implementation-defined).</param>
@@ -736,12 +736,12 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
     }
 
     #endregion
-    
+
     #region scalar readers
     public Task<bool?> GetBoolScalarAsync(string query, params object[] parameters) => GetBoolScalarAsync(query, CancellationToken.None, parameters);
     public async Task<bool?> GetBoolScalarAsync(string query, CancellationToken ct, params object[] parameters)
     {
-        using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+        using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = await oc.Cmd.ExecuteScalarAsync(ct);
@@ -752,7 +752,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     public bool? GetBoolScalarSynchronized(string query, params object[] parameters)
     {
-        using var oc = CmdHelper.Open(Ctx);
+        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = oc.Cmd.ExecuteScalar();
@@ -764,7 +764,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     public async Task<long?> GetLongScalarAsync(string query, CancellationToken ct, params object[] parameters)
     {
-        using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+        using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = await oc.Cmd.ExecuteScalarAsync(ct);
@@ -774,7 +774,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     public long? GetLongScalarSynchronized(string query, params object[] parameters)
     {
-        using var oc = CmdHelper.Open(Ctx);
+        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = oc.Cmd.ExecuteScalar();
@@ -785,7 +785,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
     public Task<decimal?> GetDecimalScalarAsync(string query, params object[] parameters) => GetDecimalScalarAsync(query, CancellationToken.None, parameters);
     public async Task<decimal?> GetDecimalScalarAsync(string query, CancellationToken ct, params object[] parameters)
     {
-        using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+        using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = await oc.Cmd.ExecuteScalarAsync(ct);
@@ -795,7 +795,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     public decimal? GetDecimalScalarSynchronized(string query, params object[] parameters)
     {
-        using var oc = CmdHelper.Open(Ctx);
+        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters) ;
         var result = oc.Cmd.ExecuteScalar();
@@ -806,7 +806,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
     public Task<string?> GetStringScalarAsync(string query, params object[] parameters) => GetStringScalarAsync(query, CancellationToken.None, parameters);
     public async Task<string?> GetStringScalarAsync(string query, CancellationToken ct, params object[] parameters)
     {
-        using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+        using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
         oc.Cmd.CommandText = query;
         AddParameters(oc.Cmd, parameters);
         var result = await oc.Cmd.ExecuteScalarAsync(ct);
@@ -816,7 +816,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     public string? GetStringScalarSynchronized(string query, params object[] parameters)
     {
-        using var oc = CmdHelper.Open(Ctx);
+        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = oc.Cmd.ExecuteScalar();
@@ -944,7 +944,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     }
 
     /// <summary>
-    /// Spead up bulk-delete by delaying Tracking checks 
+    /// Spead up bulk-delete by delaying Tracking checks
     /// </summary>
     /// <param name="entities"></param>
     public void DeleteManyBrute(IEnumerable<T> entities)
@@ -997,7 +997,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     /// <param name="ct">Optional token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous bulk delete operation.</returns>
     public async Task BulkDeleteByIdsAsync(IEnumerable<long> ids, CancellationToken ct = default)
-    {     
+    {
         var ambient = Ctx.Database.CurrentTransaction?.GetDbTransaction();
         if (ambient != null)
         {
@@ -1017,9 +1017,9 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             }
             catch(Exception)
             {
-                try { 
-                    await efTx.RollbackAsync(ct); 
-                } 
+                try {
+                    await efTx.RollbackAsync(ct);
+                }
                 catch { }
                 throw;
             }
@@ -1065,7 +1065,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var fullTableName = this.CalcSqlTableName();
         var (pkColumnName, keyClrType) = this.FindTabPrimIdCol();
         var quotedIdColumn = Quote(pkColumnName);
-        using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+        using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
         oc.Cmd.Transaction = trans;
         const int batchSize = 1000;
         for (int i = 0; i < idArray.Length; i += batchSize)
@@ -1102,7 +1102,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var fullTableName = this.CalcSqlTableName();
         var (pkColumnName, keyClrType) = this.FindTabPrimIdCol();
         var quotedIdColumn = Quote(pkColumnName);
-        using var oc = CmdHelper.Open(Ctx);
+        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
         oc.Cmd.Transaction = trans;
         const int batchSize = 1000;
         for (int i = 0; i < idArray.Length; i += batchSize)
@@ -1248,8 +1248,8 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             }
             catch
             {
-                try { 
-                    await efTx.RollbackAsync(ct); 
+                try {
+                    await efTx.RollbackAsync(ct);
                 }
                 catch { }
                 throw;
@@ -1367,7 +1367,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     /// <param name="includeIdentityValues"></param>
     /// <param name="ct"></param>
     /// <returns></returns>
-    /// 
+    ///
     protected async Task MSBulkInsertAsync(List<T> items, DbTransaction trans, bool includeIdentityValues = false, CancellationToken ct = default)
     {
         if (DbType != DatabaseType.SqlServer)
@@ -1382,7 +1382,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         if (includeIdentityValues) opts |= SqlBulkCopyOptions.KeepIdentity;
         //NOTE: ms-table locking is only beneficial to large data inserts
         //In multi threaded env where lots of inserts take place, locking can be counter productive
-        //Thus we set the lock limit to 5000 records.  
+        //Thus we set the lock limit to 5000 records.
         if (items.Count >= 5000) opts |= SqlBulkCopyOptions.TableLock;
         SqlCommand? cmd = null;
         if (includeIdentityValues)
@@ -1746,7 +1746,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     }
 
     /// <summary>
-    /// Marks the entire entity as Modified so every mapped column is updated on SaveChanges. 
+    /// Marks the entire entity as Modified so every mapped column is updated on SaveChanges.
     /// Walks nav-graph, marks everything Modified, may trigger wide updates
     /// </summary>
     public void UpdateAllCols(T entities) => DbSet.Update(entities);

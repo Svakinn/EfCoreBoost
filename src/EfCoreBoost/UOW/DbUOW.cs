@@ -45,7 +45,7 @@ namespace EfCore.Boost.UOW
         string Metadata();
 
         /// <summary>
-        /// Gets the Entity Data Model (EDM) associated with the dataset. Also used by OData endpoints. 
+        /// Gets the Entity Data Model (EDM) associated with the dataset. Also used by OData endpoints.
         /// </summary>
         /// <returns>An <see cref="IEdmModel"/> instance representing the EDM for the current context.</returns>
         IEdmModel GetModel();
@@ -76,7 +76,7 @@ namespace EfCore.Boost.UOW
 
         /// <summary>
         /// Saves all pending changes to the data store and creates a new entity instance for further
-        /// editing. This is useful when performing large inserts/updates in batches to reduce change-tracker overhead. 
+        /// editing. This is useful when performing large inserts/updates in batches to reduce change-tracker overhead.
         /// </summary>
         /// <param name="ct">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns></returns>
@@ -522,7 +522,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.NonQuery, parameters);
-            using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -532,7 +532,7 @@ namespace EfCore.Boost.UOW
         //See interface for documentation
         public async Task<int> ExecuteNonQueryAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
-            using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = sql;
             oc.Cmd.CommandType = CommandType.Text;
             ToDbParms(parameters, oc.Cmd);
@@ -545,7 +545,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.NonQuery, parameters);
-            using var oc = CmdHelper.Open(Ctx);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -555,7 +555,7 @@ namespace EfCore.Boost.UOW
         //See interface for documentation
         public int ExecuteNonQuerySynchronized(string sql, List<DbParmInfo>? parameters = null)
         {
-            using var oc = CmdHelper.Open(Ctx);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
             oc.Cmd.CommandText = sql;
             oc.Cmd.CommandType = CommandType.Text;
             ToDbParms(parameters, oc.Cmd);
@@ -575,7 +575,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -595,10 +595,10 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = CmdHelper.Open(Ctx);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);            
+            ToDbParms(parameters, oc.Cmd);
             var result = oc.Cmd.ExecuteScalar();
             return result != null && result != DBNull.Value ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : null;
         }
@@ -616,7 +616,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -636,7 +636,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = CmdHelper.Open(Ctx);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -657,7 +657,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -677,7 +677,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = CmdHelper.Open(Ctx);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -698,7 +698,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -724,7 +724,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = CmdHelper.Open(Ctx);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -751,7 +751,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -777,7 +777,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = CmdHelper.Open(Ctx);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -804,7 +804,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -830,7 +830,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = CmdHelper.Open(Ctx);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -884,7 +884,7 @@ namespace EfCore.Boost.UOW
         /// <returns></returns>
         public async Task<long?> GetLongScalarAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
-            using var oc = await CmdHelper.OpenAsync(Ctx, ct);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = sql;
             oc.Cmd.CommandType = CommandType.Text;
             ToDbParms(parameters, oc.Cmd);
@@ -900,7 +900,7 @@ namespace EfCore.Boost.UOW
         /// <returns></returns>
         public long? GetLongScalarSynchronized(string sql, List<DbParmInfo>? parameters = null)
         {
-            using var oc = CmdHelper.Open(Ctx);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
             oc.Cmd.CommandText = sql;
             oc.Cmd.CommandType = CommandType.Text;
             ToDbParms(parameters, oc.Cmd);
@@ -944,7 +944,7 @@ namespace EfCore.Boost.UOW
                         if (dt.Kind == DateTimeKind.Utc)
                             prop.CurrentValue = DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
                     }
-                    else 
+                    else
                     if (prop.Metadata.ClrType == typeof(DateTime?) && prop.CurrentValue is DateTime dtN)
                     {
                         if (dtN.Kind == DateTimeKind.Utc)
@@ -979,12 +979,12 @@ namespace EfCore.Boost.UOW
         }
 
         //See interface for documentation
-        public IQueryable<T> SetUpRoutineQuery<T>(string schema, string routineName, List<DbParmInfo>? parameters = null) where T : class 
+        public IQueryable<T> SetUpRoutineQuery<T>(string schema, string routineName, List<DbParmInfo>? parameters = null) where T : class
         {
-            parameters ??= []; 
-            var conv = new RoutineConvention(DbType); 
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            var cmd = Ctx.Database.GetDbConnection().CreateCommand();
+            var cmd = Ctx.Database.GetDbConnection().CreateCommand(); //NoTE: only used for parameter handling so transaction binding the command or open connection is not needed
             var dbParams = parameters
                 .Select(p =>
                 {
@@ -994,7 +994,7 @@ namespace EfCore.Boost.UOW
                     return pa;
                 })
                 .ToArray();
-            return Ctx.Set<T>().FromSqlRaw(call.Text, dbParams); 
+            return Ctx.Set<T>().FromSqlRaw(call.Text, dbParams).AsNoTracking();
         }
 
         #endregion

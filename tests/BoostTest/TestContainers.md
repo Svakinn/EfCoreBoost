@@ -14,7 +14,7 @@ That gives us integration tests that are repeatable and provider-authentic, with
 
 All container orchestration lives in `BoostTestContainers` (often referred to as `UnitTestContainers.cs` in discussion).
 
-There is one “prepare” method per database flavor:
+There is one Â´prepareÂ´ method per database flavor:
 
 - `PreparePgSqlContainer()`
 - `PrepareMsSqlContainer()`
@@ -46,8 +46,8 @@ Every provider follows the same overall ritual:
    - **admin/create** connection (for creating the test DB or running bootstrap SQL)
    - **app/test** connection (pointing at the actual `TestDb`)
 3. Build an `IConfiguration` by overlaying in-memory connection overrides on top of `AppSettings.json`
-4. Create a UOW for “create/admin”, run the create-db script
-5. Create a UOW for “normal/app”, run the provider migration script
+4. Create a UOW for Â´create/adminÂ´, run the create-db script
+5. Create a UOW for Â´normal/appÂ´, run the provider migration script
 6. Return `(container, uow)`
 
 The details differ slightly per engine, but the structure is the same.
@@ -71,32 +71,23 @@ static async Task<(PostgreSqlContainer Container, UOWTestDb Uow)> PreparePgSqlCo
         .Build();
 
     await pg.StartAsync();
-
     var adminCs = pg.GetConnectionString();
     var adminBuilder = new Npgsql.NpgsqlConnectionStringBuilder(adminCs) { Database = dbName };
     var dbCs = adminBuilder.ToString();
-
     var overrides = new Dictionary<string, string?>
     {
-        ["DefaultAppConnName"] = connName,
-
-        // create/admin
-        [$"DBConnections:{connNameCreate}:ConnectionString"] = adminCs,
-        [$"DBConnections:{connNameCreate}:Provider"] = "PostgreSql",
-
-        // normal/app
-        [$"DBConnections:{connName}:ConnectionString"] = dbCs,
+        ["DefaultAppConnName"] = connName,        
+        [$"DBConnections:{connNameCreate}:ConnectionString"] = adminCs, // create/admin
+        [$"DBConnections:{connNameCreate}:Provider"] = "PostgreSql",        
+        [$"DBConnections:{connName}:ConnectionString"] = dbCs, // normal/app// normal/app
         [$"DBConnections:{connName}:Provider"] = "PostgreSql"
     };
-
     var cfg = BuildConfig(overrides);
-
     var uowCreate = CreateUow(cfg, connNameCreate);
     await uowCreate.ExecSqlScriptAsync(await ReadSql("PgSqlCreateDb.pgsql"), false);
 
     var uow = CreateUow(cfg, connName);
     await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_PgSql.pgsql"), false);
-
     return (pg, uow);
 }
 ```

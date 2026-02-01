@@ -1,4 +1,6 @@
-﻿// EFB0006 CodeFix tests – RepoSyncInAsyncCodeFixProvider
+﻿// Copyright © 2026  Sveinn S. Erlendsson
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+// EFB0006 CodeFix tests – RepoSyncInAsyncCodeFixProvider
 // Synchronous repo methods in async methods should be replaced with async+await.
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -38,8 +40,8 @@ namespace BoostAnalyzer.Test.Fixers
         }
 
         // EFB0006
-        [DataTestMethod]
-        [DynamicData(nameof(GetMethods), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(GetMethods))]
         public async Task SyncRepoMethod_InAsyncMethod_IsConverted_To_AsyncAwait(string syncName)
         {
             var asyncName = syncName.Replace("Synchronized", "Async");

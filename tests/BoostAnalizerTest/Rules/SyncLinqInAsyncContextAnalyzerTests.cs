@@ -1,7 +1,6 @@
 ﻿// Copyright © 2026  Sveinn S. Erlendsson
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using Microsoft;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 
