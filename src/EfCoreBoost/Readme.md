@@ -1,4 +1,5 @@
-# EfCore.Boost
+
+# EfCore.Boost <img src="https://github.com/Svakinn/EfCoreBoost/blob/main/src/EfCoreBoost/icon.png" width="32" height="32" />
 
 A disciplined **Unit of Work + Repository + Routine + Model Building**
 layer for Entity Framework Core that makes database access
