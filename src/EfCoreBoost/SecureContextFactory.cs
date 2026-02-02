@@ -29,16 +29,16 @@ namespace EfCore.Boost
     public static class SecureContextFactory
     {
         public static T CreateDbContext<T>(IConfiguration configuration, string configName = "", IEnumerable<IInterceptor>? interceptors = null) where T : DbContext
-        { 
+        {
             if (string.IsNullOrWhiteSpace(configName))
             {
-                var dbConnName = configuration.GetValue<string>("DefaultAppConnName");
+                var dbConnName = configuration["DefaultAppConnName"];
                 if (string.IsNullOrWhiteSpace(dbConnName))
                     throw new Exception("DefaultAppConnName missing or no value in config file !");
                 configName = dbConnName;
             }
             var dbCfg = DbConnectionCFG.Get(configuration, configName);
-            if (dbCfg == null || string.IsNullOrWhiteSpace(dbCfg.ConnectionString)) 
+            if (dbCfg == null || string.IsNullOrWhiteSpace(dbCfg.ConnectionString))
                 throw new Exception("DbConfig for " + configName + " is missing !");
             return CreateDbContext<T>(
                 dbCfg.ConnectionString,
@@ -80,7 +80,7 @@ namespace EfCore.Boost
            string? provider = null,
            IEnumerable<IInterceptor>? interceptors = null, //optional interceptors pased to DbContextOptionsBuilder
            int retryCount = 5,             // intended for azure only
-           int maxRetryDelaySeconds = 30,  // intended for azure only        
+           int maxRetryDelaySeconds = 30,  // intended for azure only
            int? commandTimeoutSeconds = 60 //Set null to skip.
 
         )
@@ -131,14 +131,14 @@ namespace EfCore.Boost
                                 errorNumbersToAdd: null // use built-in transient list
                             );
                         }
-                    }); 
+                    });
                     break;
                 case "postgresql":
                     optionsBuilder.UseNpgsql(connectionString); //.
-                        //EnableSensitiveDataLogging().LogTo(Console.WriteLine, LogLevel.Debug); //For debugging only 
+                        //EnableSensitiveDataLogging().LogTo(Console.WriteLine, LogLevel.Debug); //For debugging only
                     break;
                 case "mysql": //version 8.0 is bare minimum for Pomelo, lesser versions require different migration output
-                    optionsBuilder.UseMySql(connectionString, ServerVersion.Create(8, 0, 0, ServerType.MySql)); 
+                    optionsBuilder.UseMySql(connectionString, ServerVersion.Create(8, 0, 0, ServerType.MySql));
                     break;
                 default:
                     throw new Exception($"Unknown or unsupported provider: {prov}");
@@ -149,7 +149,7 @@ namespace EfCore.Boost
         }
 
         public static string NormalizeProvider(string? raw)
-        { 
+        {
             raw = raw ?? string.Empty;
             return raw?.Trim().ToLowerInvariant() switch
             {
@@ -160,6 +160,5 @@ namespace EfCore.Boost
             };
         }
     }
-
 
 }
