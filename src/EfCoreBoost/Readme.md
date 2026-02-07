@@ -6,7 +6,7 @@ layer for Entity Framework Core that makes database access
 **structured**, **portable**, and **predictable** across **SQL Server**,
 **PostgreSQL**, and **MySQL**.
 
-EfCore.Boost does **not** replace Entity Framework Core.\
+EfCore.Boost does **not** replace Entity Framework Core.
 EF Core remains your ORM.
 
 EfCore.Boost strengthens how EF Core is used in real-world, long-lived
@@ -21,12 +21,12 @@ EfCore.Boost is an architectural extension layer on top of EF Core.
 It introduces a consistent and disciplined data-access model that helps
 teams:
 
--   enforce clear boundaries around database access\
--   keep behavior predictable across database providers\
--   treat views and routines as first-class citizens\
--   support high-performance bulk ingestion\
--   expose safe and powerful OData queries\
--   maintain long-term portability
+-   Enforce clear boundaries around database access
+-   Keep behavior predictable across database providers
+-   Treat views and routines as first-class citizens
+-   Support high-performance bulk ingestion
+-   Expose safe and powerful OData queries
+-   Maintain long-term portability
 
 It is designed for systems that must grow without turning data-access
 into chaos.
@@ -35,9 +35,9 @@ into chaos.
 
 ## What EfCore.Boost Is Not
 
--   Not a replacement ORM\
--   Not a code generator\
--   Not a micro-ORM\
+-   Not a replacement ORM
+-   Not a code generator
+-   Not a micro-ORM
 -   Not a "magic performance switch"
 
 EfCore.Boost is about **architecture, discipline, and consistency**.
@@ -46,17 +46,17 @@ EfCore.Boost is about **architecture, discipline, and consistency**.
 
 ## Architectural Model (at a glance)
 
-Application\
-→ Unit of Work (UOW)\
-→ Repositories & Routines\
-→ EF Core\
+Application
+→ Unit of Work (UOW)
+→ Repositories & Routines
+→ EF Core
 → Database
 
 Key ideas:
 
--   Applications talk to UOW, not DbContext\
--   Repositories expose tables and views\
--   Routines expose procedures and functions\
+-   Applications talk to UOW, not DbContext
+-   Repositories expose tables and views
+-   Routines expose procedures and functions
 -   Provider differences are absorbed by conventions
 
 This creates a stable and testable data-access boundary.
@@ -67,15 +67,15 @@ This creates a stable and testable data-access boundary.
 
 As systems grow, direct DbContext usage tends to spread everywhere:
 
--   inconsistent patterns\
--   duplicated logic\
--   provider-specific hacks\
--   fragile migrations\
--   unclear transaction boundaries
+-   Inconsistent patterns
+-   Duplicated logic
+-   Provider-specific hacks
+-   Fragile migrations
+-   Unclear transaction boundaries
 
 EfCore.Boost centralizes these concerns into a single, coherent layer.
 
-You model **intent** in C#.\
+You model **intent** in C#.
 EfCore.Boost applies **provider-correct behavior**.
 
 ------------------------------------------------------------------------
@@ -91,16 +91,17 @@ once and let EfCore.Boost apply provider-specific behavior.
 ``` csharp
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
+    base.OnModelCreating(modelBuilder);
     modelBuilder.ApplyEfBoostConventions(this, "log");
 }
 ```
 
 From that point:
 
--   naming and quoting are normalized\
--   identity/sequence behavior is handled\
--   string and datetime quirks are corrected\
--   routines and views follow a consistent pattern
+-   Naming and quoting are normalized
+-   Identity/sequence behavior is handled
+-   String and datetime quirks are corrected
+-   Routines and views follow a consistent pattern
 
 The model remains portable.
 

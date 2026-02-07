@@ -281,4 +281,6 @@ MIT.
 
 ## 🧭 Status
 Actively developed.  
-Oracle support planned soon.
+Project and solution templates coming soon.  
+Documentation and examples expanding continuously.
+Oracle provider support under consideration.  
