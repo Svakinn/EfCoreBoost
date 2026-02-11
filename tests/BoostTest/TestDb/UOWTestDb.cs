@@ -12,7 +12,7 @@ using static BoostTest.TestDb.DbTest;
 
 namespace BoostTest.TestDb
 {
-    public partial class UOWTestDb(IConfiguration cfg, string cfgName) : DbUow<DbTest>(() => SecureContextFactory.CreateDbContext<DbTest>(cfg, cfgName))
+    public partial class UOWTestDb(IConfiguration cfg, string cfgName) : UowFactory<DbTest>(cfg, cfgName)
     {
 
         #region tabular data
@@ -48,7 +48,7 @@ namespace BoostTest.TestDb
         }
 
         /// <summary>
-        /// Scalar routine example.   
+        /// Scalar routine example.
         /// </summary>
         /// <param name="myId"></param>
         /// <returns></returns>

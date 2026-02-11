@@ -257,7 +257,12 @@ EfCore.Boost is for systems that require things like:
 - long-term maintainability  
 
 EF Core remains the ORM.  
-EfCore.Boost helps turn it into a **robust, scalable, and well-structured data layer**.
+EfCore.Boost helps turn it into a **robust, scalable, and well-structured data layer**.  
+EfCore.Boost is ultimately about comfort and predictability.
+
+By guiding entity access through clear entry points, everyday operations stop feeling improvised. Transaction boundaries are explicit, bulk operations integrate naturally, and common patterns remain consistent across the codebase.
+
+Model construction becomes more direct as well. Intent is expressed on the model itself through focused attributes, reducing reliance on large and fragile fluent configuration blocks. The result is a model that is easier to read, easier to reason about, and easier to maintain over time.
 
 ---
 
@@ -282,5 +287,5 @@ MIT.
 ## 🧭 Status
 Actively developed.  
 Project and solution templates coming soon.  
-Documentation and examples expanding continuously.
+Documentation and examples expanding continuously.  
 Oracle provider support under consideration.  

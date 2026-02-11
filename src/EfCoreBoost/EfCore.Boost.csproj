@@ -9,7 +9,7 @@
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <Authors>Sveinn S. Erlendsson</Authors>
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
@@ -18,8 +18,8 @@
 EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core, plus utilities for routines, bulk operations, and OData suport.
 Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.
 	</Description>
-    <PackageReleaseNotes>First public preview with UOW/Repo helpers and initial analyzer integration.</PackageReleaseNotes>
-    <PackageTags>efcore;ef-core;repository;uow;database;efboost;cross-database</PackageTags>
+    <PackageReleaseNotes>Simplified creation of the Unit of Work</PackageReleaseNotes>
+    <PackageTags>efcore;ef-core;repository;uow;database;efboost;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-famework;dotnet;ef-core-migrations</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
 	  <PackageIcon>icon.png</PackageIcon>
 	  <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -37,13 +37,13 @@ Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, M
 	  <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.21" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.21">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.24" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.24">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.21" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.21" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.24" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.24" />
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
     <PackageReference Include="Microsoft.OData.Core" Version="8.4.2" />
     <PackageReference Include="Microsoft.OData.Edm" Version="8.4.2" />

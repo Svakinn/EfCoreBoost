@@ -129,12 +129,7 @@ Specifying a connection name here would lock the factory to a single provider an
 Each Unit of Work explicitly defines how its DbContext is created.
 
 ```csharp
-public partial class UOWTestDb(
-    IConfiguration cfg,
-    string cfgName
-) : DbUow<DbTest>(
-    () => SecureContextFactory.CreateDbContext<DbTest>(cfg, cfgName)
-);
+public partial class UOWTestDb(IConfiguration cfg, string cfgName) UowFactory<DbTest>(cfg, cfgName) {..
 ```
 
 ### Usage Examples

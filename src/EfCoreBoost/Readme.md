@@ -1,16 +1,20 @@
 
 # EfCore.Boost 
 
-A disciplined **Unit of Work + Repository + Routine + Model Building**
-layer for Entity Framework Core that makes database access
-**structured**, **portable**, and **predictable** across **SQL Server**,
-**PostgreSQL**, and **MySQL**.
+A disciplined **Unit of Work + Repository + Routine + Model Building** layer for Entity Framework Core that makes database access **structured**, **portable**, and **powerful** across **SQL Server**, **PostgreSQL**, and **MySQL**.
 
-EfCore.Boost does **not** replace Entity Framework Core.
-EF Core remains your ORM.
+EfCore.Boost isn’t here to replace EF Core. It is designed for systems that require any of the following:
 
-EfCore.Boost strengthens how EF Core is used in real-world, long-lived
-systems.
+- structured database access boundaries  
+- predictable behavior across SQL Server, PostgreSQL, and MySQL  
+- safe and powerful OData  
+- high-performance bulk ingestion  
+- first-class handling of views and routines  
+- consistent transactional semantics  
+- architecture that remains maintainable as systems grow  
+
+EF Core remains the ORM.  
+EfBoost strengthens how EF is used in real applications.
 
 ------------------------------------------------------------------------
 
@@ -18,29 +22,26 @@ systems.
 
 EfCore.Boost is an architectural extension layer on top of EF Core.
 
-It introduces a consistent and disciplined data-access model that helps
-teams:
+It simplifies model building and cross-platform conventions, and introduces a disciplined Unit-of-Work model for accessing tables, views, and stored procedures or functions.
 
--   Enforce clear boundaries around database access
--   Keep behavior predictable across database providers
--   Treat views and routines as first-class citizens
--   Support high-performance bulk ingestion
--   Expose safe and powerful OData queries
--   Maintain long-term portability
+EfCore.Boost is designed for systems that must grow without turning data access into chaos.
 
-It is designed for systems that must grow without turning data-access
-into chaos.
+It is about **architecture, discipline, and consistency**.
 
 ------------------------------------------------------------------------
 
-## What EfCore.Boost Is Not
+## Additional Capabilities
 
--   Not a replacement ORM
--   Not a code generator
--   Not a micro-ORM
--   Not a "magic performance switch"
+In addition to its core architectural model, EfCore.Boost provides several focused tools commonly needed in production systems:
 
-EfCore.Boost is about **architecture, discipline, and consistency**.
+- **Strong and natural OData support**  
+  Expressive, safe query composition that integrates cleanly with EF Core while remaining provider-correct.
+
+- **Simple, Azure-safe transaction model**  
+  Explicit transactional boundaries designed to behave correctly under retries and transient failures.
+
+- **Simple and powerful bulk inserts**  
+  High-throughput ingestion helpers that operate within the same Unit-of-Work and transaction model.
 
 ------------------------------------------------------------------------
 
@@ -76,7 +77,8 @@ As systems grow, direct DbContext usage tends to spread everywhere:
 EfCore.Boost centralizes these concerns into a single, coherent layer.
 
 You model **intent** in C#.
-EfCore.Boost applies **provider-correct behavior**.
+EfCore.Boost applies **provider-correct behavior**.  
+The idea is to simplify everyday creation and handling of database models.
 
 ------------------------------------------------------------------------
 

@@ -81,7 +81,7 @@ Concrete UOWs declare how to securely create their DbContext using a provided se
 Example:
 
 ```csharp
-public partial class UOWTestDb(IConfiguration cfg, string cfgName) : DbUow<DbTest>(() => SecureContextFactory.CreateDbContext<DbTest>(cfg, cfgName))
+public partial class UOWTestDb(IConfiguration cfg, string cfgName) : UowFactory<DbTest>(cfg, cfgName)
 {
 }
 ```
@@ -279,7 +279,7 @@ See: [Configs.md](../CFG/Configs.md)
 ### Definition
 
 ```csharp
-public partial class UOWLogs(IConfiguration cfg) : DbUow<DbLogs>(() => SecureContextFactory.CreateDbContext<DbLogs>(cfg, "Logs"))
+public partial class UOWLogs(IConfiguration cfg) : UowFactory<DbLogs>(cfg, "Logs") 
 {
     public IAsyncRepo<LoginLog> LoginLogs => new EfRepo<LoginLog>(Ctx!, DbType);
     public IAsyncRepo<SessionLog> SessionLogs => new EfRepo<SessionLog>(Ctx!, DbType);
