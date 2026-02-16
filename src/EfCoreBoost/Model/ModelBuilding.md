@@ -315,7 +315,7 @@ Deployment builds it physically.
 
 EfBoost supports disciplined cross‑database migration strategies. These are documented separately in:
 
-📄 [EfMigrationsCmd.md](./EfMigrationsCmd.md)
+📄 [EfMigrationsCMD.md](./EfMigrationsCMD.md)
 
 That document covers:
 

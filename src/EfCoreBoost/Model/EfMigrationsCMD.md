@@ -327,7 +327,7 @@ foreach ($m in $migrations) {
         break
     }
 }
-#Merge the migration with our custom sql into one deployment script
+# Merge the migration with our custom SQL into one deployment script
 # Resolve to full paths relative to DbAppBase
 $existingFiles = @()
 foreach ($relPath in $filesInOrder) {

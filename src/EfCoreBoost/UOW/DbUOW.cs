@@ -36,13 +36,19 @@ namespace EfCore.Boost.UOW
     /// Not concurrency-safe: do not use the same UOW instance from multiple concurrent operations.
     /// Create a new UOW per scope (request/job) and dispose it when done.
     /// </summary>
-    public interface IDbUow : IDisposable
+    public interface IDbReadUow : IDisposable
     {
         /// <summary>
         /// Rerturns the EDMX metadata XML representation of the model. Used by OData endpoints.
         /// </summary>
         /// <returns></returns>
         string Metadata();
+
+        /// <summary>
+        /// Override default command timeout (in seconds)
+        /// </summary>
+        /// <param name="seconds">New command time limit in seconds</param>
+        void SetCommandTimeout(int seconds);
 
         /// <summary>
         /// Gets the Entity Data Model (EDM) associated with the dataset. Also used by OData endpoints.
@@ -55,38 +61,6 @@ namespace EfCore.Boost.UOW
         /// This is currently any of MySql, PostgreSql, SqlServer
         /// </summary>
         DatabaseType DbType { get; }
-
-        /// <summary>
-        /// Returns the underlying EF DbContext instance for advanced scenarios where you need direct access.
-        /// </summary>
-        /// <returns>The EF´s DBContext</returns>
-        DbContext GetDbContext();
-
-        /// <summary>
-        /// Saves pending changes to the database. Applies internal normalization/truncation rules before saving.
-        /// </summary>
-        /// <param name="ct">A cancellation token that can be used to cancel the asynchronous operation.</param>
-        /// <returns></returns>
-        Task SaveChangesAsync(CancellationToken ct = default);
-
-        /// <summary>
-        /// Syncronized version of SaveChangesAsync
-        /// </summary>
-        void SaveChangesSynchronized();
-
-        /// <summary>
-        /// Saves all pending changes to the data store and creates a new entity instance for further
-        /// editing. This is useful when performing large inserts/updates in batches to reduce change-tracker overhead.
-        /// </summary>
-        /// <param name="ct">A cancellation token that can be used to cancel the asynchronous operation.</param>
-        /// <returns></returns>
-        Task SaveChangesAndNewAsync(CancellationToken ct = default);
-
-        /// <summary>
-        /// Syncronized version of SaveChangesAndNewAsync
-        /// </summary>
-        void SaveChangesAndNewSynchronized();
-
 
 #pragma warning disable CS1570 // XML comment has badly formed XML
         /// <summary>
@@ -167,92 +141,213 @@ namespace EfCore.Boost.UOW
         /// <param name="ct">Cancellation token.</param>
         Task RunInTransactionAsync(Func<CancellationToken, Task> work, System.Data.IsolationLevel iso = System.Data.IsolationLevel.ReadCommitted, CancellationToken ct = default);
 
-
         /// <summary>
         /// Syncronized version of RunInTransactionAsync
         /// </summary>
         /// <param name="work"></param>
         /// <param name="iso"></param>
         void RunInTransactionSynchronized(Action work, IsolationLevel iso = IsolationLevel.ReadCommitted);
+
+        /// <summary>
+        /// Executes a scalar database routine and returns the result as a nullable 64-bit integer.
+        /// </summary>
+        /// <param name="schema">The name of the database schema that contains the routine to execute.</param>
+        /// <param name="routineName">The name of the routine to execute. (Case sensitive)</param>
+        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>The scalar value from the routine</returns>
+        Task<long?> RunRoutineLongAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Syncronized version of RunRoutineLongAsync
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        long? RunRoutineLongSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
+
+        /// <summary>
+        /// Executes a scalar database routine and returns the result as a nullable 32-bit integer.
+        /// </summary>
+        /// <param name="schema">Schema name</param>
+        /// <param name="routineName">Routine name (Case sensitive)</param>
+        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
+        /// <param name="ct">Cancelation token</param>
+        /// <returns></returns>
+        Task<int?> RunRoutineIntAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Syncronized version of RunRoutineStringAsync
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        string? RunRoutineStringSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
+
+        /// <summary>
+        /// Executes a scalar database routine and returns the result as a nullable string
+        /// </summary>
+        /// <param name="schema">Schema name</param>
+        /// <param name="routineName">Routine name (Case sensitive)</param>
+        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
+        /// <param name="ct">Cancelation token</param>
+        /// <returns></returns>
+        Task<string?> RunRoutineStringAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Executes a scalar database routine pre-made for returning a list of 64-bit integers.
+        /// </summary>
+        /// <param name="schema">Schema name</param>
+        /// <param name="routineName">Routine name (Case sensitive)</param>
+        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
+        /// <param name="ct">Cancelation token</param>
+        /// <returns></returns>
+        Task<List<long>> RunRoutineLongListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Syncronized version of RunRoutineLongListAsync
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        List<long> RunRoutineLongListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
+
+        /// <summary>
+        /// Executes a scalar database routine pre-made for returning a list of 32-bit integers.
+        /// </summary>
+        /// <param name="schema">Schema name</param>
+        /// <param name="routineName">Routine name (Case sensitive)</param>
+        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
+        /// <param name="ct">Cancelation token</param>
+        /// <returns></returns>
+        Task<List<int>> RunRoutineIntListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Syncronized version of RunRoutineIntListAsync
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        List<int> RunRoutineIntListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
+
+        /// <summary>
+        /// Executes a scalar database routine pre-made for returning a list of strings.
+        /// </summary>
+        /// <param name="schema">Schema name</param>
+        /// <param name="routineName">Routine name (Case sensitive)</param>
+        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
+        /// <param name="ct">Cancelation token</param>
+        /// <returns></returns>
+        Task<List<string>> RunRoutineStringListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Syncronized version of RunRoutineStringListAsync
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        List<string> RunRoutineStringListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
+
+        /// <summary>
+        /// Raw sql runner, returning scalar long value
+        /// </summary>
+        /// <remarks>
+        /// Raw sql is not cross-db compatible and should be avoided.
+        /// Proper way would be to set up routine and call that one instead.
+        /// </remarks>
+        /// <param name="sql">Raw SQL to execute</param>
+        /// <param name="parameters">An optional list of parameters to pass to the routine. If null, no parameters are used.</param>
+        /// <param name="ct">Cancelation token</param>
+        /// <returns></returns>
+        Task<long?> GetLongScalarAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Syncronized version of GetLongScalarAsync
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        long? GetLongScalarSynchronized(string sql, List<DbParmInfo>? parameters = null);
     }
 
-    /// <summary>
-    /// Base unit of work class to be extended by inherited classes, doing the actual db work
-    /// </summary>
-    public abstract class DbUow<TCtx> : IDbUow where TCtx : DbContext
-    {
-        protected readonly Func<TCtx> CtxFactory;
-        protected TCtx Ctx;
-        public DatabaseType DbType { get; protected set; }
-        protected bool _disposed;
-        //EDM model caching
-        protected static IEdmModel? _cachedEdmModel;
-        protected static readonly object _edmLock = new();
-        //Transaction support
-        protected IDbContextTransaction? _currentTx;
-        protected readonly SemaphoreSlim _sync = new(1, 1);
-
-        protected DbUow(Func<TCtx> ctxFactory)
-        {
-            CtxFactory = ctxFactory;
-            Ctx = CtxFactory();
-            DbType = DetectDbType(Ctx);
-        }
-
-        ///See interface for documentation
-        public DbContext GetDbContext() => Ctx;
-
-        protected void RecreateContext()
-        {
-            Ctx.Dispose();
-            Ctx = CtxFactory();
-            DbType = DetectDbType(Ctx);
-        }
+    public interface IDbUow : IDbReadUow {
 
         /// <summary>
-        /// Detect db type by provider
+        /// Saves pending changes to the database. Applies internal normalization/truncation rules before saving.
         /// </summary>
+        /// <param name="ct">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns></returns>
-        static DatabaseType DetectDbType(DbContext ctx)
-        {
-            var p = ctx.Database.ProviderName?.ToLowerInvariant();
-            if (string.IsNullOrWhiteSpace(p)) return DatabaseType.Unknown;
-            if (p.Contains("sqlserver")) return DatabaseType.SqlServer;
-            if (p.Contains("postgres")) return DatabaseType.PostgreSql;
-            if (p.Contains("mysql")) return DatabaseType.MySql;
-            if (p.Contains("sqlite")) return DatabaseType.Sqlite;
-            if (p.Contains("oracle")) return DatabaseType.Oracle;
-            if (p.Contains("inmemory")) return DatabaseType.InMemory;
-            return DatabaseType.Unknown;
-        }
+        Task SaveChangesAsync(CancellationToken ct = default);
 
         /// <summary>
-        /// Override default command timeout (in seconds)
+        /// Syncronized version of SaveChangesAsync
         /// </summary>
-        /// <param name="seconds">New command time limit in seconds</param>
-        public void SetCommandTimeout(int seconds)
-        {
-            this.Ctx.Database.SetCommandTimeout(seconds);
-        }
+        void SaveChangesSynchronized();
 
-        //See interface for documentation
-        public string Metadata()
-        {
-            return EdmContextBuilder.BuildXMLModelFromContext(this.Ctx);
-        }
+        /// <summary>
+        /// Saves all pending changes to the data store and creates a new entity instance for further
+        /// editing. This is useful when performing large inserts/updates in batches to reduce change-tracker overhead.
+        /// </summary>
+        /// <param name="ct">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns></returns>
+        Task SaveChangesAndNewAsync(CancellationToken ct = default);
 
-        ///See interface for documentation
-        public IEdmModel GetModel()
-        {
-            if (_cachedEdmModel != null) return _cachedEdmModel;
-            lock (_edmLock)
-            {
-                _cachedEdmModel ??= EdmContextBuilder.BuildEdmModelFromContext(Ctx);
-            }
-            return _cachedEdmModel;
-        }
+        /// <summary>
+        /// Syncronized version of SaveChangesAndNewAsync
+        /// </summary>
+        void SaveChangesAndNewSynchronized();
 
+        /// <summary>
+        /// Returns the underlying EF DbContext instance for advanced scenarios where you need direct access.
+        /// </summary>
+        /// <returns>The EF´s DBContext</returns>
+        DbContext GetDbContext();
 
+        /// <summary>
+        /// Enables or disables automatic change detection in the underlying DbContext.
+        /// Set to <c>false</c> when performing bulk inserts (e.g., via <c>AddRange</c>) to improve performance.
+        /// Remember to restore the original setting after doing your things.
+        /// </summary>
+        /// <param name="enable">True to enable automatic change detection; false to disable.</param>
+        void SetAutoDetectChanges(bool enable);
+
+        /// <summary>
+        /// Returns the current state of automatic change detection in the DbContext.
+        /// </summary>
+        bool IsAutoDetectChangesEnabled();
+
+        /// <summary>
+        /// Triggers manual change detection. Useful when <c>AutoDetectChanges</c> is disabled
+        /// and you need EF to process changes before calling <c>SaveChanges</c>.
+        /// </summary>
+        void DetectChanges();
+
+        /// <summary>
+        /// Accepts all changes tracked by the DbContext.
+        /// Use this if you disabled automatic acceptance via <c>SaveChanges(acceptAllChangesOnSuccess: false)</c>
+        /// and want to manually finalize the changes.
+        /// </summary>
+        void AcceptAllChanges();
+
+        /// <summary>
+        /// Temporarily disables automatic change detection for the current DbContext.
+        /// Automatically restores the original state when the returned IDisposable is disposed.
+        /// Use with a <c>using</c> block to safely wrap bulk insert operations.
+        /// </summary>
+        /// <returns>An IDisposable that restores the original AutoDetectChanges setting on disposal.</returns>
+        IDisposable WithAutoDetectChangesDisabled();
+    }
+
+    public abstract class DbUow<TCtx> : DbReadUow<TCtx> where TCtx : DbContext
+    {
+        protected DbUow(Func<TCtx> ctxFactory) : base(ctxFactory) { }
+
+        #region save changes
         //See interface for documentation
         public virtual async Task SaveChangesAsync(CancellationToken ct = default)
         {
@@ -308,33 +403,20 @@ namespace EfCore.Boost.UOW
                 throw;
             }
         }
+        #endregion
 
         #region ChangeTracker tuning
 
-        /// <summary>
-        /// Enables or disables automatic change detection in the underlying DbContext.
-        /// Set to <c>false</c> when performing bulk inserts (e.g., via <c>AddRange</c>) to improve performance.
-        /// Remember to restore the original setting after doing your things.
-        /// </summary>
-        /// <param name="enable">True to enable automatic change detection; false to disable.</param>
+        //See interface for documentation
         public void SetAutoDetectChanges(bool enable) => Ctx.ChangeTracker.AutoDetectChangesEnabled = enable;
 
-        /// <summary>
-        /// Returns the current state of automatic change detection in the DbContext.
-        /// </summary>
+        //See interface for documentation
         public bool IsAutoDetectChangesEnabled() => Ctx.ChangeTracker.AutoDetectChangesEnabled;
 
-        /// <summary>
-        /// Triggers manual change detection. Useful when <c>AutoDetectChanges</c> is disabled
-        /// and you need EF to process changes before calling <c>SaveChanges</c>.
-        /// </summary>
+        //See interface for documentation
         public void DetectChanges() => Ctx.ChangeTracker.DetectChanges();
 
-        /// <summary>
-        /// Accepts all changes tracked by the DbContext.
-        /// Use this if you disabled automatic acceptance via <c>SaveChanges(acceptAllChangesOnSuccess: false)</c>
-        /// and want to manually finalize the changes.
-        /// </summary>
+        //See interface for documentation
         public void AcceptAllChanges() => Ctx.ChangeTracker.AcceptAllChanges();
 
         /// <summary>
@@ -357,25 +439,369 @@ namespace EfCore.Boost.UOW
             public void Dispose() => _onDispose();
         }
 
-        /// <summary>
-        /// Temporarily disables automatic change detection for the current DbContext.
-        /// Automatically restores the original state when the returned IDisposable is disposed.
-        /// Use with a <c>using</c> block to safely wrap bulk insert operations.
-        /// </summary>
-        /// <returns>An IDisposable that restores the original AutoDetectChanges setting on disposal.</returns>
+        //See interface for documentation
         public IDisposable WithAutoDetectChangesDisabled()
         {
             var original = Ctx.ChangeTracker.AutoDetectChangesEnabled;
             Ctx.ChangeTracker.AutoDetectChangesEnabled = false;
             return new DelegateDisposable(() => Ctx.ChangeTracker.AutoDetectChangesEnabled = original);
         }
+        #endregion
+    }
+
+    /// <summary>
+    /// Base unit of work class to be extended by inherited classes, doing the actual db work
+    /// </summary>
+    public abstract class DbReadUow<TCtx> : IDbReadUow where TCtx : DbContext
+    {
+        protected readonly Func<TCtx> CtxFactory;
+        protected TCtx Ctx;
+        public DatabaseType DbType { get; protected set; }
+        protected bool _disposed;
+        //EDM model caching
+        protected static IEdmModel? _cachedEdmModel;
+        protected static readonly object _edmLock = new();
+        //Transaction support
+        protected IDbContextTransaction? _currentTx;
+        protected readonly SemaphoreSlim _sync = new(1, 1);
+
+        protected DbReadUow(Func<TCtx> ctxFactory)
+        {
+            CtxFactory = ctxFactory;
+            Ctx = CtxFactory();
+            DbType = DetectDbType(Ctx);
+        }
+
+        ///See interface for documentation
+        public DbContext GetDbContext() => Ctx;
+
+        protected void RecreateContext()
+        {
+            Ctx.Dispose();
+            Ctx = CtxFactory();
+            DbType = DetectDbType(Ctx);
+        }
+
+        /// <summary>
+        /// Detect db type by provider
+        /// </summary>
+        /// <returns></returns>
+        static DatabaseType DetectDbType(DbContext ctx)
+        {
+            var p = ctx.Database.ProviderName?.ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(p)) return DatabaseType.Unknown;
+            if (p.Contains("sqlserver")) return DatabaseType.SqlServer;
+            if (p.Contains("postgres")) return DatabaseType.PostgreSql;
+            if (p.Contains("mysql")) return DatabaseType.MySql;
+            if (p.Contains("sqlite")) return DatabaseType.Sqlite;
+            if (p.Contains("oracle")) return DatabaseType.Oracle;
+            if (p.Contains("inmemory")) return DatabaseType.InMemory;
+            return DatabaseType.Unknown;
+        }
+
+        ///See interface for documentation
+        public void SetCommandTimeout(int seconds)
+        {
+            this.Ctx.Database.SetCommandTimeout(seconds);
+        }
+
+        //See interface for documentation
+        public string Metadata()
+        {
+            return EdmContextBuilder.BuildXMLModelFromContext(this.Ctx);
+        }
+
+        ///See interface for documentation
+        public IEdmModel GetModel()
+        {
+            if (_cachedEdmModel != null) return _cachedEdmModel;
+            lock (_edmLock)
+            {
+                _cachedEdmModel ??= EdmContextBuilder.BuildEdmModelFromContext(Ctx);
+            }
+            return _cachedEdmModel;
+        }
+
+        /// <summary>
+        /// Used for generating exception message including all inner exceptions
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <returns>Encaptulated full error text</returns>
+        public static string SqlExceptionMessages(SqlException ex)
+        {
+            var ret = "";
+            if (ex != null)
+            {
+                if (ex.Errors != null && ex.Errors.Count > 0)
+                {
+                    foreach (var err in ex.Errors)
+                    {
+                        ret += "\r\n" + err.ToString();
+                    }
+                    ret += "\r\n";
+                }
+            }
+            return ret;
+        }
+
+        #region command/script execution
+
+        //See interface for documentation
+        public async Task<int> RunRoutineNonQueryAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.NonQuery, parameters);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            return await oc.Cmd.ExecuteNonQueryAsync(ct);
+        }
+
+        //See interface for documentation
+        public async Task<int> ExecuteNonQueryAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = sql;
+            oc.Cmd.CommandType = CommandType.Text;
+            ToDbParms(parameters, oc.Cmd);
+            return await oc.Cmd.ExecuteNonQueryAsync(ct);
+        }
+
+        //See interface for documentation
+        public int RunRoutineNonQuerySynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.NonQuery, parameters);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            return oc.Cmd.ExecuteNonQuery();
+        }
+
+        //See interface for documentation
+        public int ExecuteNonQuerySynchronized(string sql, List<DbParmInfo>? parameters = null)
+        {
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            oc.Cmd.CommandText = sql;
+            oc.Cmd.CommandType = CommandType.Text;
+            ToDbParms(parameters, oc.Cmd);
+            return oc.Cmd.ExecuteNonQuery();
+        }
+
+        //See interface for documentation
+        public async Task<long?> RunRoutineLongAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var result = await oc.Cmd.ExecuteScalarAsync(ct);
+            return result != null && result != DBNull.Value ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : null;
+        }
+
+        //See interface for documentation
+        public long? RunRoutineLongSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var result = oc.Cmd.ExecuteScalar();
+            return result != null && result != DBNull.Value ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : null;
+        }
+
+        //See interface for documentation
+        public async Task<int?> RunRoutineIntAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var result = await oc.Cmd.ExecuteScalarAsync(ct);
+            return result != null && result != DBNull.Value ? Convert.ToInt32(result, CultureInfo.InvariantCulture) : null;
+        }
+
+        //See interface for documentation
+        public int? RunRoutineIntSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var result = oc.Cmd.ExecuteScalar();
+            return result != null && result != DBNull.Value ? Convert.ToInt32(result, CultureInfo.InvariantCulture) : null;
+        }
+
+        //See interface for documentation
+        public async Task<string?> RunRoutineStringAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var result = await oc.Cmd.ExecuteScalarAsync(ct);
+            return result != null && result != DBNull.Value ? Convert.ToString(result, CultureInfo.InvariantCulture) : null;
+        }
+
+        //See interface for documentation
+        public string? RunRoutineStringSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var result = oc.Cmd.ExecuteScalar();
+            return result != null && result != DBNull.Value ? Convert.ToString(result, CultureInfo.InvariantCulture) : null;
+        }
+
+        //See interface for documentation
+        public async Task<List<long>> RunRoutineLongListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var list = new List<long>();
+            using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                if (!reader.IsDBNull(0))
+                    list.Add(reader.GetInt64(0));
+            }
+            return list;
+        }
+
+        //See interface for documentation
+        public List<long> RunRoutineLongListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var list = new List<long>();
+            using var reader = oc.Cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (!reader.IsDBNull(0))
+                    list.Add(reader.GetInt64(0));
+            }
+            return list;
+        }
+
+        //See interface for documentation
+        public async Task<List<int>> RunRoutineIntListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var list = new List<int>();
+            using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                if (!reader.IsDBNull(0))
+                    list.Add(reader.GetInt32(0));
+            }
+            return list;
+        }
+
+        //See interface for documentation
+        public List<int> RunRoutineIntListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var list = new List<int>();
+            using var reader = oc.Cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (!reader.IsDBNull(0))
+                    list.Add(reader.GetInt32(0));
+            }
+            return list;
+        }
+
+        //See interface for documentation
+        public async Task<List<string>> RunRoutineStringListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
+            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var list = new List<string>();
+            using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                if (!reader.IsDBNull(0))
+                    list.Add(reader.GetString(0));
+            }
+            return list;
+        }
+
+        //See interface for documentation
+        public List<string> RunRoutineStringListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
+            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var list = new List<string>();
+            using var reader = oc.Cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (!reader.IsDBNull(0))
+                    list.Add(reader.GetString(0));
+            }
+            return list;
+        }
 
         #endregion
 
-
         #region Transactions
         //See interface for documentation
-        protected async Task RunInTransactionAsync(Func<DbTransaction, CancellationToken, Task> work, System.Data.IsolationLevel iso = System.Data.IsolationLevel.ReadCommitted, CancellationToken ct = default) {
+        protected async Task RunInTransactionAsync(Func<DbTransaction, CancellationToken, Task> work, System.Data.IsolationLevel iso = System.Data.IsolationLevel.ReadCommitted, CancellationToken ct = default)
+        {
             if (work == null) throw new ArgumentNullException(nameof(work));
             if (_currentTx != null) throw new InvalidOperationException("A transaction is already active on this UOW instance. Use nested logic inside the same RunInTransaction call.");
 
@@ -404,7 +830,7 @@ namespace EfCore.Boost.UOW
 
         //See interface for documentation
         public Task RunInTransactionAsync(Func<CancellationToken, Task> work, System.Data.IsolationLevel iso = System.Data.IsolationLevel.ReadCommitted, CancellationToken ct = default)
-                => RunInTransactionAsync(async (tx, c) => await work(c), iso,  ct);
+                => RunInTransactionAsync(async (tx, c) => await work(c), iso, ct);
 
         //See interface for documentation
         public void RunInTransactionSynchronized(Action work, IsolationLevel iso = IsolationLevel.ReadCommitted)
@@ -424,7 +850,7 @@ namespace EfCore.Boost.UOW
                         work();
                         efTx.Commit();
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         try { efTx.Rollback(); } catch { }
                         throw new InvalidOperationException($"Transaction failed (iso={iso}). See inner exception for root cause.", ex);
@@ -443,30 +869,7 @@ namespace EfCore.Boost.UOW
 
         #endregion
 
-        /// <summary>
-        /// Used for generating exception message including all inner exceptions
-        /// </summary>
-        /// <param name="ex"></param>
-        /// <returns>Encaptulated full error text</returns>
-        public static string SqlExceptionMessages(SqlException ex)
-        {
-            var ret = "";
-            if (ex != null)
-            {
-                if (ex.Errors != null && ex.Errors.Count > 0)
-                {
-                    foreach (var err in ex.Errors)
-                    {
-                        ret += "\r\n" + err.ToString();
-                    }
-                    ret += "\r\n";
-                }
-            }
-            return ret;
-        }
-
-        #region command/script execution
-
+        #region SQL in transactions
         //See interface for documentation
         public async Task ExecSqlScriptAsync(string scriptContent, bool useTransaction = false, CancellationToken ct = default)
         {
@@ -515,335 +918,6 @@ namespace EfCore.Boost.UOW
                 return SqlScriptSplitters.SplitMsSql(scriptContent);
             throw new NotImplementedException($"Script splitting not implemented for database type {DbType}.");
         }
-
-        //See interface for documentation
-        public async Task<int> RunRoutineNonQueryAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.NonQuery, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            return await oc.Cmd.ExecuteNonQueryAsync(ct);
-        }
-
-        //See interface for documentation
-        public async Task<int> ExecuteNonQueryAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
-        {
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
-            oc.Cmd.CommandText = sql;
-            oc.Cmd.CommandType = CommandType.Text;
-            ToDbParms(parameters, oc.Cmd);
-            return await oc.Cmd.ExecuteNonQueryAsync(ct);
-        }
-
-        //See interface for documentation
-        public int RunRoutineNonQuerySynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.NonQuery, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            return oc.Cmd.ExecuteNonQuery();
-        }
-
-        //See interface for documentation
-        public int ExecuteNonQuerySynchronized(string sql, List<DbParmInfo>? parameters = null)
-        {
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
-            oc.Cmd.CommandText = sql;
-            oc.Cmd.CommandType = CommandType.Text;
-            ToDbParms(parameters, oc.Cmd);
-            return oc.Cmd.ExecuteNonQuery();
-        }
-
-        /// <summary>
-        /// Executes a scalar database routine and returns the result as a nullable 64-bit integer.
-        /// </summary>
-        /// <param name="schema">The name of the database schema that contains the routine to execute.</param>
-        /// <param name="routineName">The name of the routine to execute. (Case sensitive)</param>
-        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>The scalar value from the routine</returns>
-        public async Task<long?> RunRoutineLongAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var result = await oc.Cmd.ExecuteScalarAsync(ct);
-            return result != null && result != DBNull.Value ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : null;
-        }
-
-        /// <summary>
-        /// Syncronized version of RunRoutineLongAsync
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="routineName"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        public long? RunRoutineLongSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var result = oc.Cmd.ExecuteScalar();
-            return result != null && result != DBNull.Value ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : null;
-        }
-
-        /// <summary>
-        /// Executes a scalar database routine and returns the result as a nullable 32-bit integer.
-        /// </summary>
-        /// <param name="schema">Schema name</param>
-        /// <param name="routineName">Routine name (Case sensitive)</param>
-        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancelation token</param>
-        /// <returns></returns>
-        public async Task<int?> RunRoutineIntAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var result = await oc.Cmd.ExecuteScalarAsync(ct);
-            return result != null && result != DBNull.Value ? Convert.ToInt32(result, CultureInfo.InvariantCulture) : null;
-        }
-
-        /// <summary>
-        /// Syncronized version of RunRoutineIntAsync
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="routineName"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        public int? RunRoutineIntSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var result = oc.Cmd.ExecuteScalar();
-            return result != null && result != DBNull.Value ? Convert.ToInt32(result, CultureInfo.InvariantCulture) : null;
-        }
-
-        /// <summary>
-        /// Executes a scalar database routine and returns the result as a nullable string
-        /// </summary>
-        /// <param name="schema">Schema name</param>
-        /// <param name="routineName">Routine name (Case sensitive)</param>
-        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancelation token</param>
-        /// <returns></returns>
-        public async Task<string?> RunRoutineStringAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var result = await oc.Cmd.ExecuteScalarAsync(ct);
-            return result != null && result != DBNull.Value ? Convert.ToString(result, CultureInfo.InvariantCulture) : null;
-        }
-
-        /// <summary>
-        /// Syncronized version of RunRoutineStringAsync
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="routineName"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        public string? RunRoutineStringSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var result = oc.Cmd.ExecuteScalar();
-            return result != null && result != DBNull.Value ? Convert.ToString(result, CultureInfo.InvariantCulture) : null;
-        }
-
-        /// <summary>
-        /// Executes a scalar database routine pre-made for returning a list of 64-bit integers.
-        /// </summary>
-        /// <param name="schema">Schema name</param>
-        /// <param name="routineName">Routine name (Case sensitive)</param>
-        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancelation token</param>
-        /// <returns></returns>
-        public async Task<List<long>> RunRoutineLongListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var list = new List<long>();
-            using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
-            while (await reader.ReadAsync(ct))
-            {
-                if (!reader.IsDBNull(0))
-                    list.Add(reader.GetInt64(0));
-            }
-            return list;
-        }
-
-        /// <summary>
-        /// Syncronized version of RunRoutineLongListAsync
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="routineName"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        public List<long> RunRoutineLongListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var list = new List<long>();
-            using var reader = oc.Cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                if (!reader.IsDBNull(0))
-                    list.Add(reader.GetInt64(0));
-            }
-            return list;
-        }
-
-        /// <summary>
-        /// Executes a scalar database routine pre-made for returning a list of 32-bit integers.
-        /// </summary>
-        /// <param name="schema">Schema name</param>
-        /// <param name="routineName">Routine name (Case sensitive)</param>
-        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancelation token</param>
-        /// <returns></returns>
-        public async Task<List<int>> RunRoutineIntListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var list = new List<int>();
-            using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
-            while (await reader.ReadAsync(ct))
-            {
-                if (!reader.IsDBNull(0))
-                    list.Add(reader.GetInt32(0));
-            }
-            return list;
-        }
-
-        /// <summary>
-        /// Syncronized version of RunRoutineIntListAsync
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="routineName"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        public List<int> RunRoutineIntListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var list = new List<int>();
-            using var reader = oc.Cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                if (!reader.IsDBNull(0))
-                    list.Add(reader.GetInt32(0));
-            }
-            return list;
-        }
-
-        /// <summary>
-        /// Executes a scalar database routine pre-made for returning a list of strings.
-        /// </summary>
-        /// <param name="schema">Schema name</param>
-        /// <param name="routineName">Routine name (Case sensitive)</param>
-        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancelation token</param>
-        /// <returns></returns>
-        public async Task<List<string>> RunRoutineStringListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var list = new List<string>();
-            using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
-            while (await reader.ReadAsync(ct))
-            {
-                if (!reader.IsDBNull(0))
-                    list.Add(reader.GetString(0));
-            }
-            return list;
-        }
-
-        /// <summary>
-        /// Syncronized version of RunRoutineStringListAsync
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="routineName"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        public List<string> RunRoutineStringListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
-        {
-            parameters ??= [];
-            var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
-            oc.Cmd.CommandText = call.Text;
-            oc.Cmd.CommandType = CalcCommandType(call.Mode);
-            ToDbParms(parameters, oc.Cmd);
-            var list = new List<string>();
-            using var reader = oc.Cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                if (!reader.IsDBNull(0))
-                    list.Add(reader.GetString(0));
-            }
-            return list;
-        }
-
         #endregion
 
         #region command/script execution + routine wrappers
@@ -871,17 +945,7 @@ namespace EfCore.Boost.UOW
 
         private static CommandType CalcCommandType(RoutineCallMode mode) => mode == RoutineCallMode.ProcedureName ? CommandType.StoredProcedure : CommandType.Text;
 
-        /// <summary>
-        /// Raw sql runner, returning scalar long value
-        /// </summary>
-        /// <remarks>
-        /// Raw sql is not cross-db compatible and should be avoided.
-        /// Proper way would be to set up routine and call that one instead.
-        /// </remarks>
-        /// <param name="sql">Raw SQL to execute</param>
-        /// <param name="parameters">An optional list of parameters to pass to the routine. If null, no parameters are used.</param>
-        /// <param name="ct">Cancelation token</param>
-        /// <returns></returns>
+        //See interface for documentation
         public async Task<long?> GetLongScalarAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
@@ -892,12 +956,7 @@ namespace EfCore.Boost.UOW
             return result != null && result != DBNull.Value ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : null;
         }
 
-        /// <summary>
-        /// Syncronized version of GetLongScalarAsync
-        /// </summary>
-        /// <param name="sql"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
+        //See interface for documentation
         public long? GetLongScalarSynchronized(string sql, List<DbParmInfo>? parameters = null)
         {
             using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
@@ -1045,5 +1104,12 @@ namespace EfCore.Boost.UOW
         {
             this.ParmStore = parm;
         }
+    }
+
+    // Extension method to allow treating a regular DbUow as a read-only unit of work when needed
+    // Example: await Helper(uow.AsReadOnly(), ct); --Helper only needs read access, so we can pass a read-only
+    public static class DbUowExtensions
+    {
+        public static IDbReadUow AsReadOnly(this IDbUow uow) => uow;
     }
 }

@@ -1825,3 +1825,9 @@ public class QueryResult<T> where T : class
     public void FillException(Exception e) { ErrorNo = 1; ErrorMessage = e.Message; ErrorDetails = ExceptRecurse(e); }
     public void ThrowIfError(string context) { if (ErrorNo != 0) throw new InvalidOperationException($"{context}: {ErrorMessage}\n{ErrorDetails}"); }
 }
+
+// Extension method to allow treating a regular repo as a read-only repo when needed
+public static class RepoExtensions
+{
+    public static IReadRepo<T> AsReadOnly<T>(this IRepo<T> repo) where T : class => repo;
+}

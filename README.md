@@ -162,7 +162,7 @@ dotnet add package EfCore.Boost
 
 ### Define a Unit of Work
 ```csharp
-public partial class UOWLogs(IConfiguration cfg) : DbUow<DbLogs>(() => SecureContextFactory.CreateDbContext<DbLogs>(cfg, "Logs"))
+public partial class UOWLogs(IConfiguration cfg) : UowFactory<DbLogs>(cfg, "Logs")
 {
     public IAsyncRepo<LoginLog> LoginLogs => new EfRepo<LoginLog>(Ctx!, DbType);
     public IAsyncRepo<SessionLog> SessionLogs => new EfRepo<SessionLog>(Ctx!, DbType);
@@ -171,20 +171,14 @@ public partial class UOWLogs(IConfiguration cfg) : DbUow<DbLogs>(() => SecureCon
 
 ### Query with tracking
 ```csharp
-var recent = await uow.LoginLogs.Query()
-    .OrderByDescending(x => x.CreatedUtc)
-    .Take(20)
-    .ToListAsync();
-
+var recent = await uow.LoginLogs.Query().OrderByDescending(x => x.CreatedUtc).Take(20).ToListAsync();
 recent[0].Message = "Updated";
 await uow.SaveChangesAsync();
 ```
 
 ### Query without tracking
 ```csharp
-var sessions = await uow.SessionLogs.QueryNoTrack()
-    .Where(x => x.UserId == userId)
-    .ToListAsync();
+var sessions = await uow.SessionLogs.QueryNoTrack().Where(x => x.UserId == userId).ToListAsync();
 ```
 
 ### Run a routine
