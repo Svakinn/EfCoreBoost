@@ -302,11 +302,16 @@ namespace EfCore.Boost.UOW
         /// </summary>
         void SaveChangesAndNewSynchronized();
 
+
+#pragma warning disable CS1587 // XML comment is not placed on a valid language element
         /// <summary>
+        /// In case you would ever want to give access to the underlying DbContext for some reason, you can get it via this method.
+        /// Use with care, as direct access to the DbContext can lead to unintended side effects if not handled properly.
         /// Returns the underlying EF DbContext instance for advanced scenarios where you need direct access.
         /// </summary>
         /// <returns>The EF´s DBContext</returns>
-        DbContext GetDbContext();
+        //DbContext GetDbContext();
+#pragma warning restore CS1587 // XML comment is not placed on a valid language element
 
         /// <summary>
         /// Enables or disables automatic change detection in the underlying DbContext.
@@ -315,6 +320,7 @@ namespace EfCore.Boost.UOW
         /// </summary>
         /// <param name="enable">True to enable automatic change detection; false to disable.</param>
         void SetAutoDetectChanges(bool enable);
+
 
         /// <summary>
         /// Returns the current state of automatic change detection in the DbContext.

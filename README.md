@@ -76,6 +76,33 @@ EfBoost treats database intelligence as a first-class citizen:
 
 ---
 
+### Architectural view
+
+<img src="./SoupSm.png" width="500" height="333" />
+
+Think of the dababase model (`DbContext`) as a pot of soup.
+
+Now we place a lid on the pot.  
+In that lid we cut windows and each window represents a **Unit of Work**.  
+A `DbUow` or `DbReadUow` provides controlled and focused access to the `DbContext` through its repositories, to tables and views in the databse.
+
+Each UOW:
+
+- Exposes only the repositories it defines  
+- Controls tracking behavior  
+- Controls saving and transaction boundaries  
+- Handles communication with different database providers
+
+The business logic interacts with repositories via `IQuery<T>` and save operations, never with the soup directly.  
+It receives exactly what it needs. No more, no less.  
+It also does not need to care whether the heat beneath the pot comes from SQL Server, MySQL, or Postgres.
+
+> While the illustration shows clean boundaries, the repositories themselves are far from simple.  
+> They support high-performance bulk operations and rich OData-based querying out of the box.  
+> The diagram also does not show that each UOW owns its own `DbContext` instance and can even replace the context when needed.
+
+---
+
 ## 🌍 Model Building & Cross-Platform Conventions  
 
 EfBoost solves, **once and uniformly**, the practical differences between database engines.
@@ -206,8 +233,14 @@ No. Single-provider systems benefit from structure, safe OData usage, bulk perfo
 ---
 
 ### Does EfBoost remove the ability to access DbContext?
-Perhaps it should. It is preferred that you don’t, but:  
-**No.** UOW exposes DbContext intentionally as an escape hatch.  
+**Yes. Intentionally.**  
+DbContext still exists under the hood and EfCore.Boost builds and configures it.
+But it is not exposed for direct use.
+All data access should instead go through the Unit of Work:
+- DbUow for read-write operations
+- DbReadUow for read-only operations  
+
+This keeps boundaries explicit and intent clear.
 
 ---
 

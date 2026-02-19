@@ -114,6 +114,54 @@ The UOW ensures higher-level APIs stay consistent even when individual engines d
 
 ---
 
+## DbUow & DbReadUow
+
+EfCore.Boost provides two distinct Unit of Work types:
+
+- `DbUow` – Read/Write  
+- `DbReadUow` – Read-Only  
+
+The separation is intentional and architectural.
+
+### DbUow
+
+`DbUow` is used when data modifications are required.
+
+It:
+
+- Allows tracking
+- Allows save operations
+- Defines transaction boundaries
+- Can expose both read/write and read-only repositories
+
+A `DbUow` may include read-only repositories when practical,  
+but it always has the capability to perform writes.
+
+Use this when your operation changes state.
+
+### DbReadUow
+
+`DbReadUow` is designed strictly for query scenarios.
+
+It:
+
+- Does not allow save operations
+- Restricts write-side behavior
+- Guards against unintended side effects
+- Exposes only read-only repositories
+
+It would not be practical to include write-capable repositories in a read-only UOW, as that would defeat its purpose.  
+
+If a service depends on `DbReadUow`, it is explicitly stating:
+
+> This operation does not modify data.
+
+By separating read and write UOWs, EfCore.Boost makes intent visible in the type system.  
+Side effects are no longer accidental.  
+
+
+---
+
 ## Saving & Lifecycle
 
 ### Standard Commit

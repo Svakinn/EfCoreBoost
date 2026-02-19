@@ -24,7 +24,7 @@ using BoostTest.TestDb;
 namespace BoostTest
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     [TestClass]
     public class BoostTestContainers
@@ -48,6 +48,7 @@ namespace BoostTest
         /// <param name="name"></param>
         /// <returns></returns>
         static UOWTestDb CreateUow(IConfiguration cfg, string name) => new(cfg, name);
+        static UOWTestView CreateUowView(IConfiguration cfg, string name) => new(cfg, name);
 
         /// <summary>
         /// Test on Azure SQL Database, requires pre-configured access and will be skipped if not properly set up
@@ -57,15 +58,12 @@ namespace BoostTest
         [TestMethod]
         public async Task Uow_Azure_Test()
         {
-            var uow = await PrepareAzureAccess();
+            var (uow, uowV) = await PrepareAzureAccess();
+            if (uow == null || uowV == null) throw new Exception("Azure SQL access not properly configured, test should have been skipped !");
+            using (uowV)
             using (uow)
             {
-                if (uow == null)
-                {
-                    Console.WriteLine("Azure SQL access not properly configured, skipping test !");
-                    return;
-                }
-                await BasicSmokeAsync(uow);
+                await BasicSmokeAsync(uow, uowV);
             }
         }
 
@@ -73,66 +71,78 @@ namespace BoostTest
         [TestMethod]
         public async Task Uow_MsSql_Test()
         {
-            var (container, uow) = await PrepareMsSqlContainer();
+            var (container, uow, uowV) = await PrepareMsSqlContainer();
+            if (uow == null || uowV == null) throw new Exception("MS SQL access not properly configured, test should have been skipped !");
             await using (container)
+            using (uowV)
             using (uow)
             {
-                await BasicSmokeAsync(uow);
+                await BasicSmokeAsync(uow, uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_MsSql_Test_Synchronized()
         {
-            var (container, uow) = await PrepareMsSqlContainer();
+            var (container, uow, uowV) = await PrepareMsSqlContainer();
+            if (uow == null || uowV == null) throw new Exception("MS SQL access not properly configured, test should have been skipped !");
             await using (container)
+            using (uowV)
             using (uow)
             {
-                await BasicSmokeSynchronous(uow);
+                await BasicSmokeSynchronous(uow, uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_Postgres_Test()
         {
-            var (container, uow) = await PreparePgSqlContainer();
+            var (container, uow, uowV) = await PreparePgSqlContainer();
+            if (uow == null || uowV == null) throw new Exception("Postgres access not properly configured, test should have been skipped !");
             await using (container)
+            using (uowV)
             using (uow)
             {
-                await BasicSmokeAsync(uow);
+                await BasicSmokeAsync(uow, uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_Postgres_Test_Synchronized()
         {
-            var (container, uow) = await PreparePgSqlContainer();
+            var (container, uow, uowV) = await PreparePgSqlContainer();
+            if (uow == null || uowV == null) throw new Exception("Postgres access not properly configured, test should have been skipped !");
             await using (container)
+            using (uowV)
             using (uow)
             {
-                await BasicSmokeSynchronous(uow);
+                await BasicSmokeSynchronous(uow,uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_MySql_Test()
         {
-            var (container, uow) = await PrepareMySqlContainer();
+            var (container, uow, uowV) = await PrepareMySqlContainer();
+            if (uow == null || uowV == null) throw new Exception("MySql access not properly configured, test should have been skipped !");
             await using (container)
+            using (uowV)
             using (uow)
             {
-                await BasicSmokeAsync(uow);
+                await BasicSmokeAsync(uow, uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_MySql_Test_Synchronized()
         {
-            var (container, uow) = await PrepareMySqlContainer();
+            var (container, uow, uowV) = await PrepareMySqlContainer();
+            if (uow == null || uowV == null) throw new Exception("MySql access not properly configured, test should have been skipped !");
             await using (container)
+            using (uowV)
             using (uow)
             {
-                await BasicSmokeSynchronous(uow);
+                await BasicSmokeSynchronous(uow,uowV);
             }
         }
 
@@ -140,7 +150,7 @@ namespace BoostTest
         ///  Spin up temporary SQL Server in Docker
         /// </summary>
         /// <returns></returns>
-        static async Task<(MsSqlContainer Container, UOWTestDb Uow)> PrepareMsSqlContainer()
+        static async Task<(MsSqlContainer Container, UOWTestDb Uow, UOWTestView UowV)> PrepareMsSqlContainer()
         {
             const string dbName = "TestDb";
             const string connNameCreate = "TestMsCreate";
@@ -162,36 +172,38 @@ namespace BoostTest
             await uowCreate.ExecSqlScriptAsync(await ReadSql("MsSqlCreateDb.sql"), false);
             var uow = CreateUow(cfg, connName);
             await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_MsSql.sql"), false); //Script contains own transactions, therefore cannot run in transaction here
-            return (sql, uow);
+            var uowV = CreateUowView(cfg, connName);
+            return (sql, uow, uowV);
         }
 
         /// <summary>
         /// We have no container for Azure SQL we rly on prepared access by the tester (or skip the test otherwise)
         /// AppSettings.json determines if Azure test is run or skipped
-        /// 
+        ///
         /// </summary>
         /// <returns></returns>
-        static async Task<UOWTestDb?> PrepareAzureAccess()
+        static async Task<(UOWTestDb? Uow, UOWTestView? UowView)> PrepareAzureAccess()
         {
             const string dbName = "TestDb";
             const string connName = "TestAzure";
             var cc = new ConfigurationBuilder().SetBasePath(AppDomain.CurrentDomain.BaseDirectory).AddJsonFile("AppSettings.json", optional: false, reloadOnChange: false).Build();
             var dbTestCfg = DbConnectionCFG.Get(cc, connName);
             if ( dbTestCfg == null || dbTestCfg.UseAzure == false || dbTestCfg.AzureClientSecret.Length < 2 || dbTestCfg.AzureClientSecret[..1] == "<" )
-                return null; //Skip test if not properly configured, no error thrown
+                return (null,null); //Skip test if not properly configured, no error thrown
             if (dbTestCfg.ConnectionString.IndexOf(dbName, StringComparison.OrdinalIgnoreCase) < 0)
                 throw new Exception($"Azure test DB connection string must contain database name '{dbName}'");
             var uow = CreateUow(cc, connName);
             await uow.ExecSqlScriptAsync(await ReadSql("AzurePrepareDb.sql"), false); //Cleanup previous runs
             await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_MsSql.sql"), false); //Normal SQL-Server Migrations
-            return uow;
+            var uowV = CreateUowView(cc, connName);
+            return (uow, uowV);
         }
 
         /// <summary>
         ///  Spin up temporary MySql Server in Docker
         /// </summary>
         /// <returns></returns>
-        static async Task<(MySqlContainer Container, UOWTestDb Uow)> PrepareMySqlContainer()
+        static async Task<(MySqlContainer Container, UOWTestDb? Uow, UOWTestView? UowView)> PrepareMySqlContainer()
         {
             const string dbName = "TestDb";
             const string connNameCreate = "TestMyCreate";
@@ -221,7 +233,8 @@ namespace BoostTest
             await uowCreate.ExecSqlScriptAsync(await ReadSql("MySqlCreateDb.mysql"), false);
             var uow = CreateUow(cfg, connName);
             await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_MySql.mysql"), false); //Mysql does not hanndle any ddl in transactions
-            return (my, uow);
+            var uowV = CreateUowView(cfg, connName);
+            return (my, uow, uowV);
         }
 
         static async Task<string> ReadSql(string fileName)
@@ -236,7 +249,7 @@ namespace BoostTest
         ///  Spin up temporary Postgres Server in Docker
         /// </summary>
         /// <returns></returns>
-        static async Task<(PostgreSqlContainer Container, UOWTestDb Uow)> PreparePgSqlContainer()
+        static async Task<(PostgreSqlContainer Container, UOWTestDb? Uow, UOWTestView? UowView)> PreparePgSqlContainer()
         {
             const string dbName = "TestDb";
             const string connNameCreate = "TestPgCreate";
@@ -272,7 +285,8 @@ namespace BoostTest
             await dbConn.ReloadTypesAsync();
             Npgsql.NpgsqlConnection.ClearAllPools();
             var uowNew = CreateUow(cfg, connName);
-            return (pg, uowNew);
+            var uowV = CreateUowView(cfg, connName);
+            return (pg, uowNew, uowV);
         }
 
         /// <summary>
@@ -280,7 +294,7 @@ namespace BoostTest
         /// </summary>
         /// <param name="uow"></param>
         /// <returns></returns>
-        static async Task BasicSmokeAsync(UOWTestDb uow)
+        static async Task BasicSmokeAsync(UOWTestDb uow, UOWTestView uowV)
         {
             //
             //Test saving to database
@@ -295,7 +309,7 @@ namespace BoostTest
             //
             //Test view lookup
             //
-            var viewItem = await uow.MyTableRefViews.QueryNoTrack().FirstOrDefaultAsync(tt => tt.RefId == refRow.Id);
+            var viewItem = await uowV.MyTableRefViews.QueryNoTrack().FirstOrDefaultAsync(tt => tt.RefId == refRow.Id);
             Assert.IsNotNull(viewItem);
             Assert.IsTrue((viewItem.RowID != Guid.Empty), "RowID should not be empty");
             //
@@ -378,10 +392,10 @@ namespace BoostTest
             var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
             var plan = uow.MyTables.BuildODataQueryPlan(bq, options2, new ODataPolicy(AllowExpand: true), true);
             var plan2 = uow.MyTables.ApplyODataExpandAsInclude(plan);
-            Assert.AreEqual(1, plan2.Report.Where(tt => tt == "ExpandInnerFilterIgnored:MyTableRefs").Count(), "We did not find $filter warning within AsInclude query"); 
+            Assert.AreEqual(1, plan2.Report.Where(tt => tt == "ExpandInnerFilterIgnored:MyTableRefs").Count(), "We did not find $filter warning within AsInclude query");
             var res = await uow.MyTables.MaterializeODataAsync(plan2);
             //we received our MyTableRefs records inline (but unfiltered)
-            Assert.IsTrue(res.InlineCount != null && res.InlineCount > 0 && res.Results != null &&  res.Results.FirstOrDefault() != null && res.Results.FirstOrDefault()!.MyTableRefs.Count > 0, 
+            Assert.IsTrue(res.InlineCount != null && res.InlineCount > 0 && res.Results != null &&  res.Results.FirstOrDefault() != null && res.Results.FirstOrDefault()!.MyTableRefs.Count > 0,
                 "$expand as include failed to produce data for MyTableRefs") ;
             //Now shaped tests:
             var opts = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$select=Id");
@@ -405,7 +419,7 @@ namespace BoostTest
         /// Just a part of what we do for async, no need to repeat all tests
         /// </summary>
         /// <param name="uow"></param>
-        static async Task BasicSmokeSynchronous(UOWTestDb uow)
+        static async Task BasicSmokeSynchronous(UOWTestDb uow, UOWTestView uowV)
         {
             //
             //Test saving to database
@@ -420,7 +434,7 @@ namespace BoostTest
             //
             //Test view lookup
             //
-            var viewItem = uow.MyTableRefViews.QueryNoTrack().FirstOrDefault(tt => tt.RefId == refRow.Id);
+            var viewItem = uowV.MyTableRefViews.QueryNoTrack().FirstOrDefault(tt => tt.RefId == refRow.Id);
             Assert.IsNotNull(viewItem);
             Assert.IsTrue((viewItem.RowID != Guid.Empty), "RowID should not be empty");
             //

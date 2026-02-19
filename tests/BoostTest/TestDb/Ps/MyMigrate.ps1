@@ -61,7 +61,6 @@ $filesInOrder = @(
     "TestDb/Migrations/MySQL/InitDbTest.MySQL",
     "TestDb/MySQL.MySQL"
 )
-$mergedSQLFile = "";
 
 foreach ($m in $migrations) {
     Write-Host "-> Creating migration $($m.Name) ($($m.Context))"

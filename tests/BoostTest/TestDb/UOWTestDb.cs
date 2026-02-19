@@ -2,17 +2,12 @@
 using EfCore.Boost.UOW;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static BoostTest.TestDb.DbTest;
 
 namespace BoostTest.TestDb
 {
-    public partial class UOWTestDb(IConfiguration cfg, string cfgName) : UowFactory<DbTest>(cfg, cfgName)
+    //DbTest
+    public sealed class UOWTestDb(IConfiguration cfg, string cfgName) : UowFactory<DbTest>(cfg, cfgName)
     {
 
         #region tabular data
@@ -20,8 +15,9 @@ namespace BoostTest.TestDb
         public EfRepo<MyTable> MyTables => new(Ctx, DbType);
         public EfRepo<MyTableRef> MyTableRefs => new(Ctx, DbType);
 
-        //Views are read-only, so we use a read-only repository for those
-        public EfReadRepo<MyTableRefView> MyTableRefViews => new(Ctx, DbType);
+        // Views are read-only and we can have readonly repos within RW-uow like here below
+        // However we move this to the UOWTestView.cs to demonstrate Unit of Work that is entirely readonly - cannot be used to update any data in the underlying DbContext.
+        //public EfReadRepo<MyTableRefView> MyTableRefViews => new(Ctx, DbType);
 
         #endregion
 
@@ -65,21 +61,6 @@ namespace BoostTest.TestDb
             return RunRoutineLongSynchronized("my", "GetMaxIdByChanger", paList);
         }
 
-        /// <summary>
-        /// Example of using the routine helpers with a row-returning routine.
-        /// Retrieves records from MyTableRefView filtered by MyId.
-        /// This exercises RoutineConvention + SetUpRoutineQuery&lt;T&gt; across providers.
-        /// </summary>
-        public async Task<List<MyTableRefView>> GetMyTableRefViewByMyIdAsync(long myId)
-        {
-            var paList = new List<DbParmInfo> { new("@MyId", myId) };
-            return await SetUpRoutineQuery<MyTableRefView>("my", "GetMyTableRefViewByMyId", paList).ToListAsync();
-        }
-        public List<MyTableRefView> GetMyTableRefViewByMyIdSynchronized(long myId)
-        {
-            var paList = new List<DbParmInfo> { new("@MyId", myId) };
-            return SetUpRoutineQuery<MyTableRefView>("my", "GetMyTableRefViewByMyId", paList).ToList();
-        }
         #endregion
 
     }

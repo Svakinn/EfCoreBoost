@@ -8,9 +8,9 @@
 // by SecureContextFactory.
 //
 // Enables Unit of Work definitions like:
-//     public sealed partial class UOWCore(IConfiguration cfg, string cfgName) : UowFactory<DbCore>(cfg, cfgName);
+//     public sealed partial class UOWCore(IConfiguration cfg, string cfgName) : UowFactory<DbCore>(cfg, cfgName){..
 // Instead of repeating context-creation logic:
-//     public partial class UOWCore(IConfiguration cfg, string cfgName) : DbUow<DbCore>( () => SecureContextFactory.CreateDbContext<DbCore>(cfg, cfgName));
+//     public partial class UOWCore(IConfiguration cfg, string cfgName) : DbUow<DbCore>( () => SecureContextFactory.CreateDbContext<DbCore>(cfg, cfgName)){..
 //
 // DbContext creation policy is centralized and reusable, while Unit of Work classes remain compact and declarative.
 // -----------------------------------------------------------------------------
@@ -78,6 +78,23 @@ namespace EfCore.Boost.UOW
         protected UowFactory(IConfiguration cfg, string cfgName) : this(new SecureCfgUowFactory<TCtx>(cfg, cfgName))
         {
         }
+    }
+
+    /// <summary>
+    /// Provides a base class for creating read-only unit of work instances using a specified database context type.
+    /// </summary>
+    /// <remarks>This class is intended for scenarios where read-only access to the database is required. It
+    /// leverages an underlying unit of work factory to create and manage database contexts. Derived classes can
+    /// customize behavior for specific context types or configuration sources.</remarks>
+    /// <typeparam name="TCtx">The type of the database context used for read-only operations.</typeparam>
+    public abstract class ReadUowFactory<TCtx> : DbReadUow<TCtx> where TCtx : DbContext
+    {
+        protected IUowFactory<TCtx> Factory { get; }
+        protected ReadUowFactory(IUowFactory<TCtx> factory) : base(factory.Create)
+        {
+            Factory = factory ?? throw new ArgumentNullException(nameof(factory));
+        }
+        protected ReadUowFactory(IConfiguration cfg, string cfgName) : this(new SecureCfgUowFactory<TCtx>(cfg, cfgName)) { }
     }
 
     /// <summary>

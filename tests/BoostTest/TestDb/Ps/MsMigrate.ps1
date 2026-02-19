@@ -50,8 +50,6 @@ $filesInOrder = @(
     "TestDb/Migrations/MsSQL/InitDbTest.sql",
     "TestDb/MsSQL.sql"
 )
-$mergedSQLFile = "";
-
 foreach ($m in $migrations) {
     Write-Host "-> Creating migration $($m.Name) ($($m.Context))"
     dotnet ef migrations add $m.Name `

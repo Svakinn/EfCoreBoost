@@ -5,11 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Authors>Sveinn S. Erlendsson</Authors>
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
@@ -18,7 +17,7 @@
 EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core, plus utilities for routines, bulk operations, and OData suport.
 Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.
 	</Description>
-    <PackageReleaseNotes>Simplified creation of the Unit of Work</PackageReleaseNotes>
+    <PackageReleaseNotes>Read only UOW</PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;efboost;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-famework;dotnet;ef-core-migrations</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
 	  <PackageIcon>icon.png</PackageIcon>
