@@ -1,7 +1,7 @@
 # EfCore.Boost  <img src="./src/EfCoreBoost/icon.png" width="64" height="64" />
 A disciplined **Unit of Work + Repository + Routine + Model Building** layer for Entity Framework Core that makes database access **structured**, **portable**, and **powerful** across **SQL Server**, **PostgreSQL**, and **MySQL**.
 
-EfCore.Boost isn’t here to replace EF Core. It is designed for systems that require any of the following:
+EfCore.Boost is designed for systems that require any of the following:
 
 - structured database access boundaries  
 - predictable behavior across SQL Server, PostgreSQL, and MySQL  
@@ -130,7 +130,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     OnModelData(modelBuilder);
 }
 ```
-(In the example above, "log" is the default database-schema for your models)
+> *(In the example above, "log" is the default database-schema for your models)*
 
 From there:
 

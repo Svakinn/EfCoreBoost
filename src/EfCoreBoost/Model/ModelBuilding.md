@@ -451,7 +451,11 @@ Defaults when no attribute is specified:
 - **string**: EF Core default mapping (`text` / provider equivalent), equivalent to `[Text]`
 - **decimal**: `decimal(19,4)` (previously provider-specific, now unified)
 
-Boost **does not** enforce precision conventions for `float` or `double`; only `decimal` is covered.
+Boost intentionally does **not** enforce precision conventions for `float` or `double`.  
+In application-level data modeling, `decimal` is the natural choice for fixed-precision values such as money, rates, and quantities. 
+It provides deterministic precision across providers and avoids rounding artifacts inherent in binary floating-point types.  
+`float` and `double` are designed for scientific and computational scenarios where approximate values and wide dynamic range are more important than exact decimal representation.  
+For this reason, Boost standardizes precision for `decimal` only.
 
 ---
 
@@ -518,6 +522,33 @@ Default (no attribute): `decimal(19,4)`.
 >
 > Explicit precision configuration always overrides Boost conventions.
 
+---
+
+### Date and time types
+
+Boost standardizes timestamp handling to avoid provider-specific ambiguity.
+
+Recommended usage:
+
+- Use `DateTimeOffset` for persisted timestamps.
+- Store all timestamps in UTC.
+- Convert to local time only at UI boundaries.
+
+Boost ensures:
+
+- SQL Server uses `datetime2`
+- PostgreSQL uses `timestamp without time zone`
+- MySQL sessions are forced to UTC
+
+Boost does not rely on database-local timezone interpretation.
+Application code is responsible for consistent UTC storage.
+
+This prevents:
+
+- server timezone drift
+- daylight saving surprises
+- cross-environment inconsistencies
+- replication confusion
 
 ---
 

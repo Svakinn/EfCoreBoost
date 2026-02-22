@@ -52,17 +52,17 @@ The following example shows how we use a **DbConnections** section to define thr
 
     "PgCoreDb": {
       "Provider": "PostgreSql",
-      "ConnectionString": "Host=127.0.0.1;Port=5432;Username=Core;Password=Svaki2001.;Database=postgres"
+      "ConnectionString": "Host=127.0.0.1;Port=5432;Username=Core;Password=ThePsw2001.;Database=postgres"
     },
 
     "MyCoreDb": {
       "Provider": "MySql",
-      "ConnectionString": "server=127.0.0.1;port=3306;database=TestDb;user=Core;password=Svaki2001.;TreatTinyAsBoolean=false;SslMode=none;AllowPublicKeyRetrieval=True;"
+      "ConnectionString": "server=127.0.0.1;port=3306;database=TestDb;user=Core;password=ThePsw2001.;TreatTinyAsBoolean=false;SslMode=none;AllowPublicKeyRetrieval=True;"
     },
 
     "LogsDb": {
       "Provider": "MySql",
-      "ConnectionString": "server=127.0.0.1;port=3306;database=Logs;user=Core;password=Svaki2001.;TreatTinyAsBoolean=false;SslMode=none;AllowPublicKeyRetrieval=True;"
+      "ConnectionString": "server=127.0.0.1;port=3306;database=Logs;user=Core;password=ThePsw2001.;TreatTinyAsBoolean=false;SslMode=none;AllowPublicKeyRetrieval=True;"
     }
   }
 }
@@ -96,7 +96,6 @@ public class DbTestContextFactory : IDesignTimeDbContextFactory<DbTest>
             new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .Build();
-
         return SecureContextFactory.CreateDbContext<DbTest>(configuration);
     }
 }
@@ -148,6 +147,15 @@ var uowDefault = new UOWTestDb(configuration);
 // 3. Custom connection name resolved from configuration
 // Allows caller or environment to decide which database to target
 var uowCustom = new UOWTestDb(configuration, configuration["MyChosenOne"]);
+
+// 4. Typical usage would be to inject factory for uow into the application like this:
+b.Services.AddScoped<IUowTestDbFactory, UowTestDbFactory>();
+//Where the factory code is something like this:
+    public sealed class UowTestDbFactory(IConfiguration cfg) : IUowTestDbFactory
+    {
+        public IUowTestDb Create(string? cfgName = null) => 
+           new UowTestDb(cfg, string.IsNullOrWhiteSpace(cfgName) ? cfg["DefaultAppConnName"]! : cfgName);
+    }
 ```
 ---
 ## About Azure connections
@@ -163,15 +171,20 @@ There are multiple ways to connect to Azure SQL:
 ⚠️ Note: Managed Identity only works when running in an Azure-hosted environment (e.g., App Service, Function App, VM, etc.)  
 
 ---
-## ✅ Best Practices
+## ✅ Appendix: Best Practices for Secrets
+
+Secrets management is not glamorous. It is repetitive. It is sometimes boring. And it is never repeated enough.
+Passwords, keys, and connection strings deserve deliberate handling. Most security incidents are not caused by exotic exploits but by carelessness, copy-paste accidents, 
+or forgotten test credentials that quietly ship to production.
 
 - Do **not** commit secrets (passwords/keys) into version-controlled config files.
 - Use environment variables at deployment time.
 - Set variables per user on Windows (especially with IIS); per process/service on Linux.
 - Azure Key Vault integration is not currently included, as it is primarily relevant for Azure-only deployments. This can be added later if required.
-- Support for Windows Credential Store is not implemented either. If you assign a real user to your App Pool, local environment variables provide sufficient security.
+- Support for Windows Credential Store is not implemented either. If you assign a real user to your App Pool, local environment variables provide sufficient isolation.
 - Avoid using system-wide environment variables for sensitive data on production servers.
-
+- Never reuse production passwords in development environments.
+- Rotate service credentials periodically, especially for long-lived APIs and background workers.
 ---
 
 **Environment variable override:**

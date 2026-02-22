@@ -50,7 +50,6 @@ Provides everything from ReadRepo, plus:
 - add / update / delete operations
 - bulk delete by primary key
 - bulk insert
-- higher-level OData helpers
 
 ---
 

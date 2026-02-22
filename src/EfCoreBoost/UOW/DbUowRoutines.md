@@ -10,7 +10,7 @@ The goals are:
 - Clear mapping to EfBoost `RunRoutine*` helpers
 
 Output parameters exist per engine, but do **not** behave uniformly.  
-DbRepo’s cross-platform contract avoids them completely.  
+EfCore.Boost cross-platform contract avoids them completely.  
 To be clear you can use OUT / INOUT / OUTPUT parameters in code intentended for a specific provider.  
 However if you do **your .net code is no longer portable across database engines**.
 
@@ -57,8 +57,46 @@ async Task<string?> RunRoutineStringAsync (string schema, string routineName, Li
   - Or scalar-returning function (PostgreSQL)
 - No OUT / INOUT / OUTPUT parameters.
 
-DbRepo executes the routine as a command and reads the first column of the first row into the requested CLR type.
+The underlying `DbContext` executes the routine as a command and reads the first column of the first row into the requested CLR type.
 
+**Example usage (your method inside the UOW):**
+```csharp 
+public async Task<long?> GetMaxIdByChanger(string changer)
+{
+    var paList = new List<DbParmInfo> { new("@Changer", changer) };
+    return await RunRoutineLongAsync("my", "GetMaxIdByChanger", paList);
+}
+```
+
+**Example routines from our TestDb:**  
+Stored procedure for MySQL and SQL Server.  
+Function for PostgreSQL.  
+All are mapped uniformly by the `RunRoutineLongAsync` method.
+```SQL 
+DELIMITER $$
+-- MySQL procedure test scalar result
+CREATE PROCEDURE my_GetMaxIdByChanger(IN Changer VARCHAR(50))
+BEGIN
+    SELECT MAX(Id) FROM my_MyTable WHERE LastChangedBy = Changer;
+END$$
+```
+```SQL
+-- Postgres function test scalar result
+CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(Changer VARCHAR(50)) RETURNS BIGINT AS $$
+BEGIN
+    RETURN (SELECT MAX("Id") FROM my."MyTable" WHERE "LastChangedBy" = Changer );
+END;
+$$ LANGUAGE plpgsql;
+```
+```SQL 
+-- SQL Server procedure test scalar result
+Create PROCEDURE [my].[GetMaxIdByChanger](@Changer nvarchar(50)) AS
+BEGIN
+	SET NOCOUNT ON;
+    SELECT max(Id) from my.MyTable where LastChangedBy = @Changer;
+END
+go
+```
 ---
 
 ### 1.3 Tabular routines (simple scalar lists)
@@ -77,6 +115,19 @@ async Task<List<string>> RunRoutineStringListAsync (string schema, string routin
 - Data is returned via SELECT.
 - No OUT / INOUT parameters.
 
+**Example usage:**
+```csharp 
+public async Task<List<long>> GetNextSequenceIds(int count)
+{
+    var paList = new List<DbParmInfo> { new("@IdCount", count) };
+    return await this.RunRoutineLongListAsync("my", "ReserveMyIds", paList);
+}
+```
+or simplified (for .NET 8) as
+```csharp 
+public async Task<List<long>> GetNextSequenceIds(int count) =>
+    await RunRoutineLongListAsync("my", "ReserveMyIds", [new("@IdCount", count)]);
+```
 ---
 
 ### 1.4 Fully tabular routines
@@ -95,11 +146,14 @@ IQueryable<T> RunRoutineQuery<T>(string schema, string routineName, List<DbParmI
 - Returned via SELECT.
 - No OUT / INOUT parameters.
 
-Example usage:
+**Example usage:**
 
 ```csharp 
-var items = await RunRoutineQuery<CurrentMenuItemsV>("my", "GetCurrentMenuItemsForSession",  
-    [ new("@SessionId", sessionId) ]).AsNoTracking().ToListAsync();
+public async Task<List<CurrentMenuItemsV>> GetCurrentMenuItemsForSession(long myId)
+{
+    return await RunRoutineQuery<CurrentMenuItemsV>("my", "GetCurrentMenuItemsForSession",  
+        [ new("@SessionId", sessionId) ]).AsNoTracking().ToListAsync();
+}
 ```  
 
 ---
@@ -135,6 +189,13 @@ Schema + Routine Name:
 schema: "my"  
 routine: "GetMaxIdByChanger"
 ```  
+**UOW usage:**
+
+```csharp 
+public async Task<long?> GetMaxIdByChanger(string changer) {
+    return await RunRoutineLongAsync("my", "GetMaxIdByChanger", [ new("@Changer", changer) ]);
+}
+```  
 
 ---
 
@@ -143,20 +204,8 @@ routine: "GetMaxIdByChanger"
 - Schema is real SQL schema.
 - Routine name is unchanged.
 
-```csharp 
-CREATE PROCEDURE [my].[GetMaxIdByChanger](@Changer nvarchar(50)) AS  
-BEGIN  
-    SET NOCOUNT ON;  
-    SELECT MAX(Id) AS MaxId  
-    FROM my.MyTable WHERE LastChangedBy = @Changer;  
-END;
-```  
-
-UoW call:
-
-```csharp 
-await RunRoutineLongAsync("my", "GetMaxIdByChanger",  
-    [ new("@Changer", changer) ]);
+```SQL 
+CREATE PROCEDURE [my].[GetMaxIdByChanger](@Changer nvarchar(50)) AS ... 
 ```  
 
 ---
@@ -167,26 +216,9 @@ await RunRoutineLongAsync("my", "GetMaxIdByChanger",
 - Implemented as a FUNCTION for scalar logic.
 - Function name is wrapped in double quotes.
 
-```csharp 
-CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(Changer text) RETURNS bigint LANGUAGE plPgSQL AS $$  
-DECLARE  
-    result bigint;  
-BEGIN  
-    SELECT MAX("Id")  
-    INTO result  
-    FROM my."MyTable" WHERE "LastChangedBy" = Changer;  
-    RETURN result;  
-END;  
-$$;
+```SQL
+CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(Changer text) RETURNS bigint LANGUAGE plPgSQL AS $$ ...
 ```  
-
-Call:
-
-```csharp 
-SELECT my."GetMaxIdByChanger"('Sveinn');
-```  
-
-Still consumed via RunRoutineLongAsync.   
 
 Note: When referencing object names in PostgreSQL, use double quotes to preserve casing since migrations build Case-Sensitive names for Postgres.
 
@@ -196,83 +228,15 @@ Note: When referencing object names in PostgreSQL, use double quotes to preserve
 
 MySQL uses schema prefix → name composition rule:
 
-Logical:
-
-```csharp 
-my.GetMaxIdByChanger
-```  
-
-Becomes physical:
-
-```csharp 
-my_GetMaxIdByChanger
-```  
-
-Implementation:
-
-```csharp 
-DELIMITER $$
-CREATE PROCEDURE my_GetMaxIdByChanger(IN Changer VARCHAR(50))  
-BEGIN  
-    SELECT MAX(Id) AS MaxId  
-    FROM my_MyTable WHERE LastChangedBy = Changer;  
-END$$  
-DELIMITER ;
+```SQL 
+CREATE PROCEDURE my_GetMaxIdByChanger(IN Changer VARCHAR(50)) ... 
 ```  
 
 DbRepo resolves this automatically.
 
 ---
 
-## 4. Example Summary: GetMaxIdByChanger Everywhere
-
-### SQL Server
-```csharp 
-CREATE PROCEDURE [my].[GetMaxIdByChanger](@Changer nvarchar(50)) AS  
-BEGIN  
-    SET NOCOUNT ON;  
-    SELECT MAX(Id) AS MaxId  
-    FROM my.MyTable  
-    WHERE LastChangedBy = @Changer;  
-END;
-```  
-
-### MySQL
-```csharp 
-DELIMITER $$  
-CREATE PROCEDURE my_GetMaxIdByChanger(IN Changer VARCHAR(50))  
-BEGIN  
-    SELECT MAX(Id) AS MaxId  
-    FROM my_MyTable WHERE LastChangedBy = Changer;  
-END$$  
-DELIMITER ;
-```  
-
-### PostgreSQL
-```csharp 
-CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(Changer text) RETURNS bigint LANGUAGE plPgSQL AS $$  
-DECLARE  
-    result bigint;  
-BEGIN  
-    SELECT MAX("Id") INTO result  
-    FROM my."MyTable" WHERE "LastChangedBy" = Changer;  
-    RETURN result;  
-END;  
-$$;
-```  
-
-### Unified UoW Call
-
-```csharp 
-public async Task<long?> GetMaxIdByChangerAsync(string changer)  
-{  
-    return await RunRoutineLongAsync("my", "GetMaxIdByChanger", [new("@Changer", changer)]);  
-}
-```  
-
----
-
-## 5. Official EfBoost Doctrine
+## 4. Official EfBoost Doctrine
 
 1 Tabular → SELECT → RunRoutineQuery or List helpers  
 2 Scalar → scalar SELECT / function return → RunRoutineScalar helpers  
