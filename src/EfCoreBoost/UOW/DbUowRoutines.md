@@ -67,6 +67,18 @@ public async Task<long?> GetMaxIdByChanger(string changer)
     return await RunRoutineLongAsync("my", "GetMaxIdByChanger", paList);
 }
 ```
+or
+```csharp 
+public async Task<long?> GetMaxIdByChanger(string changer)
+{
+    return await RunRoutineLongAsync("my", "GetMaxIdByChanger", [new("@Changer", changer)]);
+}
+```
+even
+```csharp 
+public async Task<long?> GetMaxIdByChanger(string changer) => await RunRoutineLongAsync("my", "GetMaxIdByChanger", [new("@Changer", changer)]);
+}
+```
 
 **Example routines from our TestDb:**  
 Stored procedure for MySQL and SQL Server.  
@@ -119,15 +131,10 @@ async Task<List<string>> RunRoutineStringListAsync (string schema, string routin
 ```csharp 
 public async Task<List<long>> GetNextSequenceIds(int count)
 {
-    var paList = new List<DbParmInfo> { new("@IdCount", count) };
-    return await this.RunRoutineLongListAsync("my", "ReserveMyIds", paList);
+    return await this.RunRoutineLongListAsync("my", "ReserveMyIds", [new("@IdCount", count)]);
 }
 ```
-or simplified (for .NET 8) as
-```csharp 
-public async Task<List<long>> GetNextSequenceIds(int count) =>
-    await RunRoutineLongListAsync("my", "ReserveMyIds", [new("@IdCount", count)]);
-```
+
 ---
 
 ### 1.4 Fully tabular routines
@@ -151,8 +158,7 @@ IQueryable<T> RunRoutineQuery<T>(string schema, string routineName, List<DbParmI
 ```csharp 
 public async Task<List<CurrentMenuItemsV>> GetCurrentMenuItemsForSession(long myId)
 {
-    return await RunRoutineQuery<CurrentMenuItemsV>("my", "GetCurrentMenuItemsForSession",  
-        [ new("@SessionId", sessionId) ]).AsNoTracking().ToListAsync();
+    return await RunRoutineQuery<CurrentMenuItemsV>("my", "GetCurrentMenuItemsForSession", [ new("@SessionId", sessionId) ]).ToListAsync();
 }
 ```  
 

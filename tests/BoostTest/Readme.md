@@ -102,7 +102,7 @@ The container-backed tests validate:
 
 In short: this is an **integration test suite by design**, and the tests double as executable documentation.
 
-See [UnitTestContainers.cs](./UnitTestContainers.cs#L351-L474) for the actual test code.
+See [UnitTestContainers.cs](./UnitTestContainers.cs#L292-L411) for the actual test code.
 And [SmokeTest.md](./SmokeTest.md) for more details about the smoke test.
 
 ### Requirements to run container-based tests
@@ -115,12 +115,12 @@ To run these tests locally or in CI, the following are required:
 
 Testcontainers communicates directly with Docker. If Docker is unavailable or not running, the container-based tests will fail before any test logic is executed.
 
-See [TestConteiners.md](./TestConteiners.md) for more details.
+See [TestContainers.md](./TestContainers.md) for more details.
 
 For environments where containers cannot be used (for example, Azure SQL), a different testing strategy is required. That setup is covered in a dedicated section of this documentation.
 
 ## Azure SQL note
 
 SQL Server can be tested with containers, but **Azure SQL cannot**.  
-You need a real Azure SQL database for that. Create an emtpy database named `TestDb` in your Azure SQL server, and configure access using a managed identity or service principal.  
+You need a real Azure SQL database for that. Create an empty database named `TestDb` in your Azure SQL server, and configure access using a managed identity or service principal.  
 See [TestAzure.md](./TestAzure.md) for more details.

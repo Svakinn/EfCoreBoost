@@ -23,13 +23,9 @@ using BoostTest.TestDb;
 
 namespace BoostTest
 {
-    /// <summary>
-    ///
-    /// </summary>
     [TestClass]
     public class BoostTestContainers
     {
-
         /// <summary>
         /// Builds configuration from the base AppSettings.json + in-memory overrides for test DB connection
         /// </summary>
@@ -66,7 +62,6 @@ namespace BoostTest
                 await BasicSmokeAsync(uow, uowV);
             }
         }
-
 
         [TestMethod]
         public async Task Uow_MsSql_Test()

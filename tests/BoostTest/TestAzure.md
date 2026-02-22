@@ -6,17 +6,17 @@ For that reason, EfCore.Boost includes a dedicated Azure test path that targets 
 This doc explains:
 - how the Azure test is wired
 - what you need to provision in Azure
-- how the test safely skips itself when Azure isn’t configured
+- how the test safely skips itself when Azure isnï¿½t configured
 - what the helper SQL scripts do
 
-> Further reading: container-based testing is documented in `TestConteiners.md`.
+> Further reading: container-based testing is documented in [TestContainers.md](./tests/BoostTest/TestContainers.md).
 
 ---
 
 ## Why Azure is different
 
 Azure SQL is a managed service:
-- you cannot spin up “Azure SQL” locally as a faithful Docker container
+- you cannot spin up ï¿½Azure SQLï¿½ locally as a faithful Docker container
 - authentication is commonly integrated with **Microsoft Entra ID** (formerly Azure AD)
 - database creation and permissions are controlled by Azure roles and firewall rules
 
@@ -43,7 +43,7 @@ The tests authenticate using a service identity:
 - either a managed identity (recommended for CI inside Azure)
 - or an Entra ID app registration (service principal) with a client secret
 
-Entra ID is Microsoft’s identity system used by Azure services.  
+Entra ID is Microsoftï¿½s identity system used by Azure services.  
 In practice, you create an identity, then grant it access to the SQL database.
 
 ---
