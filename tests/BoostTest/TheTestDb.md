@@ -225,7 +225,7 @@ In this example, the routine `ReserveMyIds` is expected to return a **set of num
 
 On SQL Server, `ReserveMyIds` is implemented as a **stored procedure**.
 
-**Invocation (conceptual):**
+**Native SQL-Invocation:**
 
 ```sql
 EXEC [my].[ReserveMyIds] @IdCount = @IdCount;
@@ -247,7 +247,7 @@ END
 
 On MySQL, `ReserveMyIds` is also implemented as a **stored procedure**.
 
-**Invocation (conceptual):**
+**Native SQL-Invocation:**
 
 ```sql
 CALL my_ReserveMyIds(?);
@@ -269,7 +269,7 @@ END
 
 On PostgreSQL, `ReserveMyIds` is implemented as a **function returning a table**.
 
-**Invocation (conceptual):**
+**Native SQL-Invocation:**
 
 ```sql
 SELECT * FROM my."ReserveMyIds"(@IdCount);
@@ -325,7 +325,6 @@ public async Task<long?> GetMaxIdByChanger(string changer)
 Here we use the helper function **``` RunRoutineLongAsync ```** to call a routine that returns scalar long value.  
 Same rules apply as in the above example.
 
-
 ---
 
 ### Parameterized view lookup
@@ -334,12 +333,7 @@ Same rules apply as in the above example.
 public async Task<List<MyTableRefView>> GetMyTableRefViewByMyIdAsync(long myId)
 {
     var paList = new List<DbParmInfo> { new("@MyId", myId) };
-    return await SetUpRoutineQuery<MyTableRefView>(
-            "my",
-            "GetMyTableRefViewByMyId",
-            paList)
-        .AsNoTracking()
-        .ToListAsync();
+    return await SetUpRoutineQuery<MyTableRefView>("my","GetMyTableRefViewByMyId", paList).ToListAsync();
 }
 ```
 

@@ -302,7 +302,7 @@ Model construction becomes more direct as well. Intent is expressed on the model
 - [BulkInserts.md](./src/EfCoreBoost/DbRepo/BulkInsert/BulkInserts.md) – bulk inserts  
 - [OData.md](./src/EfCoreBoost/DbRepo/OData/OData.md) – OData helpers  
 - [Configs.md](./src/EfCoreBoost/CFG/Configs.md) – Connection configuration
-- [Testing](./tests/BoostTest/Readme.md) – Testing & examples including [test containers](./tests/BoostTest/TestContainers.md), [the Azure test](./TestAzure.md), the [test database](./tests/BoostTest/TheTestDb.md) and the [smoke test](./tests/BoostTest/SmokeTest.md).
+- [Testing](./tests/BoostTest/Readme.md) – Testing & examples including [test containers](./tests/BoostTest/TestContainers.md), [the Azure test](./tests/BoostTest/TestAzure.md), the [test database](./tests/BoostTest/TheTestDb.md) and the [smoke test](./tests/BoostTest/SmokeTest.md).
  
 ---
 

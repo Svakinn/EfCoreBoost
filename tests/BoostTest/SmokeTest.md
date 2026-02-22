@@ -22,7 +22,7 @@ It validates that the **entire EfCore.Boost stack works end-to-end** on a real d
 - OData pipelines  
 
 If this test passes, the provider is considered functionally usable.  
-See [UnitTestContainers.cs](./UnitTestContainers.cs#L351-L474) for the actual test code.
+See [UnitTestContainers.cs](./UnitTestContainers.cs#L292-L411) for the actual test code.
 
 ---
 
