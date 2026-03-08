@@ -117,7 +117,7 @@ Of course this is the Ef´s IQueriable pattern, the repositiories expose.
 
 
 ```csharp
-var qry = uow.Users.QueryNoTrack()
+var qry = uow.Users.QueryUnTracked()
     .Where(u => u.IsActive && u.Role == "Admin");
 
 var admins = await qry.ToListAsync(ct); //ct being the cancellation token
@@ -140,7 +140,7 @@ Use when you intend to modify entities and save changes:
 
 ```csharp
 var admin = await uow.Users
-    .Query()
+    .QueryTracked()
     .Where(u => u.Id == 123)
     .FirstAsync(ct);
 
@@ -158,7 +158,7 @@ Use for APIs, reports, display data, analytics, background jobs — almost every
 
 ```csharp
 var users = await uow.Users
-    .QueryNoTrack()
+    .QueryUnTracked()
     .Where(u => u.IsActive)
     .OrderBy(u => u.LastName)
     .ToListAsync(ct);
@@ -173,38 +173,45 @@ This is your **default** read strategy.
 
 ---
 
-### 🔷 First & FirstNoTrack  
+### 🔷 RowTracked & RowUnTracked  
 *(why these exist, and yes this matches EF Core mental model)*
 
 EfBoost provides:
 
 ```csharp
-var user = await uow.Users.FirstNoTrackAsync(u => u.Email == email, ct);
+var user = await uow.Users.RowUnTrackedAsync(u => u.Email == email, ct);
 ```
 
 and
 
 ```csharp
-var user = await uow.Users.FirstAsync(u => u.Email == email, ct);
+var user = await uow.Users.RowTrackedAsync(u => u.Email == email, ct);
 ```
 
 This intentionally mirrors the **two dominant EF Core usage patterns**:
 
 | EF Pattern | EfBoost Equivalent |
 |-----------|--------------------|
-`Query()` + `FirstAsync()` | `FirstAsync(...)` |
-`QueryNoTrack()` + `FirstOrDefaultAsync()` | `FirstNoTrackAsync(...)` |
+`QueryTracked()` + `RowTrackedAsync()` | `RowUnTrackedAsync(...)` |
+`QueryUnTracked()` + `RowByKeyUnTrackedAsync()` | `RowByKeyTrackedAsync(...)` |
 
 So yes:
 ✔ These exist to support the familiar EF Core mental model,  
 but expressed with **clearer intent and safer defaults**.
+Instead of First, Single, FirstOrdefault  we supply Row- methods that behave like FirstOrDefault - no exeptions thrown.  
+
+If you still insist on using the First- or Single' pattern throwing errors, you can still use the IQueryable result for that though.  
+I.e.  
+```csharp 
+var user = await uow.Users.QueryUntracked().Where(tt => Id == 20).SingleAsync(ct);   //Thrhows error when 2 rows with same Id
+```
 
 Why this is useful:
 
 - Keeps code explicit about tracking vs non-tracking
 - Matches how developers already reason about EF queries
 - Avoids the “did someone forget AsNoTracking?” problem
-- Removes API noise (`QueryNoTrack()...FirstOrDefaultAsync()`) in favor of meaningful verbs
+- Removes API noise (`QueryUnTracked()...FirstOrDefaultAsync()`) in favor of meaningful verbs
 
 You still can absolutely build queries and call normal EF `.FirstOrDefaultAsync()` yourself.  
 These helpers just encode common intent more elegantly.
@@ -216,7 +223,7 @@ These helpers just encode common intent more elegantly.
 Yes, sometimes you will use EF directly:
 
 ```csharp
-var list = await uow.Users.QueryNoTrack()
+var list = await uow.Users.QueryUnTracked()
     .Where(u => u.IsActive)
     .ToListAsync(ct);
 ```
@@ -231,11 +238,11 @@ But repo helpers are valuable when you want:
 ✔ more readable intent  
 
 ```csharp
-var users = await uow.Users.QueryNoTrackAsync(u => u.IsActive, ct);
+var users = await uow.Users.QueryUnTrackedAsync(u => u.IsActive, ct);
 ```
 
 Same result, clearer meaning:  
-> “Give me a read-only list of matching users.”
+> “Give me a read-only, list of matching users.”
 
 Both are allowed. Use what keeps your code base consistent and expressive.
 
@@ -254,10 +261,10 @@ On almost every table
 
 EfBoost embraces that convention.
 
-So in addition to generic `ByKey(...)`, you get ergonomic helpers:
+So in addition to generic `RowByKeyUnTrackedAsync(...)`, you get ergonomic helpers:
 
 ```csharp
-var user = await uow.Users.ByIdNoTrackAsync(12345,ct);
+var user = await uow.Users.RowByIdUnTrackedAsync(12345,ct);
 ```
 
 No guessing.
@@ -290,7 +297,7 @@ Both paths enforce the same safety principles: OData is always applied on top of
 Apply OData behavior **onto a query you control**.
 
 ```csharp
-var baseQuery = uow.Users.QueryNoTrack()
+var baseQuery = uow.Users.QueryUnTracked()
     .Where(u => u.IsActive);
 
 var result = await uow.Users.FilterODataAsync(
@@ -394,7 +401,7 @@ It gives every entity (and view):
 - reliable **key lookup**
 - controlled and safe **OData integration**
 - real-world **bulk operations**
-- expressive helpers like `FirstNoTrackAsync`
+- expressive helpers like `RowUnTrackedAsync`
 - scale-aware streaming and existence checks
 - provider-aware behavior across SQL Server, PostgreSQL, and MySQL
 

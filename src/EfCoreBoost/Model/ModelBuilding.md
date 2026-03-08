@@ -499,6 +499,54 @@ Boost applies consistent provider-specific column definitions and safe defaults.
 
 Default (no attribute): EF Core default string mapping (`text` / provider equivalent), equivalent to `[Text]`.
 
+### Semantic string attributes
+
+However, if you want **more expressive intent on your columns**, EfBoost
+also provides a set of **semantic string attributes**. These can be used
+instead of the raw `Str*` attributes. They communicate the **purpose of
+the data** rather than just the maximum length of the column.
+
+Internally, Boost maps these semantic attributes to one of the standard
+string buckets:
+
+`StrCode`, `StrShort`, `StrMed`, `StrLong`, or `Text`.
+
+This keeps database schemas consistent while still allowing the model to
+clearly express *what the data represents*.
+
+| Attribute | Maps to | Typical usage |
+|---|---|---|
+|`CountryCode`|`StrCode`|ISO country codes (`IS`, `US`, `DE`).|
+|`CurrencyCode`|`StrCode`|ISO currency codes (`ISK`, `EUR`, `USD`).|
+|`LanguageCode`|`StrCode`|ISO language codes (`en`, `is`).|
+|`CultureCode`|`StrCode`|Culture identifiers such as locale codes (`en-GB`, `is-IS`).|
+|`MimeType`|`StrShort`|MIME content type identifiers.|
+|`AddressPostalCode`|`StrShort`|Postal or ZIP codes.|
+|`AddressStreetNumber`|`StrShort`|Street number part of an address.|
+|`AddressBuildingUnit`|`StrShort`|Apartment, suite, or building unit identifiers.|
+|`Phone`|`StrShort`|Telephone numbers.|
+|`UserName`|`StrShort`|Login or account user names.|
+|`Name`|`StrMed`|Names of people, entities, or objects.|
+|`Title`|`StrMed`|Titles or headings.|
+|`ExternalRef`|`StrMed`|Identifiers referencing external systems.|
+|`AddressStreetName`|`StrMed`|Street names in addresses.|
+|`AddressCity`|`StrMed`|City or town names.|
+|`AddressAdminArea`|`StrMed`|Administrative region, state, or province.|
+|`AddressRecepientName`|`StrMed`|Recipient name used in address fields.|
+|`Email`|`StrLong`|Email addresses.|
+|`Url`|`StrLong`|Web addresses or resource URLs.|
+|`FileName`|`StrLong`|File names including extensions.|
+|`Html`|`Text`|Stored HTML markup content.|
+|`Markdown`|`Text`|Markdown formatted content.|
+|`RichText`|`Text`|Rich text editor output.|
+|`Json`|`Text`|JSON structured content.|
+|`Editor`|`Text`|Editor JSON payloads such as TipTap content.|
+
+#### Notes
+
+-   Only **one string intent attribute** should be applied to a
+    property.
+
 ---
 
 ### Decimal precision intent
@@ -515,6 +563,8 @@ Boost enforces uniform precision and scale across providers for `decimal` only.
 | `Money` | 19,4 | Monetary values. |
 | `SortRank` | 38,19 | Ranking or scoring values. |
 | `Scientific` | 38,19 | High-precision scientific values. |
+| `Longitude` | 9,6 | Geocraphic longitude |
+| `Latitude` | 9,6 | Geocraphic latitude. |
 
 Default (no attribute): `decimal(19,4)`.
 > Of course, you may specify the standard EF Core precision attribute instead, for example:
@@ -552,6 +602,28 @@ This prevents:
 
 ---
 
+### Semantic marker attributes
+
+These attributes **do not change the database schema**.  
+They exist to express **common domain semantics and allow conventions**, tooling, or libraries to recognize standard column meanings.
+
+| Attribute | Applies to | Typical usage |
+|---|---|---|
+|`Media`|`byte[]`|Binary media content such as images, files, or attachments stored in the database.|
+|`Hash`|`byte[]`|Cryptographic hashes such as password hashes or integrity hashes.|
+|`Salt`|`byte[]`|Salt values used together with hashed secrets.|
+|`Encrypted`|`byte[]`|Encrypted binary payloads or encrypted field storage.|
+|`SigningKey`|`byte[]`|Binary signing keys or cryptographic key material used for token signing or verification.|
+|`SoftDelete`|`bool` or `DateTime`|Marks a column used for soft-delete state or deletion timestamp (for example `IsDeleted`).|
+|`LastChangedUtc`|`DateTime`|Timestamp for the last modification of the row.|
+|`CreatedUtc`|`DateTime`|Timestamp when the record was created.|
+|`ValidFromUtc`|`DateTime`|Start of a validity period for temporal data.|
+|`ValidToUtc`|`DateTime`|End of a validity period for temporal data.|
+|`ExpiresUtc`|`DateTime`|Expiration timestamp for temporary or expiring data.|
+|`Tenant`|`long`, `int`, or `Guid`|Tenant identifier used for multi-tenant data partitioning.|
+|`Status`|`int`, `short`, or `string`|Application-defined status or state indicator.|
+---
+
 ### Notes on usage
 
 - Only **one string** or **one decimal** intent attribute should be applied per property.
@@ -559,6 +631,93 @@ This prevents:
 - Floating-point types (`float`, `double`) are intentionally left untouched.
 - These attributes exist to keep models **portable, predictable, and consistent** across database providers.
 
+---
+
+### Example usage
+
+For a bulk insert demo we displayd this example model:
+```csharp
+[Index(nameof(LastChangedUtc), IsUnique = false, AllDescending = true)]
+[Index(nameof(SessionId), IsUnique = false)]
+[Index(nameof(Context), nameof(LastChangedUtc), nameof(SessionId), IsUnique = false)]
+public class ErrorLog
+{
+    [DbAutoUid]
+    public long Id { get; set; }
+    public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
+    public long? SessionId { get; set; }
+    public int Context { get; set; }
+    [StrMed]
+    public string? ErrorMsg { get; set; }
+    [Text]
+    public string? ErrorDetails { get; set; }
+    [ForeignKey(nameof(Context))]
+    public LogContext? LogContext { get; set; }
+    public int Tenant { get; set; } = 1;
+}
+
+[Index(nameof(Ctx), nameof(Tenant), IsUnique = true)]
+public class LogContext
+{
+    [DbAutoUid]
+    public int Id { get; set; }
+    public int Ctx { get; set; }
+    [StrMed]
+    public string Name { get; set; } = string.Empty;
+    [Text]
+    public string? Description { get; set; }
+    public int LogTypeId { get; set; } = 1;
+    public int Tenant { get; set; } = 1;
+}
+```
+We could make the model more expressive by using the semantic attributes provided by EfBoost.  
+These attributes describe the purpose of the data, enabling clearer domain models while also allowing conventions and tooling to infer appropriate database mappings.  
+
+Using these attributes is entirely optional. Projects may choose to rely only on the basic Str* attributes, or define their own semantic attributes and conventions following the same pattern.
+
+```csharp
+[Index(nameof(LastChangedUtc), IsUnique = false, AllDescending = true)]
+[Index(nameof(SessionId), IsUnique = false)]
+[Index(nameof(Context), nameof(LastChangedUtc), nameof(SessionId), IsUnique = false)]
+public class ErrorLog
+{
+    [DbAutoUid]
+    public long Id { get; set; }
+    [LastChangedUtc]
+    public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
+    [ExternalRef]
+    public long? SessionId { get; set; }  //Note: this point s to sessio-info record not current session record
+    [ExternalRef]
+    public int Context {  get; set; }
+    [Title]
+    public string? ErrorMsg { get; set; }
+    [Text]
+    public string? ErrorDetails { get; set; }
+    [ForeignKey(nameof(Context))]
+    public LogContext? LogContext { get; set; }
+    [Tenant]
+    public int Tenant { get; set; } = 1;
+}
+
+[Index(nameof(Ctx), nameof(Tenant), IsUnique = true)]
+public class LogContext
+{
+    [DbAutoUid]
+    public int Id { get; set; }
+    [ExternalRef]
+    public int Ctx { get; set; }
+    [Name]
+    public string Name { get; set; } = string.Empty;
+    [Text]
+    public string? Description { get; set; }
+    [ExternalRef]
+    public int LogTypeId { get; set; } = 1;
+    [Tenant]
+    public int Tenant { get; set; } = 1;
+}
+```
+
+---
 
 # Summary
 

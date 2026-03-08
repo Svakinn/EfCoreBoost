@@ -102,7 +102,7 @@ The container-backed tests validate:
 
 In short: this is an **integration test suite by design**, and the tests double as executable documentation.
 
-See [UnitTestContainers.cs](./UnitTestContainers.cs#L292-L411) for the actual test code.
+See [UnitTestContainers.cs](./UnitTestContainers.cs#L299-L451) for the actual test code.
 And [SmokeTest.md](./SmokeTest.md) for more details about the smoke test.
 
 ### Requirements to run container-based tests

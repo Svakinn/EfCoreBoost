@@ -68,14 +68,14 @@ public interface IReadRepo<T> where T : class
     /// <param name="ct">Cancellation token.</param>
     /// <param name="key">Primary key values in the correct order.</param>
     /// <returns>The entity if found; otherwise null.</returns>
-    Task<T?> RowByKeyUntrackedAsync(CancellationToken ct, params object[] key);
+    Task<T?> RowByKeyUnTrackedAsync(CancellationToken ct, params object[] key);
 
         /// <summary>
     /// Synchronous version of RowByKeyUnTrackedAsync (no-tracking query).
     /// </summary>
     /// <param name="key">Primary key values in the correct order.</param>
     /// <returns>The entity if found; otherwise null.</returns>
-    T? RowByKeyUntrackedSynchronized(params object[] key);
+    T? RowByKeyUnTrackedSynchronized(params object[] key);
 
     /// <summary>
     /// Returns the first entity matching a filter, without tracking.
@@ -83,14 +83,14 @@ public interface IReadRepo<T> where T : class
     /// <param name="filter">Predicate applied to the query.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The first matching entity; otherwise null.</returns>
-    Task<T?> RowUntrackedAsync(Expression<Func<T, bool>> filter, CancellationToken ct = default);
+    Task<T?> RowUnTrackedAsync(Expression<Func<T, bool>> filter, CancellationToken ct = default);
 
     /// <summary>
-    /// Synchronous version of RowUntrackedAsync.
+    /// Synchronous version of RowUnTrackedAsync.
     /// </summary>
     /// <param name="filter">Predicate applied to the query.</param>
     /// <returns>The first matching entity; otherwise null.</returns>
-    T? RowUntrackedSynchronized(Expression<Func<T, bool>> filter);
+    T? RowUntTackedSynchronized(Expression<Func<T, bool>> filter);
 
     /// <summary>
     /// Executes a no-tracking query and returns a list.
@@ -105,7 +105,7 @@ public interface IReadRepo<T> where T : class
     /// </summary>
     /// <param name="filter">Optional predicate. If null, returns all rows within the base scope.</param>
     /// <returns>Materialized list of entities.</returns>
-    List<T> QueryUntrackedSynchronized(Expression<Func<T, bool>>? filter = null);
+    List<T> QueryUnTrackedSynchronized(Expression<Func<T, bool>>? filter = null);
 
     /// <summary>
     /// Streams entities using async iteration (no tracking).
@@ -590,16 +590,16 @@ public interface IRepo<T> : IReadRepo<T> where T : class
 
 public interface ILongIdRepo<T> : IRepo<T> where T : class
 {
-    Task<T?> ByIdNoTrackAsync(long id);
-    T? ByIdNoTrackSynchronized(long id);
-    Task<T?> ByIdAsync(long id);
-    T? ByIdSynchronized(long id);
+    Task<T?> RowByIdUnTrackedAsync(long id);
+    T? RowByIdUnTrackedSynchronized(long id);
+    Task<T?> RowByIdTrackedAsync(long id);
+    T? RowByIdTrackedSynchronized(long id);
 }
 
 public interface ILongIdReadRepo<T> : IReadRepo<T> where T : class
 {
-    Task<T?> ByIdNoTrackAsync(long id);
-    T? ByIdNoTrackSynchronized(long id);
+    Task<T?> RowByIdUnTrackedAsync(long id);
+    T? RowByIdUnTrackedSynchronized(long id);
 }
 
 public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = DatabaseType.SqlServer) : IReadRepo<T> where T : class
@@ -620,10 +620,10 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     #region key-lookups
 
-    public Task<T?> RowByKeyUnTrackedAsync(params object[] key) => RowByKeyUntrackedAsync(CancellationToken.None, key);
-    public Task<T?> RowByKeyUntrackedAsync(CancellationToken ct, params object[] key) => DbSet.AsNoTracking().FirstOrDefaultAsync(BuildPkPredicate(key), ct);
+    public Task<T?> RowByKeyUnTrackedAsync(params object[] key) => RowByKeyUnTrackedAsync(CancellationToken.None, key);
+    public Task<T?> RowByKeyUnTrackedAsync(CancellationToken ct, params object[] key) => DbSet.AsNoTracking().FirstOrDefaultAsync(BuildPkPredicate(key), ct);
 
-    public T? RowByKeyUntrackedSynchronized(params object[] key) => DbSet.AsNoTracking().FirstOrDefault(BuildPkPredicate(key));
+    public T? RowByKeyUnTrackedSynchronized(params object[] key) => DbSet.AsNoTracking().FirstOrDefault(BuildPkPredicate(key));
 
         /// <summary>
     /// Multi-use build query from primary key values mapped to parameters
@@ -714,9 +714,9 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     #region queries
 
-    public async Task<T?> RowUntrackedAsync(Expression<Func<T, bool>> filter, CancellationToken ct = default) => await DbSet.AsNoTracking().FirstOrDefaultAsync(filter, ct);
+    public async Task<T?> RowUnTrackedAsync(Expression<Func<T, bool>> filter, CancellationToken ct = default) => await DbSet.AsNoTracking().FirstOrDefaultAsync(filter, ct);
 
-    public T? RowUntrackedSynchronized(Expression<Func<T, bool>> filter) =>  DbSet.AsNoTracking().FirstOrDefault(filter);
+    public T? RowUntTackedSynchronized(Expression<Func<T, bool>> filter) =>  DbSet.AsNoTracking().FirstOrDefault(filter);
 
     public async Task<List<T>> QueryUnTrackedAsync(Expression<Func<T, bool>>? filter = null, CancellationToken ct = default)
     {
@@ -726,7 +726,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
         return await query.ToListAsync(ct);
     }
 
-    public List<T> QueryUntrackedSynchronized(Expression<Func<T, bool>>? filter = null)
+    public List<T> QueryUnTrackedSynchronized(Expression<Func<T, bool>>? filter = null)
     {
         var query = DbSet.AsNoTracking().AsQueryable();
         if (filter != null)
@@ -894,7 +894,6 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfReadRepo<T>(dbContext, dbType), IRepo<T> where T : class
 {
     public IQueryable<T> QueryTracked() => DbSet;
-    //public new IQueryable<T> QueryUnTracked() => DbSet.AsNoTracking();
 
     public Task<T?> RowByKeyTrackedAsync(params object[] key) => RowByKeyTrackedAsync(CancellationToken.None, key);
     public Task<T?> RowByKeyTrackedAsync(CancellationToken ct, params object[] key) => DbSet.FindAsync(NormalizeKeyValues(key), ct).AsTask();
@@ -1818,10 +1817,10 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
 public class EfLongIdRepo<T> : EfRepo<T>, ILongIdRepo<T> where T : class
 {
     public EfLongIdRepo(DbContext ctx, DatabaseType dbType) : base(ctx, dbType) { }
-    public Task<T?> ByIdNoTrackAsync(long id) => RowByKeyUnTrackedAsync(id);
-    public T? ByIdNoTrackSynchronized(long id) => RowByKeyUntrackedSynchronized(id);
-    public Task<T?> ByIdAsync(long id) => RowByKeyTrackedAsync(id);
-    public T? ByIdSynchronized(long id) => RowByKeyTrackedSynchronized(id);
+    public Task<T?> RowByIdUnTrackedAsync(long id) => RowByKeyUnTrackedAsync(id);
+    public T? RowByIdUnTrackedSynchronized(long id) => RowByKeyUnTrackedSynchronized(id);
+    public Task<T?> RowByIdTrackedAsync(long id) => RowByKeyTrackedAsync(id);
+    public T? RowByIdTrackedSynchronized(long id) => RowByKeyTrackedSynchronized(id);
 
 }
 
@@ -1829,8 +1828,8 @@ public class EfLongIdRepo<T> : EfRepo<T>, ILongIdRepo<T> where T : class
 public class EfLongIdReadRepo<T> : EfReadRepo<T>, ILongIdReadRepo<T> where T : class
 {
     public EfLongIdReadRepo(DbContext ctx, DatabaseType dbType) : base(ctx, dbType) { }
-    public Task<T?> ByIdNoTrackAsync(long id) => RowByKeyUnTrackedAsync(id);
-    public T? ByIdNoTrackSynchronized(long id) => RowByKeyUntrackedSynchronized(id);
+    public Task<T?> RowByIdUnTrackedAsync(long id) => RowByKeyUnTrackedAsync(id);
+    public T? RowByIdUnTrackedSynchronized(long id) => RowByKeyUnTrackedSynchronized(id);
 }
 
 

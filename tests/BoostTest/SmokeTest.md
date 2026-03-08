@@ -22,7 +22,7 @@ It validates that the **entire EfCore.Boost stack works end-to-end** on a real d
 - OData pipelines  
 
 If this test passes, the provider is considered functionally usable.  
-See [UnitTestContainers.cs](./UnitTestContainers.cs#L292-L411) for the actual test code.
+See [UnitTestContainers.cs](./UnitTestContainers.cs#L299-L451) for the actual test code.
 
 ---
 
@@ -45,7 +45,7 @@ Everything that follows verifies runtime behavior rather than setup.
 ## 1. Basic insert and read
 
 ```csharp
-var myRow = await uow.MyTables.Query().FirstOrDefaultAsync();
+var myRow = await uow.MyTables.QueryTracked().FirstOrDefaultAsync();
 Assert.NotNull(myRow);
 ```
 
@@ -72,7 +72,7 @@ This validates:
 Then we verify that the row was actually persisted:
 
 ```csharp
-var found = await uow.MyTableRefs.QueryNoTrack()
+var found = await uow.MyTableRefs.QueryUnTracked()
     .FirstOrDefaultAsync(t => t.Id == refRow.Id);
 Assert.NotNull(found);
 ```
@@ -82,7 +82,7 @@ Assert.NotNull(found);
 ## 2. View lookup (and GUID auto-seeding)
 
 ```csharp
-var viewItem = await uow.MyTableRefViews.QueryNoTrack()
+var viewItem = await uow.MyTableRefViews.QueryUnTracked()
     .FirstOrDefaultAsync(tt => tt.RefId == refRow.Id);
 Assert.NotNull(viewItem);
 Assert.True((viewItem.RowID != Guid.Empty), "RowID should not be empty");
@@ -161,7 +161,7 @@ After explicitly inserting IDs 10 and 11, the next generated ID should be **12**
 
 ```csharp
 await uow.MyTables.BulkDeleteByIdsAsync([10]);
-var currIds = await uow.MyTables.QueryNoTrack().Select(tt => tt.Id).ToListAsync();
+var currIds = await uow.MyTables.QueryUnTracked().Select(tt => tt.Id).ToListAsync();
 
 Assert.False(currIds.Where(tt => tt == 10).Any(), "Bulkdelete failed, row 10 still exists");
 Assert.True(currIds.Where(tt => tt == 11).Any(), "Bulk inserted row not found");
@@ -177,7 +177,7 @@ Both bulk insert and bulk delete execute inside transactions automatically.
 ```csharp
 await uow.MyTables.BulkDeleteByIdsAsync([11]);
 await uow.MyTables.BulkInsertAsync([tt, tt2]);
-var row2 = await uow.MyTables.ByKeyNoTrackAsync(13);
+var row2 = await uow.MyTables.RowByKeyUnTrackedAsync(13);
 
 Assert.True(row2 != null, "Bulk-insert without identities fail");
 ```
@@ -224,7 +224,7 @@ try
     {
         uow.MyTables.Add(rb);
         await uow.SaveChangesAsync(ct);
-        var insideExists = await uow.MyTables.QueryNoTrack().AnyAsync(t => t.Id == rb.Id, cancellationToken: ct);
+        var insideExists = await uow.MyTables.QueryUnTracked().AnyAsync(t => t.Id == rb.Id, cancellationToken: ct);
 
         Assert.True(insideExists, "Row should be visible inside active transaction");
 
@@ -238,7 +238,7 @@ catch (Exception) { }
 After transaction:
 
 ```csharp
-var afterRollbackExists = await uow.MyTables.QueryNoTrack().AnyAsync(t => t.Id == rb.Id);
+var afterRollbackExists = await uow.MyTables.QueryUnTracked().AnyAsync(t => t.Id == rb.Id);
 
 Assert.False(afterRollbackExists, "Row should not exist after rollback");
 ```
@@ -251,13 +251,13 @@ Validates full rollback and transactional consistency.
 
 ```csharp
  var options = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow,"$filter=LastChangedBy eq 'Stefan'" );
- var baseQuery = uow.MyTables.QueryNoTrack();
+ var baseQuery = uow.MyTables.QueryUnTracked();
  var filtResult = await uow.MyTables.FilterODataAsync(baseQuery,options,null,true);
 
  Assert.True(filtResult.InlineCount > 0 && !filtResult.Results.Any(x => x.LastChangedBy != "Stefan"), "We expect to find Stefans, but only Stefans" );
 
  // Verify that data exist with linQ
- var normRow = await uow.MyTables.QueryNoTrack().Where(tt => tt.Id == -1).Include(tt => tt.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToListAsync();
+ var normRow = await uow.MyTables.QueryUnTracked().Where(tt => tt.Id == -1).Include(tt => tt.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToListAsync();
  
  Assert.True(normRow.Count > 0, "");
 ```
@@ -269,7 +269,7 @@ Validates EDM generation, filter parsing, and translation.
 ## 9. OData expand-as-include
 
 ```csharp
- var bq = uow.MyTables.QueryNoTrack();
+ var bq = uow.MyTables.QueryUnTracked();
  var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
  var plan = uow.MyTables.BuildODataQueryPlan(bq, options2, new ODataPolicy(AllowExpand: true), true);
  var plan2 = uow.MyTables.ApplyODataExpandAsInclude(plan);

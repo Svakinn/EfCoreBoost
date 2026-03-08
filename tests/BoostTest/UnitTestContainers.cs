@@ -314,7 +314,7 @@ namespace BoostTest
             Assert.IsNotNull(savedRef, "Faild fetching tracked row, just added");
             savedRef!.MyInfo = "Ref2";
             await uow.SaveChangesAsync();
-            var found = await uow.MyTableRefs.RowUntrackedAsync(tt => tt.Id == savedRef.Id);
+            var found = await uow.MyTableRefs.RowUnTrackedAsync(tt => tt.Id == savedRef.Id);
             Assert.IsNotNull(found,"Faild fetching untracked row, just saved");
             Assert.IsGreaterThan(origRowId, found.RowVersion, "Rowversion not incremented in the saved row " + found.RowVersion);
             //
@@ -472,7 +472,7 @@ namespace BoostTest
             Assert.IsNotNull(savedRef, "Faild fetching tracked row, just added");
             savedRef!.MyInfo = "Ref2";
             uow.SaveChangesSynchronized();
-            var found = await uow.MyTableRefs.RowUntrackedAsync(tt => tt.Id == savedRef.Id);
+            var found = await uow.MyTableRefs.RowUnTrackedAsync(tt => tt.Id == savedRef.Id);
             Assert.IsNotNull(found,"Faild fetching untracked row, just saved");
             Assert.IsGreaterThan(origRowId, found.RowVersion, "Rowversion not incremented in the saved row " + found.RowVersion);
             //
@@ -533,7 +533,7 @@ namespace BoostTest
             //
             uow.MyTables.BulkDeleteByIdsSynchronized([11]);
             uow.MyTables.BulkInsertSynchronized([tt, tt2]);
-            var row2 = uow.MyTables.RowByKeyUntrackedSynchronized(13);
+            var row2 = uow.MyTables.RowByKeyUnTrackedSynchronized(13);
             Assert.IsNotNull(row2, "Bulk-insert without identies fail");
             //While at it test the tracked by key lookup (slightly different key handling there)
             var row3 = uow.MyTables.RowByKeyTrackedSynchronized(13);

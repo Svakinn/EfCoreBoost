@@ -344,14 +344,13 @@ public partial class UOWLogs(IConfiguration cfg) : UowFactory<DbLogs>(cfg, "Logs
 using var uow = new UOWLogs(configuration);
 
 // Repository usage
-var recent = await uow.LoginLogs.Query()
+var recent = await uow.LoginLogs.QueryTracked()
     .OrderByDescending(x => x.CreatedUtc)
     .Take(20)
     .ToListAsync();
 
 // Tabular routine
 var viewData = await uow.GetMyViewData(sessionId)
-    .AsNoTracking()
     .ToListAsync();
 ```
 

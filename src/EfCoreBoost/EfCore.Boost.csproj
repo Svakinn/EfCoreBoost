@@ -23,7 +23,7 @@ Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, M
     Multiple Repo methods renamed:
       ByKeyAsync -> FindRowByKeyAsync
       ByKeyNoTrackAsync -> RowByKeyUnTrackedAsync
-      FirstNoTrackAsync -> RowUntrackedAsync
+      FirstNoTrackAsync -> RowUnTrackedAsync
       QueryNoTrack -> QueryUnTracked
       QueryNoTrackAsync -> QueryUnTrackedAsync
       StreamNoTrackAsync -> StreamUnTrackedAsync

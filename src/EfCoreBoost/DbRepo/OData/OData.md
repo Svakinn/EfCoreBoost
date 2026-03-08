@@ -135,7 +135,7 @@ Example secure pattern:
 
 ```csharp
 var baseQuery = _uow.Users
-    .QueryNoTrack()
+    .QueryUnTracked()
     .Where(u => u.TenantId == session.TenantId && u.IsActive);
 ```
 
@@ -370,7 +370,7 @@ Relevant test model:
 Even in tests, we start from a base query we own:
 
 ```csharp
-var baseQuery = uow.MyTables.QueryNoTrack(); // your security boundary normally goes here
+var baseQuery = uow.MyTables.QueryUnTracked(); // your security boundary normally goes here
 ```
 
 In a real API, this is where you apply tenant scoping, ACLs, soft-delete filters, etc.
@@ -385,7 +385,7 @@ From the smoke test:
 
 ```csharp
 var options = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=LastChangedBy eq 'Stefan'");
-var baseQuery = uow.MyTables.QueryNoTrack();
+var baseQuery = uow.MyTables.QueryUnTracked();
 var result = await uow.MyTables.FilterODataAsync(
     baseQuery,
     options,
@@ -463,7 +463,7 @@ From the smoke test:
 ```csharp
 var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')"
 );
-var baseQuery = uow.MyTables.QueryNoTrack();
+var baseQuery = uow.MyTables.QueryUnTracked();
 var plan = uow.MyTables.BuildODataQueryPlan(
     baseQuery,
     options2,
@@ -499,7 +499,7 @@ From the smoke test:
 
 ```csharp
 var opts = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow,"$filter=Id eq -1&$select=Id");
-var baseQuery = uow.MyTables.QueryNoTrack();
+var baseQuery = uow.MyTables.QueryUnTracked();
 var plan3 = uow.MyTables.BuildODataQueryPlan(
     baseQuery,
     opts,
@@ -540,7 +540,7 @@ The smoke test includes a shaped expand example (note: plan should be built from
 
 ```csharp
 var opts4 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
-var baseQuery = uow.MyTables.QueryNoTrack();
+var baseQuery = uow.MyTables.QueryUnTracked();
 var plan4 = uow.MyTables.BuildODataQueryPlan(
     baseQuery,
     opts4,

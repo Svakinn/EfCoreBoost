@@ -198,14 +198,14 @@ public partial class UOWLogs(IConfiguration cfg) : UowFactory<DbLogs>(cfg, "Logs
 
 ### Query with tracking
 ```csharp
-var recent = await uow.LoginLogs.Query().OrderByDescending(x => x.CreatedUtc).Take(20).ToListAsync();
+var recent = await uow.LoginLogs.QueryTracked().OrderByDescending(x => x.CreatedUtc).Take(20).ToListAsync();
 recent[0].Message = "Updated";
 await uow.SaveChangesAsync();
 ```
 
 ### Query without tracking
 ```csharp
-var sessions = await uow.SessionLogs.QueryNoTrack().Where(x => x.UserId == userId).ToListAsync();
+var sessions = await uow.SessionLogs.QueryUnTracked().Where(x => x.UserId == userId).ToListAsync();
 ```
 
 ### Run a routine
