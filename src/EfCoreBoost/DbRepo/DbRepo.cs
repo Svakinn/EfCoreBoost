@@ -667,6 +667,33 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
         return Expression.Lambda<Func<T, bool>>(body!, p);
     }
 
+    protected object?[] NormalizeKeyValues(params object[] key)
+    {
+        var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new InvalidOperationException($"Entity {typeof(T).Name} not found in model.");
+        var pk = et.FindPrimaryKey()?.Properties ?? throw new InvalidOperationException($"Entity {typeof(T).Name} has no primary key.");
+        if (pk.Count != key.Length) throw new ArgumentException("Key count mismatch.", nameof(key));
+        var result = new object?[pk.Count];
+        for (int i = 0; i < pk.Count; i++)
+        {
+            var prop = pk[i];
+            var clr = prop.ClrType;
+            var keyVal = key[i];
+            if (keyVal == null && clr.IsValueType && Nullable.GetUnderlyingType(clr) == null) throw new ArgumentException($"Null key value for non-nullable key '{prop.Name}'.", nameof(key));
+            try
+            {
+                result[i] = ConvertKeyValue(keyVal, clr);
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException(
+                    $"Key value '{keyVal}' ({(keyVal == null ? "Null" : keyVal.GetType().Name)}) cannot be converted to '{clr.Name}' for key '{prop.Name}'.",
+                    nameof(key),
+                    ex);
+            }
+        }
+        return result;
+    }
+
     private static object? ConvertKeyValue(object? value, Type targetType)
     {
         if (value == null) return null;
@@ -870,9 +897,9 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     //public new IQueryable<T> QueryUnTracked() => DbSet.AsNoTracking();
 
     public Task<T?> RowByKeyTrackedAsync(params object[] key) => RowByKeyTrackedAsync(CancellationToken.None, key);
-    public Task<T?> RowByKeyTrackedAsync(CancellationToken ct, params object[] key) => DbSet.FindAsync(key, ct).AsTask();
+    public Task<T?> RowByKeyTrackedAsync(CancellationToken ct, params object[] key) => DbSet.FindAsync(NormalizeKeyValues(key), ct).AsTask();
 
-    public T? RowByKeyTrackedSynchronized(params object[] key) => DbSet.Find(key);
+    public T? RowByKeyTrackedSynchronized(params object[] key) => DbSet.Find(NormalizeKeyValues(key));
 
     public Task<T?> RowTrackedAsync(Expression<Func<T, bool>> filter, CancellationToken ct = default) => DbSet.FirstOrDefaultAsync(filter, ct);
 

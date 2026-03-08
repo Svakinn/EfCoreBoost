@@ -378,6 +378,9 @@ namespace BoostTest
             await uow.MyTables.BulkInsertAsync([tt, tt2]);
             var row2 = await uow.MyTables.RowByKeyUnTrackedAsync(13);
             Assert.IsNotNull(row2, "Bulk-insert without identies fail");
+            //While at it test the tracked by key lookup (slightly different key handling there)
+            var row3 = await uow.MyTables.RowByKeyTrackedAsync(13);
+            Assert.IsNotNull(row3, "Tracked key lookup by Id, failed");
             //
             // Test scalar lookup
             //
@@ -532,6 +535,9 @@ namespace BoostTest
             uow.MyTables.BulkInsertSynchronized([tt, tt2]);
             var row2 = uow.MyTables.RowByKeyUntrackedSynchronized(13);
             Assert.IsNotNull(row2, "Bulk-insert without identies fail");
+            //While at it test the tracked by key lookup (slightly different key handling there)
+            var row3 = uow.MyTables.RowByKeyTrackedSynchronized(13);
+            Assert.IsNotNull(row3, "Tracked key lookup by Id, failed");
             //
             // Test scalar lookup
             //
