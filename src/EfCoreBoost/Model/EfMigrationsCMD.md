@@ -260,7 +260,6 @@ This script:
 
 
 ```powershell
-<#
 param(
     [string]$SolutionRoot,
     [string]$SqlOutFileName = "Migrations\DbDeploy_PgSQL.PgSQL"

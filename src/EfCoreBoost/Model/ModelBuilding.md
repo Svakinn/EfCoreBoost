@@ -252,6 +252,149 @@ EfBoost ensures identity behavior remains predictable during:
 
 ---
 
+# Concurrency Columns
+
+Handling row concurrency in EF Core is **not consistent across database providers**.
+
+Different databases rely on different mechanisms:
+
+| Provider | Typical mechanism |
+|---|---|
+| SQL Server | `rowversion` / `timestamp` |
+| PostgreSQL | `xmin` system column |
+| MySQL | triggers or manual version columns |
+
+Because these approaches differ in **column type, behavior, and EF configuration**, writing portable applications becomes difficult.
+
+EfBoost provides a **uniform cross-provider approach** to concurrency using a simple integer version column.
+
+---
+
+## Automatic Concurrency Handling 
+
+ [AutoIncrementConcurrency]
+
+Applied to an `int` or `long` property.
+
+Behavior:
+
+- the column is automatically incremented whenever the row changes
+- EF Core treats the column as a **concurrency token**
+- conflicting updates raise the standard EF Core `DbUpdateConcurrencyException`
+- behavior is consistent across SQL Server, PostgreSQL, and MySQL
+
+Benefits:
+
+- predictable cross-database behavior
+- no provider-specific column types
+- migration friendly
+- easy debugging and inspection
+
+Example:
+
+```csharp
+public class Product
+{
+    [DbAutoUid]
+    public long Id { get; set; }
+
+    [StrShort]
+    public string Name { get; set; }
+
+    [AutoIncrementConcurrency]
+    public long Version { get; set; }
+}
+```
+
+Whenever the row changes, the version value increments automatically.
+
+If another process updates the row first, EF Core detects the mismatch
+and throws a concurrency exception.
+
+------------------------------------------------------------------------
+
+## Automatic Versioning Without Exceptions
+
+EF Core's concurrency system is **strict by design**.
+
+If a concurrency token is present, EF Core **always enforces it**, which
+can cause problems in scenarios where the data layer is used for more
+than user edits, such as:
+
+-   data replication
+-   background synchronization
+-   import pipelines
+-   system maintenance tasks
+
+In these scenarios concurrency exceptions are often undesirable.
+
+EfBoost therefore provides an alternative attribute.
+
+    [AutoIncrement]
+
+Behavior:
+
+-   the column automatically increments whenever the row changes
+-   **no EF concurrency exception is triggered**
+-   the column can be used for **manual concurrency checks**
+
+Example:
+
+``` csharp
+public class Product
+{
+    [DbAutoUid]
+    public long Id { get; set; }
+
+    [StrShort]
+    public string Name { get; set; }
+
+    [AutoIncrement]
+    public long Version { get; set; }
+}
+```
+
+The version column still tracks row changes, but the application can
+decide **when and how to verify concurrency**.
+
+Typical pattern:
+
+``` csharp
+// retrieve current server version
+var serverVersion = await uow.Products
+    .QueryUnTracked()
+    .Where(p => p.Id == rowId)
+    .Select(p => p.Version)
+    .FirstAsync();
+
+// manual concurrency validation
+if (serverVersion != incoming.Version)
+    throw new ConcurrencyConflictException();
+```
+
+------------------------------------------------------------------------
+
+## Design Philosophy
+
+EfBoost separates **version tracking** from **conflict enforcement**.
+
+| Attribute | Behavior |
+|---|---|
+|`[AutoIncrementConcurrency]`|Automatically increments the version and enables EF Core concurrency enforcement.|
+|`[AutoIncrement]`|Automatically increments the version but leaves concurrency checks to the application.|
+
+This gives developers control to choose the appropriate model for each
+workload.
+
+Benefits:
+
+-   portable across database providers
+-   predictable migration behavior
+-   safer replication scenarios
+-   flexible concurrency strategies
+
+---
+
 # Cascade Delete Policy
 ## Pain Avoided on Purpose
 
