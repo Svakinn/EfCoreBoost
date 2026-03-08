@@ -23,9 +23,16 @@ namespace BoostTest.TestDb.Migrations.MsSQL.MgDbTest
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    RowVersion = table.Column<long>(type: "bigint", nullable: false),
                     RowID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    Heading = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    Balance = table.Column<decimal>(type: "decimal(19,4)", precision: 19, scale: 4, nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    Discount = table.Column<decimal>(type: "decimal(18,8)", precision: 18, scale: 8, nullable: false),
                     LastChanged = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    LastChangedBy = table.Column<string>(type: "nvarchar(50)", nullable: false)
+                    Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    LastChangedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -39,10 +46,13 @@ namespace BoostTest.TestDb.Migrations.MsSQL.MgDbTest
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    RowVersion = table.Column<long>(type: "bigint", nullable: false),
                     ParentId = table.Column<long>(type: "bigint", nullable: false),
-                    MyInfo = table.Column<string>(type: "nvarchar(256)", nullable: false),
+                    MyInfo = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(19,4)", precision: 19, scale: 4, nullable: false),
+                    Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     LastChanged = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    LastChangedBy = table.Column<string>(type: "nvarchar(50)", nullable: false)
+                    LastChangedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -59,22 +69,22 @@ namespace BoostTest.TestDb.Migrations.MsSQL.MgDbTest
             migrationBuilder.InsertData(
                 schema: "my",
                 table: "MyTable",
-                columns: new[] { "Id", "LastChanged", "LastChangedBy", "RowID" },
+                columns: new[] { "Id", "Balance", "Code", "Created", "Discount", "Heading", "LastChanged", "LastChangedBy", "RowID", "RowVersion", "Status" },
                 values: new object[,]
                 {
-                    { -2L, new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Stefan", new Guid("76768a9c-2682-4ebf-ab4e-3c19ba985b4d") },
-                    { -1L, new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Baldr", new Guid("f8c846fb-fa55-481c-bf42-9d67a1c334cb") }
+                    { -2L, 200m, "Mn", new DateTimeOffset(new DateTime(2026, 3, 8, 13, 7, 57, 553, DateTimeKind.Unspecified).AddTicks(7753), new TimeSpan(0, 0, 0, 0, 0)), 0m, "Mando", new DateTimeOffset(new DateTime(2026, 3, 8, 13, 7, 57, 553, DateTimeKind.Unspecified).AddTicks(7752), new TimeSpan(0, 0, 0, 0, 0)), "Stefan", new Guid("0dbf85d5-7e18-4c47-baf9-793f34448533"), 0L, 2 },
+                    { -1L, 350m, "BD", new DateTimeOffset(new DateTime(2026, 3, 8, 13, 7, 57, 553, DateTimeKind.Unspecified).AddTicks(7721), new TimeSpan(0, 0, 0, 0, 0)), 5m, "Baldo", new DateTimeOffset(new DateTime(2026, 3, 8, 13, 7, 57, 553, DateTimeKind.Unspecified).AddTicks(7719), new TimeSpan(0, 0, 0, 0, 0)), "Baldr", new Guid("896c798d-118f-42d5-8e8a-e2af6d4109fb"), 0L, 1 }
                 });
 
             migrationBuilder.InsertData(
                 schema: "my",
                 table: "MyTableRef",
-                columns: new[] { "Id", "LastChanged", "LastChangedBy", "MyInfo", "ParentId" },
+                columns: new[] { "Id", "Amount", "Created", "LastChanged", "LastChangedBy", "MyInfo", "ParentId", "RowVersion" },
                 values: new object[,]
                 {
-                    { -3L, new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Stefan", "OtherData", -2L },
-                    { -2L, new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Baldr", "BiggerData", -1L },
-                    { -1L, new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Baldr", "BigData", -1L }
+                    { -3L, 200m, new DateTimeOffset(new DateTime(2026, 3, 8, 13, 7, 57, 553, DateTimeKind.Unspecified).AddTicks(7850), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(2026, 3, 8, 13, 7, 57, 553, DateTimeKind.Unspecified).AddTicks(7850), new TimeSpan(0, 0, 0, 0, 0)), "Stefan", "OtherData", -2L, 0L },
+                    { -2L, 50m, new DateTimeOffset(new DateTime(2026, 3, 8, 13, 7, 57, 553, DateTimeKind.Unspecified).AddTicks(7848), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(2026, 3, 8, 13, 7, 57, 553, DateTimeKind.Unspecified).AddTicks(7849), new TimeSpan(0, 0, 0, 0, 0)), "Baldr", "BiggerData", -1L, 0L },
+                    { -1L, 300m, new DateTimeOffset(new DateTime(2026, 3, 8, 13, 7, 57, 553, DateTimeKind.Unspecified).AddTicks(7845), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(2026, 3, 8, 13, 7, 57, 553, DateTimeKind.Unspecified).AddTicks(7846), new TimeSpan(0, 0, 0, 0, 0)), "Baldr", "BigData", -1L, 0L }
                 });
 
             migrationBuilder.CreateIndex(

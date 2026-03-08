@@ -17,7 +17,7 @@ namespace BoostTest.TestDb.Migrations.PgSQL.MgDbTest
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.21")
+                .HasAnnotation("ProductVersion", "8.0.24")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
@@ -32,15 +32,43 @@ namespace BoostTest.TestDb.Migrations.PgSQL.MgDbTest
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<decimal>("Balance")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("numeric(19,4)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Discount")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("numeric(18,8)");
+
+                    b.Property<string>("Heading")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
                     b.Property<DateTimeOffset>("LastChanged")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastChangedBy")
                         .IsRequired()
-                        .HasColumnType("citext");
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
 
                     b.Property<Guid>("RowID")
                         .HasColumnType("uuid");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -55,16 +83,30 @@ namespace BoostTest.TestDb.Migrations.PgSQL.MgDbTest
                         new
                         {
                             Id = -1L,
-                            LastChanged = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Balance = 350m,
+                            Code = "BD",
+                            Created = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 31, 753, DateTimeKind.Unspecified).AddTicks(5730), new TimeSpan(0, 0, 0, 0, 0)),
+                            Discount = 5m,
+                            Heading = "Baldo",
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 31, 753, DateTimeKind.Unspecified).AddTicks(5729), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Baldr",
-                            RowID = new Guid("ac4b0a74-e0b6-42eb-b11c-71ac0db378be")
+                            RowID = new Guid("7ea1a206-4cea-4297-bc7e-b1bf15d56b27"),
+                            RowVersion = 0L,
+                            Status = 1
                         },
                         new
                         {
                             Id = -2L,
-                            LastChanged = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Balance = 200m,
+                            Code = "Mn",
+                            Created = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 31, 753, DateTimeKind.Unspecified).AddTicks(5820), new TimeSpan(0, 0, 0, 0, 0)),
+                            Discount = 0m,
+                            Heading = "Mando",
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 31, 753, DateTimeKind.Unspecified).AddTicks(5819), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Stefan",
-                            RowID = new Guid("caa5a062-c9bb-494f-bf9d-538e64f20b6a")
+                            RowID = new Guid("b398b742-2e81-4590-86d6-36e3cffe7f5d"),
+                            RowVersion = 0L,
+                            Status = 2
                         });
                 });
 
@@ -76,18 +118,30 @@ namespace BoostTest.TestDb.Migrations.PgSQL.MgDbTest
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("numeric(19,4)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("LastChanged")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastChangedBy")
                         .IsRequired()
-                        .HasColumnType("citext");
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
 
                     b.Property<string>("MyInfo")
                         .IsRequired()
-                        .HasColumnType("citext");
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
 
                     b.Property<long>("ParentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RowVersion")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
@@ -102,26 +156,35 @@ namespace BoostTest.TestDb.Migrations.PgSQL.MgDbTest
                         new
                         {
                             Id = -1L,
-                            LastChanged = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Amount = 300m,
+                            Created = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 31, 753, DateTimeKind.Unspecified).AddTicks(5935), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 31, 753, DateTimeKind.Unspecified).AddTicks(5935), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Baldr",
                             MyInfo = "BigData",
-                            ParentId = -1L
+                            ParentId = -1L,
+                            RowVersion = 0L
                         },
                         new
                         {
                             Id = -2L,
-                            LastChanged = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Amount = 50m,
+                            Created = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 31, 753, DateTimeKind.Unspecified).AddTicks(5938), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 31, 753, DateTimeKind.Unspecified).AddTicks(5938), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Baldr",
                             MyInfo = "BiggerData",
-                            ParentId = -1L
+                            ParentId = -1L,
+                            RowVersion = 0L
                         },
                         new
                         {
                             Id = -3L,
-                            LastChanged = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Amount = 200m,
+                            Created = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 31, 753, DateTimeKind.Unspecified).AddTicks(5939), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 31, 753, DateTimeKind.Unspecified).AddTicks(5939), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Stefan",
                             MyInfo = "OtherData",
-                            ParentId = -2L
+                            ParentId = -2L,
+                            RowVersion = 0L
                         });
                 });
 
@@ -132,6 +195,19 @@ namespace BoostTest.TestDb.Migrations.PgSQL.MgDbTest
 
                     b.Property<long>("MyId")
                         .HasColumnType("bigint");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("citext");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Heading")
+                        .HasColumnType("citext");
 
                     b.Property<DateTimeOffset>("LastChanged")
                         .HasColumnType("timestamp with time zone");
@@ -144,15 +220,18 @@ namespace BoostTest.TestDb.Migrations.PgSQL.MgDbTest
                         .IsRequired()
                         .HasColumnType("citext");
 
-                    b.Property<DateTimeOffset>("RefLastChanged")
+                    b.Property<DateTimeOffset>("ParLastChanged")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("RefLastChangedBy")
+                    b.Property<string>("ParLastChangedBy")
                         .IsRequired()
                         .HasColumnType("citext");
 
                     b.Property<Guid>("RowID")
                         .HasColumnType("uuid");
+
+                    b.Property<long>("RowVersion")
+                        .HasColumnType("bigint");
 
                     b.HasKey("RefId", "MyId");
 

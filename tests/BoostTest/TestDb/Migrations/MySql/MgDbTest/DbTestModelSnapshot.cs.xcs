@@ -17,7 +17,7 @@ namespace BoostTest.TestDb.Migrations.MySQL.MgDbTest
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.21")
+                .HasAnnotation("ProductVersion", "8.0.24")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
@@ -30,15 +30,43 @@ namespace BoostTest.TestDb.Migrations.MySQL.MgDbTest
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<decimal>("Balance")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("Discount")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<string>("Heading")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
                     b.Property<DateTimeOffset>("LastChanged")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("LastChangedBy")
                         .IsRequired()
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
 
                     b.Property<Guid>("RowID")
                         .HasColumnType("char(36)");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -53,16 +81,30 @@ namespace BoostTest.TestDb.Migrations.MySQL.MgDbTest
                         new
                         {
                             Id = -1L,
-                            LastChanged = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Balance = 350m,
+                            Code = "BD",
+                            Created = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 13, 991, DateTimeKind.Unspecified).AddTicks(5263), new TimeSpan(0, 0, 0, 0, 0)),
+                            Discount = 5m,
+                            Heading = "Baldo",
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 13, 991, DateTimeKind.Unspecified).AddTicks(5261), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Baldr",
-                            RowID = new Guid("e781aa56-299c-4e18-91cd-89cb1544fc3a")
+                            RowID = new Guid("f89f5a0d-79fd-4ad3-ad4d-afaa6bf1e421"),
+                            RowVersion = 0L,
+                            Status = 1
                         },
                         new
                         {
                             Id = -2L,
-                            LastChanged = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Balance = 200m,
+                            Code = "Mn",
+                            Created = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 13, 991, DateTimeKind.Unspecified).AddTicks(5296), new TimeSpan(0, 0, 0, 0, 0)),
+                            Discount = 0m,
+                            Heading = "Mando",
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 13, 991, DateTimeKind.Unspecified).AddTicks(5296), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Stefan",
-                            RowID = new Guid("6a3bf170-797c-40ba-ad8b-76e6ac34614a")
+                            RowID = new Guid("97c0bb6f-e332-4f24-9be3-70230036cef7"),
+                            RowVersion = 0L,
+                            Status = 2
                         });
                 });
 
@@ -74,18 +116,30 @@ namespace BoostTest.TestDb.Migrations.MySQL.MgDbTest
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTimeOffset>("LastChanged")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("LastChangedBy")
                         .IsRequired()
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
 
                     b.Property<string>("MyInfo")
                         .IsRequired()
+                        .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
 
                     b.Property<long>("ParentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RowVersion")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
@@ -100,26 +154,35 @@ namespace BoostTest.TestDb.Migrations.MySQL.MgDbTest
                         new
                         {
                             Id = -1L,
-                            LastChanged = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Amount = 300m,
+                            Created = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 13, 991, DateTimeKind.Unspecified).AddTicks(5400), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 13, 991, DateTimeKind.Unspecified).AddTicks(5401), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Baldr",
                             MyInfo = "BigData",
-                            ParentId = -1L
+                            ParentId = -1L,
+                            RowVersion = 0L
                         },
                         new
                         {
                             Id = -2L,
-                            LastChanged = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Amount = 50m,
+                            Created = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 13, 991, DateTimeKind.Unspecified).AddTicks(5402), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 13, 991, DateTimeKind.Unspecified).AddTicks(5403), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Baldr",
                             MyInfo = "BiggerData",
-                            ParentId = -1L
+                            ParentId = -1L,
+                            RowVersion = 0L
                         },
                         new
                         {
                             Id = -3L,
-                            LastChanged = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Amount = 200m,
+                            Created = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 13, 991, DateTimeKind.Unspecified).AddTicks(5404), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 8, 13, 8, 13, 991, DateTimeKind.Unspecified).AddTicks(5404), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Stefan",
                             MyInfo = "OtherData",
-                            ParentId = -2L
+                            ParentId = -2L,
+                            RowVersion = 0L
                         });
                 });
 
@@ -130,6 +193,19 @@ namespace BoostTest.TestDb.Migrations.MySQL.MgDbTest
 
                     b.Property<long>("MyId")
                         .HasColumnType("bigint");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Heading")
+                        .HasColumnType("longtext");
 
                     b.Property<DateTimeOffset>("LastChanged")
                         .HasColumnType("datetime(6)");
@@ -142,15 +218,18 @@ namespace BoostTest.TestDb.Migrations.MySQL.MgDbTest
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<DateTimeOffset>("RefLastChanged")
+                    b.Property<DateTimeOffset>("ParLastChanged")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("RefLastChangedBy")
+                    b.Property<string>("ParLastChangedBy")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<Guid>("RowID")
                         .HasColumnType("char(36)");
+
+                    b.Property<long>("RowVersion")
+                        .HasColumnType("bigint");
 
                     b.HasKey("RefId", "MyId");
 

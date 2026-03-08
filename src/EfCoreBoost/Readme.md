@@ -3,7 +3,7 @@
 
 A disciplined **Unit of Work + Repository + Routine + Model Building** layer for Entity Framework Core that makes database access **structured**, **portable**, and **powerful** across **SQL Server**, **PostgreSQL**, and **MySQL**.
 
-EfCore.Boost isn’t here to replace EF Core. It is designed for systems that require any of the following:
+EfCore.Boost is designed for systems that require any of the following:
 
 - structured database access boundaries  
 - predictable behavior across SQL Server, PostgreSQL, and MySQL  
@@ -13,8 +13,7 @@ EfCore.Boost isn’t here to replace EF Core. It is designed for systems that re
 - consistent transactional semantics  
 - architecture that remains maintainable as systems grow  
 
-EF Core remains the ORM.  
-EfBoost strengthens how EF is used in real applications.
+EfBoost strengthens how EF Core is used in real applications.
 
 ------------------------------------------------------------------------
 

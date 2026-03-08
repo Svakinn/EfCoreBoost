@@ -4,6 +4,7 @@
 using Azure.Core;
 using Azure.Identity;
 using EfCore.Boost.CFG;
+using EfCore.Boost.Model;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -67,6 +68,7 @@ namespace EfCore.Boost
             var list = custom?.ToList() ?? new List<IInterceptor>();
             if (useUtcSession)
                 list.Add(new UtcSessionInterceptor());
+            list.Add(new AutoIncrementConcurrencyInterceptor());
             return list;
         }
 
@@ -82,8 +84,8 @@ namespace EfCore.Boost
            int retryCount = 5,             // intended for azure only
            int maxRetryDelaySeconds = 30,  // intended for azure only
            int? commandTimeoutSeconds = 60 //Set null to skip.
-
         )
+
         where T : DbContext
         {
             var prov = NormalizeProvider(provider);

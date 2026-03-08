@@ -20,6 +20,7 @@ using Testcontainers.MySql;
 using Testcontainers.PostgreSql;
 using BoostTest.Helpers;
 using BoostTest.TestDb;
+using Microsoft.AspNetCore.Builder;
 
 namespace BoostTest
 {
@@ -54,90 +55,92 @@ namespace BoostTest
         [TestMethod]
         public async Task Uow_Azure_Test()
         {
-            var (uow, uowV) = await PrepareAzureAccess();
-            if (uow == null || uowV == null) throw new Exception("Azure SQL access not properly configured, test should have been skipped !");
+            var (uow, uow2, uowV) = await PrepareAzureAccess();
+            if (uow == null || uow2 == null || uowV == null)
+                Assert.Inconclusive("Azure SQL access not properly configured. Skip this test!");
             using (uowV)
+            using (uow2)
             using (uow)
             {
-                await BasicSmokeAsync(uow, uowV);
+                await BasicSmokeAsync(uow, uow2, uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_MsSql_Test()
         {
-            var (container, uow, uowV) = await PrepareMsSqlContainer();
-            if (uow == null || uowV == null) throw new Exception("MS SQL access not properly configured, test should have been skipped !");
+            var (container, uow, uow2, uowV) = await PrepareMsSqlContainer();
             await using (container)
             using (uowV)
+            using (uow2)
             using (uow)
             {
-                await BasicSmokeAsync(uow, uowV);
+                await BasicSmokeAsync(uow, uow2, uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_MsSql_Test_Synchronized()
         {
-            var (container, uow, uowV) = await PrepareMsSqlContainer();
-            if (uow == null || uowV == null) throw new Exception("MS SQL access not properly configured, test should have been skipped !");
+            var (container, uow, uow2, uowV) = await PrepareMsSqlContainer();
             await using (container)
             using (uowV)
+            using (uow2)
             using (uow)
             {
-                await BasicSmokeSynchronous(uow, uowV);
+                await BasicSmokeSynchronous(uow, uow2, uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_Postgres_Test()
         {
-            var (container, uow, uowV) = await PreparePgSqlContainer();
-            if (uow == null || uowV == null) throw new Exception("Postgres access not properly configured, test should have been skipped !");
+            var (container, uow, uow2, uowV) = await PreparePgSqlContainer();
             await using (container)
             using (uowV)
+            using (uow2)
             using (uow)
             {
-                await BasicSmokeAsync(uow, uowV);
+                await BasicSmokeAsync(uow, uow2, uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_Postgres_Test_Synchronized()
         {
-            var (container, uow, uowV) = await PreparePgSqlContainer();
-            if (uow == null || uowV == null) throw new Exception("Postgres access not properly configured, test should have been skipped !");
+            var (container, uow, uow2, uowV) = await PreparePgSqlContainer();
             await using (container)
             using (uowV)
+            using (uow2)
             using (uow)
             {
-                await BasicSmokeSynchronous(uow,uowV);
+                await BasicSmokeSynchronous(uow, uow2, uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_MySql_Test()
         {
-            var (container, uow, uowV) = await PrepareMySqlContainer();
-            if (uow == null || uowV == null) throw new Exception("MySql access not properly configured, test should have been skipped !");
-            await using (container)
+            var (container, uow, uow2, uowV) = await PrepareMySqlContainer();
+             await using (container)
             using (uowV)
+            using (uow2)
             using (uow)
             {
-                await BasicSmokeAsync(uow, uowV);
+                await BasicSmokeAsync(uow, uow2, uowV);
             }
         }
 
         [TestMethod]
         public async Task Uow_MySql_Test_Synchronized()
         {
-            var (container, uow, uowV) = await PrepareMySqlContainer();
-            if (uow == null || uowV == null) throw new Exception("MySql access not properly configured, test should have been skipped !");
+            var (container, uow, uow2, uowV) = await PrepareMySqlContainer();
             await using (container)
             using (uowV)
+            using (uow2)
             using (uow)
             {
-                await BasicSmokeSynchronous(uow,uowV);
+                await BasicSmokeSynchronous(uow, uow2, uowV);
             }
         }
 
@@ -145,7 +148,7 @@ namespace BoostTest
         ///  Spin up temporary SQL Server in Docker
         /// </summary>
         /// <returns></returns>
-        static async Task<(MsSqlContainer Container, UOWTestDb Uow, UOWTestView UowV)> PrepareMsSqlContainer()
+        static async Task<(MsSqlContainer Container, UOWTestDb Uow, UOWTestDb Uow2, UOWTestView UowV)> PrepareMsSqlContainer()
         {
             const string dbName = "TestDb";
             const string connNameCreate = "TestMsCreate";
@@ -166,9 +169,10 @@ namespace BoostTest
             var uowCreate = CreateUow(cfg, connNameCreate);
             await uowCreate.ExecSqlScriptAsync(await ReadSql("MsSqlCreateDb.sql"), false);
             var uow = CreateUow(cfg, connName);
+            var uow2 = CreateUow(cfg, connName);
             await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_MsSql.sql"), false); //Script contains own transactions, therefore cannot run in transaction here
             var uowV = CreateUowView(cfg, connName);
-            return (sql, uow, uowV);
+            return (sql, uow, uow2, uowV);
         }
 
         /// <summary>
@@ -177,28 +181,29 @@ namespace BoostTest
         ///
         /// </summary>
         /// <returns></returns>
-        static async Task<(UOWTestDb? Uow, UOWTestView? UowView)> PrepareAzureAccess()
+        static async Task<(UOWTestDb? Uow, UOWTestDb? Uow2, UOWTestView? UowView)> PrepareAzureAccess()
         {
             const string dbName = "TestDb";
             const string connName = "TestAzure";
             var cc = new ConfigurationBuilder().SetBasePath(AppDomain.CurrentDomain.BaseDirectory).AddJsonFile("AppSettings.json", optional: false, reloadOnChange: false).Build();
             var dbTestCfg = DbConnectionCFG.Get(cc, connName);
-            if ( dbTestCfg == null || dbTestCfg.UseAzure == false || dbTestCfg.AzureClientSecret.Length < 2 || dbTestCfg.AzureClientSecret[..1] == "<" )
-                return (null,null); //Skip test if not properly configured, no error thrown
+            if (dbTestCfg == null || dbTestCfg.UseAzure == false || dbTestCfg.AzureClientSecret.Length < 2 || dbTestCfg.AzureClientSecret[..1] == "<")
+                return (null, null, null); //Skip test if not properly configured, no error thrown
             if (dbTestCfg.ConnectionString.IndexOf(dbName, StringComparison.OrdinalIgnoreCase) < 0)
                 throw new Exception($"Azure test DB connection string must contain database name '{dbName}'");
             var uow = CreateUow(cc, connName);
+            var uow2 = CreateUow(cc, connName);
             await uow.ExecSqlScriptAsync(await ReadSql("AzurePrepareDb.sql"), false); //Cleanup previous runs
             await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_MsSql.sql"), false); //Normal SQL-Server Migrations
             var uowV = CreateUowView(cc, connName);
-            return (uow, uowV);
+            return (uow, uow2, uowV);
         }
 
         /// <summary>
         ///  Spin up temporary MySql Server in Docker
         /// </summary>
         /// <returns></returns>
-        static async Task<(MySqlContainer Container, UOWTestDb? Uow, UOWTestView? UowView)> PrepareMySqlContainer()
+        static async Task<(MySqlContainer Container, UOWTestDb Uow, UOWTestDb Uow2, UOWTestView UowView)> PrepareMySqlContainer()
         {
             const string dbName = "TestDb";
             const string connNameCreate = "TestMyCreate";
@@ -227,9 +232,10 @@ namespace BoostTest
             var uowCreate = CreateUow(cfg, connNameCreate);
             await uowCreate.ExecSqlScriptAsync(await ReadSql("MySqlCreateDb.mysql"), false);
             var uow = CreateUow(cfg, connName);
+            var uow2 = CreateUow(cfg, connName);
             await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_MySql.mysql"), false); //Mysql does not hanndle any ddl in transactions
             var uowV = CreateUowView(cfg, connName);
-            return (my, uow, uowV);
+            return (my, uow, uow2, uowV);
         }
 
         static async Task<string> ReadSql(string fileName)
@@ -244,7 +250,7 @@ namespace BoostTest
         ///  Spin up temporary Postgres Server in Docker
         /// </summary>
         /// <returns></returns>
-        static async Task<(PostgreSqlContainer Container, UOWTestDb? Uow, UOWTestView? UowView)> PreparePgSqlContainer()
+        static async Task<(PostgreSqlContainer Container, UOWTestDb Uow, UOWTestDb Uow2, UOWTestView UowView)> PreparePgSqlContainer()
         {
             const string dbName = "TestDb";
             const string connNameCreate = "TestPgCreate";
@@ -257,7 +263,7 @@ namespace BoostTest
                 .Build();
             await pg.StartAsync();
             var adminCs = pg.GetConnectionString();
-                var adminBuilder = new Npgsql.NpgsqlConnectionStringBuilder(adminCs) { Database = dbName };
+            var adminBuilder = new Npgsql.NpgsqlConnectionStringBuilder(adminCs) { Database = dbName };
             var dbCs = adminBuilder.ToString(); var overrides = new Dictionary<string, string?>
             {
                 ["DefaultAppConnName"] = connName,
@@ -271,17 +277,18 @@ namespace BoostTest
             var cfg = BuildConfig(overrides);
             var uowCreate = CreateUow(cfg, connNameCreate);
             await uowCreate.ExecSqlScriptAsync(await ReadSql("PgSqlCreateDb.pgsql"), false);
-            var uow = CreateUow(cfg, connName);
-            await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_PgSql.pgsql"), false); // Note: Migration script itself contains transactions so we do not run in transaction here
+            var uowMigrate = CreateUow(cfg, connName);
+            await uowMigrate.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_PgSql.pgsql"), false); // Note: Migration script itself contains transactions so we do not run in transaction here
             // Force Npgsql to refresh type mappings (citext, etc.) for this database
-            var dbConn = (Npgsql.NpgsqlConnection)uow.GetDbContext().Database.GetDbConnection();
+            var dbConn = (Npgsql.NpgsqlConnection)uowMigrate.GetDbContext().Database.GetDbConnection();
             if (dbConn.State != ConnectionState.Open)
-                await uow.GetDbContext().Database.OpenConnectionAsync();
+                await uowMigrate.GetDbContext().Database.OpenConnectionAsync();
             await dbConn.ReloadTypesAsync();
             Npgsql.NpgsqlConnection.ClearAllPools();
-            var uowNew = CreateUow(cfg, connName);
+            var uow = CreateUow(cfg, connName);
+            var uow2 = CreateUow(cfg, connName);
             var uowV = CreateUowView(cfg, connName);
-            return (pg, uowNew, uowV);
+            return (pg, uow, uow2, uowV);
         }
 
         /// <summary>
@@ -289,22 +296,48 @@ namespace BoostTest
         /// </summary>
         /// <param name="uow"></param>
         /// <returns></returns>
-        static async Task BasicSmokeAsync(UOWTestDb uow, UOWTestView uowV)
+        static async Task BasicSmokeAsync(UOWTestDb uow, UOWTestDb uow2, UOWTestView uowV)
         {
             //
-            //Test saving to database
+            // Test saving to database
             //
-            var myRow = await uow.MyTables.Query().FirstOrDefaultAsync();
+            var myRow = await uow.MyTables.QueryTracked().FirstOrDefaultAsync();
             Assert.IsNotNull(myRow); //do we have our seeded data ?
             var refRow = new DbTest.MyTableRef { MyInfo = "ref", LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "Philip" };
             myRow.MyTableRefs.Add(refRow);
             await uow.SaveChangesAsync(); //Wa can add refst to previous row
-            var found = await uow.MyTableRefs.QueryNoTrack().FirstOrDefaultAsync(t => t.Id == refRow.Id);
-            Assert.IsNotNull(found);
             //
-            //Test view lookup
+            //Test if the auto-incrementor attribute worked [AutoIncrement]:
             //
-            var viewItem = await uowV.MyTableRefViews.QueryNoTrack().FirstOrDefaultAsync(tt => tt.RefId == refRow.Id);
+            var origRowId = myRow.RowVersion;
+            var savedRef = await uow.MyTableRefs.RowTrackedAsync(tt => tt.ParentId == myRow.Id && tt.MyInfo == "ref");
+            Assert.IsNotNull(savedRef, "Faild fetching tracked row, just added");
+            savedRef!.MyInfo = "Ref2";
+            await uow.SaveChangesAsync();
+            var found = await uow.MyTableRefs.RowUntrackedAsync(tt => tt.Id == savedRef.Id);
+            Assert.IsNotNull(found,"Faild fetching untracked row, just saved");
+            Assert.IsGreaterThan(origRowId, found.RowVersion, "Rowversion not incremented in the saved row " + found.RowVersion);
+            //
+            // Test Actal Concurrency exeption [AutoIncrementConcurrency] (on MyTable.RowVersion)
+            //
+            bool errorThrown = false;
+            var myRow2 = await uow2.MyTables.QueryTracked().FirstOrDefaultAsync(tt => tt.Id == myRow.Id);
+            myRow.Status += 1;
+            await uow.SaveChangesAsync();
+            try
+            {
+                myRow2!.Status += 2; //Modify myRow2 on UOW2 and then try to save after UOW has modified and saved same row
+                await uow2.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                errorThrown = true;
+            }
+            Assert.IsTrue(errorThrown, "Concurrency check failed for MyTable.RowVersion");
+            //
+            // Test view lookup
+            //
+            var viewItem = await uowV.MyTableRefViews.QueryUnTracked().FirstOrDefaultAsync(tt => tt.RefId == refRow.Id);
             Assert.IsNotNull(viewItem);
             Assert.IsTrue((viewItem.RowID != Guid.Empty), "RowID should not be empty");
             //
@@ -313,40 +346,40 @@ namespace BoostTest
             var IdList = await uow.GetNextSequenceIds(10);
             Assert.HasCount(10, IdList, "Did not get 10 rows from sequence function");
             //
-            //Bulk- insert & delete tests
+            // Bulk- insert & delete tests
             //
             var tt = new DbTest.MyTable { Id = 10, LastChanged = DateTime.UtcNow, LastChangedBy = "gorm", RowID = Guid.NewGuid() };
             var tt2 = new DbTest.MyTable { Id = 11, LastChanged = DateTime.UtcNow, LastChangedBy = "gorm2", RowID = Guid.NewGuid() };
             await uow.RunInTransactionAsync(async ct =>
             {
-                await uow.MyTables.BulkInsertAsync([tt, tt2], true,  ct);
+                await uow.MyTables.BulkInsertAsync([tt, tt2], true, ct);
             }, ct: CancellationToken.None);
 
             //
-            //Testing that autogenerated sequences function as expected (should be no 12)
+            // Testing that autogenerated sequences function as expected (should be no 12)
             //
             uow.MyTables.Add(new DbTest.MyTable() { LastChanged = DateTime.UtcNow, LastChangedBy = "swarm" });
             await uow.SaveChangesAndNewAsync();
             //
-            //Now delete row no 10
+            // Now delete row no 10
             //
             await uow.MyTables.BulkDeleteByIdsAsync([10]);
             //
-            //Now test your id´s are ok
+            // Now test your id´s are ok
             //
-            var currIds = await uow.MyTables.QueryNoTrack().Select( tt => tt.Id ).ToListAsync();
-            Assert.IsFalse(currIds.Where(tt => tt ==  10).Any(),"Bulkdelete failed, row 10 still exists");
+            var currIds = await uow.MyTables.QueryUnTracked().Select(tt => tt.Id).ToListAsync();
+            Assert.IsFalse(currIds.Where(tt => tt == 10).Any(), "Bulkdelete failed, row 10 still exists");
             Assert.IsTrue(currIds.Where(tt => tt == 11).Any(), "Bulk inserted row not found");
             Assert.IsTrue(currIds.Where(tt => tt == 12).Any(), "Sequence not resetting after bulk-insert");
             //
-            //Bulk-insert without identity, no transaction
+            // Bulk-insert without identity, no transaction
             //
             await uow.MyTables.BulkDeleteByIdsAsync([11]);
-            await uow.MyTables.BulkInsertAsync([tt,tt2]);
-            var row2 = await uow.MyTables.ByKeyNoTrackAsync(13);
+            await uow.MyTables.BulkInsertAsync([tt, tt2]);
+            var row2 = await uow.MyTables.RowByKeyTrackedAsync(13);
             Assert.IsNotNull(row2, "Bulk-insert without identies fail");
             //
-            //Test scalar lookup
+            // Test scalar lookup
             //
             var fId = await uow.GetMaxIdByChanger("Stefan");
             Assert.AreEqual(-2, fId, "Scalar routine did not return valid id");
@@ -362,7 +395,7 @@ namespace BoostTest
                 {
                     uow.MyTables.Add(rb);
                     await uow.SaveChangesAsync(ct);
-                    var insideExists = await uow.MyTables.QueryNoTrack().AnyAsync(t => t.Id == rb.Id, cancellationToken: ct);
+                    var insideExists = await uow.MyTables.QueryUnTracked().AnyAsync(t => t.Id == rb.Id, cancellationToken: ct);
                     Assert.IsTrue(insideExists, "Row should be visible inside active transaction before rollback");
                     //Now add duplicate that sould trigger rollback
                     uow.MyTables.Add(rb2);
@@ -370,40 +403,44 @@ namespace BoostTest
                 }, ct: CancellationToken.None);
             }
             catch (Exception) { }
-            var afterRollbackExists = await uow.MyTables.QueryNoTrack().AnyAsync(t => t.Id == rb.Id);
+            var afterRollbackExists = await uow.MyTables.QueryUnTracked().AnyAsync(t => t.Id == rb.Id);
             Assert.IsFalse(afterRollbackExists, "Row should not exist after rollback");
             //
-            // Odata Test and EDM model generation
+            // OData Test and EDM model generation
             //
-            var options = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow,"$filter=LastChangedBy eq 'Stefan'" );
-            var baseQuery = uow.MyTables.QueryNoTrack();
-            var filtResult = await uow.MyTables.FilterODataAsync(baseQuery,options,null,true);
-             Assert.IsTrue(filtResult.InlineCount > 0 && !filtResult.Results.Any(x => x.LastChangedBy != "Stefan"), "We expect to find Stefans, but only Stefans" );
+            var options = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=LastChangedBy eq 'Stefan'");
+            var baseQuery = uow.MyTables.QueryUnTracked();
+            var filtResult = await uow.MyTables.FilterODataAsync(baseQuery, options, null, true);
+            Assert.IsTrue(filtResult.InlineCount > 0 && !filtResult.Results.Any(x => x.LastChangedBy != "Stefan"), "We expect to find Stefans, but only Stefans");
             // Verify that data exist with linQ
-            var normRow = await uow.MyTables.QueryNoTrack().Where(tt => tt.Id == -1).Include(tt => tt.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToListAsync();
+            var normRow = await uow.MyTables.QueryUnTracked().Where(tt => tt.Id == -1).Include(tt => tt.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToListAsync();
             Assert.IsNotEmpty(normRow, "");
-            // Expand test, remember to allow expand with policy:
-            var bq = uow.MyTables.QueryNoTrack();
+            //
+            // Expand Odata test, remember to allow expand with policy:
+            //
+            var bq = uow.MyTables.QueryUnTracked();
             var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
             var plan = uow.MyTables.BuildODataQueryPlan(bq, options2, new ODataPolicy(AllowExpand: true), true);
             var plan2 = uow.MyTables.ApplyODataExpandAsInclude(plan);
             Assert.AreEqual(1, plan2.Report.Where(tt => tt == "ExpandInnerFilterIgnored:MyTableRefs").Count(), "We did not find $filter warning within AsInclude query");
             var res = await uow.MyTables.MaterializeODataAsync(plan2);
             //we received our MyTableRefs records inline (but unfiltered)
-            Assert.IsTrue(res.InlineCount != null && res.InlineCount > 0 && res.Results != null &&  res.Results.FirstOrDefault() != null && res.Results.FirstOrDefault()!.MyTableRefs.Count > 0,
-                "$expand as include failed to produce data for MyTableRefs") ;
-            //Now shaped tests:
+            Assert.IsTrue(res.InlineCount != null && res.InlineCount > 0 && res.Results != null && res.Results.FirstOrDefault() != null && res.Results.FirstOrDefault()!.MyTableRefs.Count > 0,
+                "$expand as include failed to produce data for MyTableRefs");
+            //
+            // Now shaped OData tests:
+            //
             var opts = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$select=Id");
             var plan3 = uow.MyTables.BuildODataQueryPlan(bq, opts, new ODataPolicy(AllowSelect: true), true);
             var shapedQuery3 = uow.MyTables.ApplyODataSelectExpand(plan3);
-            var res3 = await uow.MyTables.MaterializeODataShapedAsync(plan3,shapedQuery3);
+            var res3 = await uow.MyTables.MaterializeODataShapedAsync(plan3, shapedQuery3);
             Assert.IsTrue(res3.Results != null && res3.Results.Count > 0, "Filtered and selected query failed");
             var json = System.Text.Json.JsonSerializer.Serialize(res3.Results[0]);
             Assert.Contains("\"Id\"", json, $"$select=Id expected 'Id' in shaped JSON.\nJSON: {json}");
             Assert.DoesNotContain("LastChangedBy", json, $"$select=Id should not include 'LastChangedBy'.\nJSON: {json}");
             Assert.DoesNotContain("MyTableRefs", json, $"$select=Id should not include navigation 'MyTableRefs'.\nJSON: {json}");
             //Inner filter test for shaped expansion
-            var opts4 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow,"$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
+            var opts4 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
             var plan4 = uow.MyTables.BuildODataQueryPlan(bq, opts, new ODataPolicy(AllowExpand: true), true);
             var shapedQuery4 = uow.MyTables.ApplyODataSelectExpand(plan4);
             var res4 = await uow.MyTables.MaterializeODataShapedAsync(plan4, shapedQuery4);
@@ -414,22 +451,48 @@ namespace BoostTest
         /// Just a part of what we do for async, no need to repeat all tests
         /// </summary>
         /// <param name="uow"></param>
-        static async Task BasicSmokeSynchronous(UOWTestDb uow, UOWTestView uowV)
+        static async Task BasicSmokeSynchronous(UOWTestDb uow, UOWTestDb uow2, UOWTestView uowV)
         {
             //
-            //Test saving to database
+            // Test saving to database
             //
-            var myRow = uow.MyTables.Query().FirstOrDefault();
+            var myRow = uow.MyTables.QueryTracked().FirstOrDefault();
             Assert.IsNotNull(myRow); //do we have our seeded data ?
             var refRow = new DbTest.MyTableRef { MyInfo = "ref", LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "Philip" };
             myRow.MyTableRefs.Add(refRow);
             uow.SaveChangesSynchronized(); //Wa can add refst to previous row
-            var found = uow.MyTableRefs.QueryNoTrack().FirstOrDefault(t => t.Id == refRow.Id);
-            Assert.IsNotNull(found);
             //
-            //Test view lookup
+            // Test if the auto-incrementor attribute worked [AutoIncrement]:
             //
-            var viewItem = uowV.MyTableRefViews.QueryNoTrack().FirstOrDefault(tt => tt.RefId == refRow.Id);
+            var origRowId = myRow.RowVersion;
+            var savedRef = uow.MyTableRefs.RowTrackedSynchronized(tt => tt.ParentId == myRow.Id && tt.MyInfo == "ref");
+            Assert.IsNotNull(savedRef, "Faild fetching tracked row, just added");
+            savedRef!.MyInfo = "Ref2";
+            uow.SaveChangesSynchronized();
+            var found = await uow.MyTableRefs.RowUntrackedAsync(tt => tt.Id == savedRef.Id);
+            Assert.IsNotNull(found,"Faild fetching untracked row, just saved");
+            Assert.IsGreaterThan(origRowId, found.RowVersion, "Rowversion not incremented in the saved row " + found.RowVersion);
+            //
+            // Test Actal Concurrency exeption [AutoIncrementConcurrency] (on MyTable.RowVersion)
+            //
+            bool errorThrown = false;
+            var myRow2 = uow2.MyTables.QueryTracked().FirstOrDefault(tt => tt.Id == myRow.Id);
+            myRow.Status += 1;
+            uow.SaveChangesSynchronized();
+            try
+            {
+                myRow2!.Status += 2; //Modify myRow2 on UOW2 and then try to save after UOW has modified and saved same row
+                uow2.SaveChangesSynchronized();
+            }
+            catch (Exception)
+            {
+                errorThrown = true;
+            }
+            Assert.IsTrue(errorThrown, "Concurrency check failed for MyTable.RowVersion");
+            //
+            // Test view lookup
+            //
+            var viewItem = uowV.MyTableRefViews.QueryUnTracked().FirstOrDefault(tt => tt.RefId == refRow.Id);
             Assert.IsNotNull(viewItem);
             Assert.IsTrue((viewItem.RowID != Guid.Empty), "RowID should not be empty");
             //
@@ -446,9 +509,8 @@ namespace BoostTest
             {
                 uow.MyTables.BulkInsertSynchronized([tt, tt2], true);
             });
-
             //
-            //Testing that autogenerated sequences function as expected (should be no 12)
+            // Testing that autogenerated sequences function as expected (should be no 12)
             //
             uow.MyTables.Add(new DbTest.MyTable() { LastChanged = DateTime.UtcNow, LastChangedBy = "swarm" });
             uow.SaveChangesAndNewSynchronized();
@@ -457,9 +519,9 @@ namespace BoostTest
             //
             uow.MyTables.BulkDeleteByIdsSynchronized([10]);
             //
-            //Now test your id´s are ok
+            // Now test your id´s are ok
             //
-            var currIds = uow.MyTables.QueryNoTrack().Select(tt => tt.Id).ToList();
+            var currIds = uow.MyTables.QueryUnTracked().Select(tt => tt.Id).ToList();
             Assert.IsFalse(currIds.Where(tt => tt == 10).Any(), "Bulkdelete failed, row 10 still exists");
             Assert.IsTrue(currIds.Where(tt => tt == 11).Any(), "Bulk inserted row not found");
             Assert.IsTrue(currIds.Where(tt => tt == 12).Any(), "Sequence not resetting after bulk-insert");
@@ -468,10 +530,10 @@ namespace BoostTest
             //
             uow.MyTables.BulkDeleteByIdsSynchronized([11]);
             uow.MyTables.BulkInsertSynchronized([tt, tt2]);
-            var row2 = uow.MyTables.ByKeyNoTrackSynchronized(13);
+            var row2 = uow.MyTables.RowByKeyTrackedSynchronized(13);
             Assert.IsNotNull(row2, "Bulk-insert without identies fail");
             //
-            //Test scalar lookup
+            // Test scalar lookup
             //
             var fId = uow.GetMaxIdByChangerSynchronized("Stefan");
             Assert.AreEqual(-2, fId, "Scalar routine did not return valid id");
@@ -487,7 +549,7 @@ namespace BoostTest
                 {
                     uow.MyTables.Add(rb);
                     uow.SaveChangesSynchronized();
-                    var insideExists = uow.MyTables.QueryNoTrack().Any(t => t.Id == rb.Id);
+                    var insideExists = uow.MyTables.QueryUnTracked().Any(t => t.Id == rb.Id);
                     Assert.IsTrue(insideExists, "Row should be visible inside active transaction before rollback");
                     //Now add duplicate that sould trigger rollback
                     uow.MyTables.Add(rb2);
@@ -495,20 +557,22 @@ namespace BoostTest
                 });
             }
             catch (Exception) { }
-            var afterRollbackExists = uow.MyTables.QueryNoTrack().Any(t => t.Id == rb.Id);
+            var afterRollbackExists = uow.MyTables.QueryUnTracked().Any(t => t.Id == rb.Id);
             Assert.IsFalse(afterRollbackExists, "Row should not exist after rollback");
             //
             // Odata Test and EDM model generation
             //
             var options = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=LastChangedBy eq 'Stefan'");
-            var baseQuery = uow.MyTables.QueryNoTrack();
+            var baseQuery = uow.MyTables.QueryUnTracked();
             var filtResult = uow.MyTables.FilterODataSynchronized(baseQuery, options, null, true);
             Assert.IsTrue(filtResult.InlineCount > 0 && !filtResult.Results.Any(x => x.LastChangedBy != "Stefan"), "We expect to find Stefans, but only Stefans");
             // Verify that data exist with linQ
-            var normRow = uow.MyTables.QueryNoTrack().Where(tt => tt.Id == -1).Include(tt => tt.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToList();
+            var normRow = uow.MyTables.QueryUnTracked().Where(tt => tt.Id == -1).Include(tt => tt.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToList();
             Assert.IsNotEmpty(normRow, "Iclude faild");
+            //
             // Expand test, remember to allow expand with policy:
-            var bq = uow.MyTables.QueryNoTrack();
+            //
+            var bq = uow.MyTables.QueryUnTracked();
             var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
             var plan = uow.MyTables.BuildODataQueryPlan(bq, options2, new ODataPolicy(AllowExpand: true), true);
             var plan2 = uow.MyTables.ApplyODataExpandAsInclude(plan);
@@ -517,7 +581,9 @@ namespace BoostTest
             //we received our MyTableRefs records inline (but unfiltered)
             Assert.IsTrue(res.InlineCount != null && res.InlineCount > 0 && res.Results != null && res.Results.FirstOrDefault() != null && res.Results.FirstOrDefault()!.MyTableRefs.Count > 0,
                 "$expand as include failed to produce data for MyTableRefs");
+            //
             //Now shaped tests:
+            //
             var opts = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$select=Id");
             var plan3 = uow.MyTables.BuildODataQueryPlan(bq, opts, new ODataPolicy(AllowSelect: true), true);
             var shapedQuery3 = uow.MyTables.ApplyODataSelectExpand(plan3);
@@ -527,7 +593,9 @@ namespace BoostTest
             Assert.Contains("\"Id\"", json, $"$select=Id expected 'Id' in shaped JSON.\nJSON: {json}");
             Assert.DoesNotContain("LastChangedBy", json, $"$select=Id should not include 'LastChangedBy'.\nJSON: {json}");
             Assert.DoesNotContain("MyTableRefs", json, $"$select=Id should not include navigation 'MyTableRefs'.\nJSON: {json}");
-            //Inner filter test for shaped expansion
+            //
+            // Inner filter test for shaped expansion
+            //
             var opts4 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
             var plan4 = uow.MyTables.BuildODataQueryPlan(bq, opts, new ODataPolicy(AllowExpand: true), true);
             var shapedQuery4 = uow.MyTables.ApplyODataSelectExpand(plan4);

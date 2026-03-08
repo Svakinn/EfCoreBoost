@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using EfCore.Boost.Model;
 using EfCore.Boost.Model.Attributes;
+using Org.BouncyCastle.Asn1.Crmf;
 
 namespace BoostTest.TestDb
 {
@@ -10,7 +11,7 @@ namespace BoostTest.TestDb
     /// Just a simple DbContext for testing the UOW.
     /// Here we define our code first datamodel using the Boost attributes:
     /// [DbAutoUid] for auto generated Id-keys
-    /// [StrShort],[StrMrd],[StrLong],[StrCode],[Text] for broad string lengths (utilizing storing and indexing for MySQL (varchar) & MsSQL (nvarchar)), postgres defaults to citext 
+    /// [StrShort],[StrMrd],[StrLong],[StrCode],[Text] for broad string lengths (utilizing storing and indexing for MySQL (varchar) & MsSQL (nvarchar)), postgres defaults to citext
     /// [ViewKey] for mapping to view and defining primary key for the view (uniqueness of the entities)
     /// </summary>
     /// <param name="options"></param>
@@ -33,12 +34,24 @@ namespace BoostTest.TestDb
         {
             [DbAutoUid]
             public long Id { get; set; }
-
-            public Guid RowID { get; set; }
-
-            public DateTimeOffset LastChanged { get; set; }
-
-            [StrShort]
+            [AutoIncrementConcurrency]
+            public long RowVersion { get; set; } = 0;   //This is for esting if Automatic concurrency cheks work, not that this is fealgood aproch to real entities that can be updated by anyone
+            public Guid RowID { get; set; }   //For testing automatic seeding of GuIds
+            [StrCode]
+            public string Code { get; set; } = string.Empty;
+            [Title]
+            public string? Heading {  get; set; }
+            [Money]
+            public decimal Balance { get; set; } = 0;
+            [Status]
+            public int Status { get; set; } = 0;
+            [Percentage]
+            public decimal Discount { get; set; } = 0;
+            [LastChangedUtc]
+            public DateTimeOffset LastChanged { get; set; } = DateTimeOffset.UtcNow;
+            [CreatedUtc]
+            public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
+            [ExternalRef]
             public string LastChangedBy { get; set; } = string.Empty;
 
             public ICollection<MyTableRef> MyTableRefs { get; set; } = [];
@@ -50,15 +63,19 @@ namespace BoostTest.TestDb
         {
             [DbAutoUid]
             public long Id { get; set; }
-
+            [AutoIncrement]
+            public long RowVersion { get; set; } = 0;  //Note this will auto-increment from previous-server value when saved
             [Required]
             public long ParentId { get; set; }
-            [StrMed]
+            [Name]
             public string MyInfo { get; set; } = string.Empty;
-
-            public DateTimeOffset LastChanged { get; set; }
-
-            [StrShort]
+            [Money]
+            public decimal Amount { get; set; } = 0;
+            [CreatedUtc]
+            public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
+            [LastChangedUtc]
+            public DateTimeOffset LastChanged { get; set; } = DateTimeOffset.UtcNow;
+            [ExternalRef]
             public string LastChangedBy { get; set; } = string.Empty;
 
             [ForeignKey(nameof(ParentId))]
@@ -68,24 +85,29 @@ namespace BoostTest.TestDb
         [ViewKey(nameof(RefId), nameof(MyId))]
         public class MyTableRefView
         {
+            [ExternalRef]
             public long RefId { get; set; }
-
             public long MyId { get; set; }
-
+            public long RowVersion { get; set; } = 0;
             public Guid RowID { get; set; }
-
-            public DateTimeOffset LastChanged { get; set; }
-
-            [StrShort]
-            public string LastChangedBy { get; set; } = string.Empty;
-
-            [StrMed]
+            [StrCode]
+            public string Code { get; set; } = string.Empty;
+            [Title]
+            public string? Heading { get; set; }
+            [LastChangedUtc]
+            public DateTimeOffset ParLastChanged { get; set; }
+            [ExternalRef]
+            public string ParLastChangedBy { get; set; } = string.Empty;
+            [Name]
             public string MyInfo { get; set; } = string.Empty;
-
-            public DateTimeOffset RefLastChanged { get; set; }
-
-            [StrShort]
-            public string RefLastChangedBy { get; set; } = string.Empty;
+            [Money]
+            public decimal Amount { get; set; } = 0;
+            [LastChangedUtc]
+            public DateTimeOffset LastChanged { get; set; }
+            [CreatedUtc]
+            public DateTimeOffset Created { get; set; }
+            [ExternalRef]
+            public string LastChangedBy { get; set; } = string.Empty;
         }
     }
 }

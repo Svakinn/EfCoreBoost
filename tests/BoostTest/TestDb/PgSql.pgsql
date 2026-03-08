@@ -29,12 +29,17 @@ CREATE VIEW my."MyTableRefView" AS
 SELECT
     r."Id" AS "RefId",
     t."Id" AS "MyId",
+    r."RowVersion",
     t."RowID",
-    t."LastChanged",
-    t."LastChangedBy",
+    t."Code",
+    t."Heading",
+    t."LastChanged" as "ParLastChanged",
+    t."LastChangedBy" as "ParLastChangedBy",
     r."MyInfo",
-    r."LastChanged" AS "RefLastChanged",
-    r."LastChangedBy" AS "RefLastChangedBy"
+    r."Amount",
+    r."Created",
+    r."LastChanged",
+    r."LastChangedBy"
 FROM my."MyTableRef" r
 INNER JOIN my."MyTable" t ON t."Id" = r."ParentId";
 
@@ -45,4 +50,3 @@ BEGIN
     SELECT * FROM my."MyTableRefView" WHERE "MyId" = MyId;
 END;
 $$ LANGUAGE plpgsql;
-

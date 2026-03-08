@@ -56,7 +56,6 @@ namespace EfCore.Boost.Model.Attributes
     public sealed class StrLongAttribute : Attribute
     {
     }
-
     /// <summary>
     /// Just for the clarification this is equal to not setting maxlen attribute that translate to longtext, text, nvarchar(max) etc depending on provider
     /// </summary>
@@ -65,6 +64,111 @@ namespace EfCore.Boost.Model.Attributes
     {
     }
 
+    #region special usage tags that will get mapped to code, long med etc..
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class NameAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class UserNameAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class ExternalRefAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class TitleAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class FileNameAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class MimeTypeAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class EmailAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class PhoneAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class UrlAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class CountryCodeAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class CurrencyCodeAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class LanguageCodeAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class CultureCodeAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class AddressPostalCodeAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class AddressAdminAreaAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class AddressStreetNameAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class AddressStreetNumberAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class AddressCityAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class AddressBuildingUnitAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class AddressRecepientNameAttribute : Attribute
+    {
+    }
+
+    //Html stored as text
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class HtmlAttribute : Attribute
+    {
+    }
+    //Editor json content i.e. TipTap
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class EditorAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class JsonAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class MarkdownAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class RichTextAttribute : Attribute
+    {
+    }
+    #endregion
     #endregion
     #region decimals
 
@@ -124,5 +228,76 @@ namespace EfCore.Boost.Model.Attributes
     {
     }
 
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class LongitudeAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class LatitudeAttribute : Attribute
+    {
+    }
+
+    #endregion
+
+    #region Raw data (byte[])
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class MediaAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class HashAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class SaltAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class EncryptedAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class SigningKeyAttribute : Attribute
+    {
+    }
+
+    #endregion
+
+    #region purpose markings with no effect, i.e. common timestamps
+    /// <summary>
+    /// If bool or Timestamp value for soft-delete indication (i.e. bool IsDeleted)
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class SoftDeleteAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class LastChangedUtcAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class CreatedUtcAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class ValidFromUtcAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class ValidToUtcAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class ExpiresUtcAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class TenantAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class StatusAttribute : Attribute
+    {
+    }
     #endregion
 }

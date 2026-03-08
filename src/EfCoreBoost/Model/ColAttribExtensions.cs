@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EfCore.Boost.Model.Attributes;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Pomelo.EntityFrameworkCore.MySql;
 using System;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Pomelo.EntityFrameworkCore.MySql;
-using EfCore.Boost.Model.Attributes;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace EfCore.Boost.Model
 {
@@ -30,7 +31,7 @@ namespace EfCore.Boost.Model
                 // Skip views or non-CLR-backed entity types
                 if (clr == null || Attribute.IsDefined(clr, typeof(ViewKeyAttribute), inherit: false))
                     continue;
-
+                var conCurrCount = 0;
                 foreach (var pi in clr.GetProperties(BindingFlags.Instance | BindingFlags.Public))
                 {
                     var prop = entity.FindProperty(pi);
@@ -53,8 +54,41 @@ namespace EfCore.Boost.Model
                     // 4) Decimal precision
                     if (pi.PropertyType == typeof(decimal) || Nullable.GetUnderlyingType(pi.PropertyType) == typeof(decimal))
                         ConfigureDecimalPrecision(prop, pi);
+                    // 5) AutoIncrementConcurrency
+                    var auIncr = pi.GetCustomAttribute<AutoIncrementConcurrencyAttribute>();
+                    if (auIncr != null && IsIntOrLong(pi.PropertyType))
+                    {
+                        if (conCurrCount > 0) throw new InvalidOperationException($"Multiple [AutoIncrementConcurrency] properties on '{clr.Name}', '{pi.Name}'.");
+                        conCurrCount++;
+                        EnsureDefaultNumIfMissing(modelBuilder, clr, pi);
+                        modelBuilder.Entity(clr).Property(pi.Name).IsConcurrencyToken();
+                    }
+                    var oIncr = pi.GetCustomAttribute<AutoIncrementAttribute>();
+                    if (oIncr != null && IsIntOrLong(pi.PropertyType))
+                    {
+                        //Set default value to 0 if not set
+                        EnsureDefaultNumIfMissing(modelBuilder, clr, pi);
+                    }
                 }
             }
+        }
+
+        private static bool IsIntOrLong(Type t)
+        {
+            t = Nullable.GetUnderlyingType(t) ?? t;
+            return t == typeof(int) || t == typeof(long);
+        }
+
+        private static bool HasAnyDefault(Microsoft.EntityFrameworkCore.Metadata.IMutableProperty p)  => p.GetDefaultValue() != null || !string.IsNullOrWhiteSpace(p.GetDefaultValueSql());
+
+        private static void EnsureDefaultNumIfMissing(ModelBuilder modelBuilder, Type clr, PropertyInfo pi)
+        {
+            var p = modelBuilder.Entity(clr).Property(pi.Name).Metadata;
+            if (HasAnyDefault(p)) return; // someone already set it (Fluent API, convention, etc.)
+
+            var t = Nullable.GetUnderlyingType(pi.PropertyType) ?? pi.PropertyType;
+            if (t == typeof(long)) modelBuilder.Entity(clr).Property(pi.Name).HasDefaultValue(1L);
+            else if (t == typeof(int)) modelBuilder.Entity(clr).Property(pi.Name).HasDefaultValue(1);
         }
 
         private static void ConfigureDbGuid(IMutableProperty prop,bool isSqlServer, bool isNpgsql,bool isMySql)
@@ -124,40 +158,91 @@ namespace EfCore.Boost.Model
             //Ef conventions for MySql auto-increment are handled by Pomelo automatically
         }
 
+        private enum StrBucket { None, Code, Short, Med, Long, Text }
+        private readonly record struct StrRule(Type AttrType, StrBucket Bucket);
         private static void ConfigureStringSize(IMutableProperty prop, PropertyInfo pi, bool isSqlServer, bool isNpgsql, bool isMySql)
         {
             // DO NOT override explicit MaxLength if already set
-            if (prop.GetMaxLength().HasValue)
-                return;
+            if (prop.GetMaxLength().HasValue) return;
 
-            var shortAttr = pi.GetCustomAttribute<StrShortAttribute>();
-            var medAttr = pi.GetCustomAttribute<StrMedAttribute>();
-            var longAttr = pi.GetCustomAttribute<StrLongAttribute>();
-            var codeAttr = pi.GetCustomAttribute<StrCodeAttribute>();
-            var textAttr = pi.GetCustomAttribute<TextAttribute>();
+            static bool Has(PropertyInfo pi, Type attrType) => Attribute.IsDefined(pi, attrType, inherit: false);
+            // Table-driven rules: add new attributes here
+            // URL is mapped to Med (256).
+            StrRule[] rules =
+            {
+                // Explicit size buckets
+                new(typeof(StrCodeAttribute), StrBucket.Code),
+                new(typeof(StrShortAttribute), StrBucket.Short),
+                new(typeof(StrMedAttribute), StrBucket.Med),
+                new(typeof(StrLongAttribute), StrBucket.Long),
+                new(typeof(TextAttribute), StrBucket.Text),
+                // Semantic: codes
+                new(typeof(CountryCodeAttribute), StrBucket.Code),
+                new(typeof(CurrencyCodeAttribute), StrBucket.Code),
+                new(typeof(LanguageCodeAttribute), StrBucket.Code),
+                new(typeof(CultureCodeAttribute), StrBucket.Code),
+                new(typeof(MimeTypeAttribute), StrBucket.Short),
+                // Semantic: address bits (short-ish)
+                new(typeof(AddressPostalCodeAttribute), StrBucket.Short),
+                new(typeof(AddressStreetNumberAttribute), StrBucket.Short),
+                new(typeof(AddressBuildingUnitAttribute), StrBucket.Short),
+                new(typeof(PhoneAttribute), StrBucket.Short),
+                new(typeof(UserNameAttribute), StrBucket.Short),
 
-            // If none -> let EF default (nvarchar(max)/text/longtext)
-            if (shortAttr == null && medAttr == null && longAttr == null && textAttr == null && codeAttr == null)
-                return;
-
-            // Prevent conflicting attributes
-            var count = (shortAttr != null ? 1 : 0)
-                + (medAttr != null ? 1 : 0)
-                + (longAttr != null ? 1 : 0)
-                + (codeAttr != null ? 1 : 0)
-                + (textAttr != null ? 1 : 0);
-            if (count > 1)
-                throw new InvalidOperationException(
-                    $"Property '{prop.ClrType.Name}.{prop.Name}' " +
-                    $"has multiple Str* attributes. Only one of [StrCode], [StrShort], [StrMed], [StrLong], [Text] is allowed.");
-            // Short / Long
-            var maxLen = shortAttr != null ? 50 : (codeAttr != null ? 30 : (medAttr != null ? 256 : 512));
-            if (!isNpgsql && textAttr != null)
-                prop.SetMaxLength(maxLen);
-            //Console.WriteLine($"Configuring string property {prop.ClrType.Name}.{prop.Name} with max length {maxLen}");
-            if (isSqlServer) prop.SetColumnType($"nvarchar({maxLen})");
-            else if (isNpgsql) prop.SetColumnType("citext");
-            else if (isMySql) prop.SetColumnType($"varchar({maxLen})");
+                // Semantic: address bits (medium)
+                new(typeof(NameAttribute), StrBucket.Med),
+                new(typeof(TitleAttribute), StrBucket.Med),
+                new(typeof(ExternalRefAttribute), StrBucket.Med),
+                new(typeof(AddressStreetNameAttribute), StrBucket.Med),
+                new(typeof(AddressCityAttribute), StrBucket.Med),
+                new(typeof(AddressAdminAreaAttribute), StrBucket.Med),
+                new(typeof(AddressRecepientNameAttribute), StrBucket.Med), // consider renaming typo
+                // Semantic: special strings
+                new(typeof(EmailAttribute), StrBucket.Long), // RFC max 320 -> keep Long(512)
+                new(typeof(UrlAttribute), StrBucket.Long),    // URL <= 356
+                new(typeof(FileNameAttribute), StrBucket.Long),
+                // Formatted/structured text (unbounded)
+                new(typeof(HtmlAttribute), StrBucket.Text),
+                new(typeof(MarkdownAttribute), StrBucket.Text),
+                new(typeof(RichTextAttribute), StrBucket.Text),
+                new(typeof(JsonAttribute), StrBucket.Text),
+                new(typeof(EditorAttribute), StrBucket.Text),
+            };
+            StrBucket bucket = StrBucket.None;
+            Type? firstAttr = null;
+            foreach (var r in rules)
+            {
+                if (!Has(pi, r.AttrType)) continue;
+                if (bucket == StrBucket.None)
+                {
+                    bucket = r.Bucket;
+                    firstAttr = r.AttrType;
+                    continue;
+                }
+                if (bucket != r.Bucket)
+                    throw new InvalidOperationException(
+                        $"Property '{prop.DeclaringType?.Name}.{prop.Name}' has multiple string intent attributes " +
+                        $"('{firstAttr?.Name}', '{r.AttrType.Name}'). Only one string intent/size attribute is allowed.");
+                // If same bucket (aliases), allow it.
+            }
+            // If none -> let EF default
+            if (bucket == StrBucket.None) return;
+            int? maxLen = bucket switch
+            {
+                StrBucket.Code => 30,
+                StrBucket.Short => 50,
+                StrBucket.Med => 256,
+                StrBucket.Long => 512,
+                _ => null // Text => unbounded
+            };
+            if (maxLen.HasValue) prop.SetMaxLength(maxLen.Value);
+            // Column types: keep consistent across providers
+            if (isSqlServer)
+                prop.SetColumnType(maxLen.HasValue ? $"nvarchar({maxLen.Value})" : "nvarchar(max)");
+            else if (isNpgsql)
+                prop.SetColumnType(maxLen.HasValue ? $"varchar({maxLen.Value})" : "text");
+            else if (isMySql)
+                prop.SetColumnType(maxLen.HasValue ? $"varchar({maxLen.Value})" : "longtext");
         }
 
         private static void ConfigureDecimalPrecision(IMutableProperty prop, PropertyInfo pi)
@@ -179,6 +264,8 @@ namespace EfCore.Boost.Model
             var money = pi.GetCustomAttribute<MoneyAttribute>();
             var sort = pi.GetCustomAttribute<SortRankAttribute>();
             var sci = pi.GetCustomAttribute<ScientificAttribute>();
+            var lgt = pi.GetCustomAttribute<LongitudeAttribute>();
+            var lat = pi.GetCustomAttribute<LatitudeAttribute>();
 
             var count = (pct != null ? 1 : 0)
                 + (price != null ? 1 : 0)
@@ -186,6 +273,8 @@ namespace EfCore.Boost.Model
                 + (rate != null ? 1 : 0)
                 + (money != null ? 1 : 0)
                 + (sort != null ? 1 : 0)
+                + (lgt != null ? 1 : 0)
+                + (lat != null ? 1 : 0)
                 + (sci != null ? 1 : 0);
 
             if (count > 1)
@@ -197,6 +286,7 @@ namespace EfCore.Boost.Model
             if (pct != null || qty != null || rate != null) { precision = 18; scale = 8; }
             else if (price != null || money != null) { precision = 19; scale = 4; }
             else if (sort != null || sci != null) { precision = 38; scale = 19; }
+            else if (lgt != null || lat != null) { precision = 9; scale = 6; }
             else { precision = 19; scale = 4; } // default for all other decimals
 
             prop.SetPrecision(precision);
