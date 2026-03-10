@@ -62,12 +62,26 @@ Now more convenient way to write design time DbTestContextFactory using DesignDb
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
   </ItemGroup>
+  <Target Name="BuildDesignProject" BeforeTargets="Pack">
+  <MSBuild Projects="..\EfCore.Boost.Design\EfCore.Boost.Design.csproj"
+           Targets="Build"
+           Properties="Configuration=$(Configuration)" />
+</Target>
+  <ItemGroup>
+  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.dll"
+        Pack="true"
+        PackagePath="lib\net8.0\" />
+  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.xml"
+        Pack="true"
+        PackagePath="lib\net8.0\"
+        Condition="Exists('..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.xml')" />
+</ItemGroup>
   <ItemGroup>
 	  <ProjectReference Include="..\BoostAnalyzer\BoostAnalyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all"  />
 	  <ProjectReference Include="..\BoostCodeFixes\BoostAnalyzer.CodeFixes.csproj" ReferenceOutputAssembly="false" PrivateAssets="all"  />
   </ItemGroup>
   <ItemGroup Condition="'$(IncludeAnalyzersInPack)' == 'true'">
     <None Include="..\BoostAnalyzer\bin\$(Configuration)\netstandard2.0\BoostAnalyzer.dll" Pack="true" PackagePath="analyzers/dotnet/cs/" />
-    <None Include="..\BoostCodeFixes\bin\Release\netstandard2.0\BoostAnalyzer.CodeFixes.dll" Pack="true" PackagePath="analyzers/dotnet/cs/" />
+    <None Include="..\BoostCodeFixes\bin\$(Configuration)\netstandard2.0\BoostAnalyzer.CodeFixes.dll" Pack="true" PackagePath="analyzers/dotnet/cs/" />
   </ItemGroup>
 </Project>
