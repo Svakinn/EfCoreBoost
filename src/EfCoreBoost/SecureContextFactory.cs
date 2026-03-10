@@ -29,7 +29,7 @@ namespace EfCore.Boost
     /// </summary>
     public static class SecureContextFactory
     {
-        public static T CreateDbContext<T>(IConfiguration configuration, string configName = "", IEnumerable<IInterceptor>? interceptors = null) where T : DbContext
+        public static T CreateDbContext<T>(IConfiguration configuration, string configName = "", IEnumerable<IInterceptor>? interceptors = null, string? migrationAssembly = null) where T : DbContext
         {
             if (string.IsNullOrWhiteSpace(configName))
             {
@@ -50,6 +50,7 @@ namespace EfCore.Boost
                 dbCfg.AzureClientSecret,
                 dbCfg.Provider,
                 ComposeInterceptors(interceptors, dbCfg.UseUtcSessionTimeZone),
+                migrationAssembly,
                 dbCfg.RetryCount ?? 5,
                 dbCfg.MaxRetryDelaySeconds ?? 30,
                 dbCfg.CommandTimeoutSeconds ?? 60
@@ -81,6 +82,7 @@ namespace EfCore.Boost
            string? clientSecret = null,
            string? provider = null,
            IEnumerable<IInterceptor>? interceptors = null, //optional interceptors pased to DbContextOptionsBuilder
+           string? migrationAssembly = null,
            int retryCount = 5,             // intended for azure only
            int maxRetryDelaySeconds = 30,  // intended for azure only
            int? commandTimeoutSeconds = 60 //Set null to skip.
@@ -123,6 +125,8 @@ namespace EfCore.Boost
                     optionsBuilder.UseSqlServer(sqlConnection, sql =>
                     {
                         if (commandTimeoutSeconds is int to) sql.CommandTimeout(to);
+                        if (!string.IsNullOrWhiteSpace(migrationAssembly))
+                            sql.MigrationsAssembly(migrationAssembly);
                         // Auto enable retries for Azure SQL unless explicitly disabled.
                         var shouldEnableRetries = useAzure && retryCount > 0;
                         if (shouldEnableRetries)
@@ -136,11 +140,21 @@ namespace EfCore.Boost
                     });
                     break;
                 case "postgresql":
-                    optionsBuilder.UseNpgsql(connectionString); //.
-                        //EnableSensitiveDataLogging().LogTo(Console.WriteLine, LogLevel.Debug); //For debugging only
+                    optionsBuilder.UseNpgsql(connectionString, npgsql =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(migrationAssembly))
+                            npgsql.MigrationsAssembly(migrationAssembly);
+                    });
                     break;
                 case "mysql": //version 8.0 is bare minimum for Pomelo, lesser versions require different migration output
-                    optionsBuilder.UseMySql(connectionString, ServerVersion.Create(8, 0, 0, ServerType.MySql));
+                    optionsBuilder.UseMySql(
+                        connectionString,
+                        ServerVersion.Create(8, 0, 0, ServerType.MySql),
+                        mySql =>
+                        {
+                            if (!string.IsNullOrWhiteSpace(migrationAssembly))
+                                mySql.MigrationsAssembly(migrationAssembly);
+                        });
                     break;
                 default:
                     throw new Exception($"Unknown or unsupported provider: {prov}");
@@ -160,6 +174,11 @@ namespace EfCore.Boost
                 "mysql" or "mariadb" => "mysql",
                 _ => throw new Exception($"Unknown provider: {raw}")
             };
+        }
+
+        public static TContext CreateDbContextForMigrations<TContext, TFactory>(IConfiguration configuration, string connName) where TContext : DbContext
+        {
+            return CreateDbContext<TContext>(configuration, connName, migrationAssembly: typeof(TFactory).Assembly.GetName().Name);
         }
     }
 

@@ -1,4 +1,4 @@
-﻿using BoostTest.TestDb;
+﻿using TestDb;
 using EfCore.Boost;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData;
@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static BoostTest.TestDb.DbTest;
+using static TestDb.DbTest;
 
 namespace BoostTest.Helpers
 {
@@ -83,5 +83,5 @@ namespace BoostTest.Helpers
         }
 
     }
-      
+
 }

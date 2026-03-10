@@ -8,14 +8,15 @@
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
     <Authors>Sveinn S. Erlendsson</Authors>
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>
-EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core, plus utilities for routines, bulk operations, and OData suport.
-Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.
+Database for test placed in seporate project.
+Migrations for the test db also moved to seporate project.
+Now more convenient way to write design time DbTestContextFactory using DesignDbContextFactoryBase T
 	</Description>
     <PackageReleaseNotes>
     Concurrency handling. 

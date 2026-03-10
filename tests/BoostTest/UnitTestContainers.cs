@@ -19,8 +19,7 @@ using Testcontainers.MsSql;
 using Testcontainers.MySql;
 using Testcontainers.PostgreSql;
 using BoostTest.Helpers;
-using BoostTest.TestDb;
-using Microsoft.AspNetCore.Builder;
+using TestDb;
 
 namespace BoostTest
 {

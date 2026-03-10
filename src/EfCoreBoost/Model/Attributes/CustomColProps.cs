@@ -94,11 +94,11 @@ namespace EfCore.Boost.Model.Attributes
     {
     }
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-    public sealed class PhoneAttribute : Attribute
+    public sealed class PhoneNumberAttribute : Attribute
     {
     }
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-    public sealed class UrlAttribute : Attribute
+    public sealed class SiteUrlAttribute : Attribute
     {
     }
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
@@ -143,6 +143,10 @@ namespace EfCore.Boost.Model.Attributes
     }
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
     public sealed class AddressRecepientNameAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class RegNoAttribute : Attribute
     {
     }
 
@@ -297,6 +301,14 @@ namespace EfCore.Boost.Model.Attributes
     }
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
     public sealed class StatusAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class SoftRefAttribute : Attribute
+    {
+    }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    public sealed class BirthDateAttribute : Attribute
     {
     }
     #endregion

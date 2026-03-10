@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace EfCore.Boost.Model
@@ -29,8 +30,9 @@ namespace EfCore.Boost.Model
             {
                 var clr = entity.ClrType;
                 // Skip views or non-CLR-backed entity types
-                if (clr == null || Attribute.IsDefined(clr, typeof(ViewKeyAttribute), inherit: false))
+                if (clr == null )
                     continue;
+                var isView = Attribute.IsDefined(clr, typeof(ViewKeyAttribute), inherit: false);
                 var conCurrCount = 0;
                 foreach (var pi in clr.GetProperties(BindingFlags.Instance | BindingFlags.Public))
                 {
@@ -44,7 +46,7 @@ namespace EfCore.Boost.Model
 
                     // 2) DbUid (shorthand: PK + database generated ID)
                     var dbUidAttr = pi.GetCustomAttribute<DbAutoUidAttribute>();
-                    if (dbUidAttr != null)
+                    if (dbUidAttr != null && !isView)
                         ConfigureDbUid(entity, prop, pi, dbUidAttr, isSqlServer, isNpgsql, isMySql);
 
                     // 3) String length attributes: StrShort / StrLong / StrText
@@ -56,7 +58,7 @@ namespace EfCore.Boost.Model
                         ConfigureDecimalPrecision(prop, pi);
                     // 5) AutoIncrementConcurrency
                     var auIncr = pi.GetCustomAttribute<AutoIncrementConcurrencyAttribute>();
-                    if (auIncr != null && IsIntOrLong(pi.PropertyType))
+                    if (auIncr != null && !isView && IsIntOrLong(pi.PropertyType))
                     {
                         if (conCurrCount > 0) throw new InvalidOperationException($"Multiple [AutoIncrementConcurrency] properties on '{clr.Name}', '{pi.Name}'.");
                         conCurrCount++;
@@ -64,7 +66,7 @@ namespace EfCore.Boost.Model
                         modelBuilder.Entity(clr).Property(pi.Name).IsConcurrencyToken();
                     }
                     var oIncr = pi.GetCustomAttribute<AutoIncrementAttribute>();
-                    if (oIncr != null && IsIntOrLong(pi.PropertyType))
+                    if (oIncr != null && !isView && IsIntOrLong(pi.PropertyType))
                     {
                         //Set default value to 0 if not set
                         EnsureDefaultNumIfMissing(modelBuilder, clr, pi);
@@ -186,8 +188,9 @@ namespace EfCore.Boost.Model
                 new(typeof(AddressPostalCodeAttribute), StrBucket.Short),
                 new(typeof(AddressStreetNumberAttribute), StrBucket.Short),
                 new(typeof(AddressBuildingUnitAttribute), StrBucket.Short),
-                new(typeof(PhoneAttribute), StrBucket.Short),
+                new(typeof(PhoneNumberAttribute), StrBucket.Short),
                 new(typeof(UserNameAttribute), StrBucket.Short),
+                new(typeof(RegNoAttribute), StrBucket.Code),
 
                 // Semantic: address bits (medium)
                 new(typeof(NameAttribute), StrBucket.Med),
@@ -199,7 +202,7 @@ namespace EfCore.Boost.Model
                 new(typeof(AddressRecepientNameAttribute), StrBucket.Med), // consider renaming typo
                 // Semantic: special strings
                 new(typeof(EmailAttribute), StrBucket.Long), // RFC max 320 -> keep Long(512)
-                new(typeof(UrlAttribute), StrBucket.Long),    // URL <= 356
+                new(typeof(SiteUrlAttribute), StrBucket.Long),    // URL <= 356
                 new(typeof(FileNameAttribute), StrBucket.Long),
                 // Formatted/structured text (unbounded)
                 new(typeof(HtmlAttribute), StrBucket.Text),
