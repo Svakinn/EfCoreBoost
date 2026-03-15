@@ -57,62 +57,87 @@ So instead of relying on discipline and memory, automation scripts:
 - temporarily adjust snapshot visibility when needed
 - optionally generate final deployable SQL packages
 
-
 ---
 
 ## 3. The Snapshot Problem
 
-EF keeps a **single model snapshot** per DbContext.  
-That snapshot represents “what EF thinks the database currently looks like”.
+EF Core keeps **one active model snapshot per DbContext**.  
+That snapshot represents EF’s current understanding of the database model.
 
-When only one provider is used, this is fine.  
-When multiple database engines are used:
+With a single database provider, this works well.  
+With multiple providers, things become more complicated:
 
-- provider differences leak into snapshots
-- each provider evolves slightly differently
-- EF assumes **only one truth**
-- migration diffs become confused or wrong
+- provider-specific differences appear in the snapshot
+- providers do not always evolve identically
+- EF still expects a single authoritative snapshot
+- migration diffs can become inaccurate or misleading
 
 ### The practical reality
 
-At any given time, for a DbContext, **only one provider’s snapshot can be active** for EF to create a new migration correctly.
+For a given `DbContext`, EF Core can only work correctly with **one active snapshot at a time** when generating a new migration.
 
-So a common and effective pattern is:
+Because of this, a common strategy in multi-database solutions is to keep a **separate migrations project for each provider**.  
+That approach is perfectly valid and is often the cleanest option for formal deployment pipelines.
 
-- have one migration folder per provider
-- keep snapshots for each provider in their own area
-- temporarily disable / hide snapshots for providers *you are not migrating right now*
-- generate migration
-- put everything back where it belongs
+### The EfCore.Boost approach
 
-There are many ways to do this.  
-This document shows one working example using file renaming.
+In the `EfCore.Boost` test project, and in the related project templates, we use a different setup:
+
+- a **single migration project**
+- support for **multiple providers**
+- optionally support for **multiple DbContexts**
+
+To make this work, we use a simple scripting approach:
+
+- one provider snapshot is kept active
+- the other provider snapshots are temporarily disabled
+- the migration is generated
+- the disabled snapshots are restored afterward
+
+In practice, this is handled by a PowerShell script that renames snapshot files so EF only sees the snapshot for the provider currently being migrated.
+
+This means the workflow is still deterministic and repeatable, while avoiding the overhead of maintaining one migration project per database flavor.
 
 ### About production migration histories
 
-If you are building a **formal public release** intended to be deployed onto production databases, you absolutely want to:
+For formal production releases, you should still treat each provider’s migration history carefully.
 
-- preserve the correct snapshot state for each provider
-- keep that snapshot aside safely
-- later use it when generating strictly correct **incremental** migrations
+That usually means:
 
-Exactly how you manage long-lived official histories is outside the scope of EfCore.Boost itself.  
-You are expected to adapt these scripting principles into your own production migration process.
+- preserving the correct snapshot state for each provider
+- keeping provider-specific migration history intact
+- using that history when generating proper **incremental** migrations for production deployment
+
+EfCore.Boost does not enforce one specific production process here.  
+Instead, it provides a practical pattern that you can adapt to your own release and deployment workflow.
 
 ---
 
-## 4. Strategies 
+## 4. Strategy Used in the Templates
 
-1️⃣ Decide which provider you are currently generating a migration for  
-2️⃣ Temporarily rename or move all `*ModelSnapshot.cs` files belonging to other providers  
-3️⃣ Ensure only the active provider’s snapshot is visible to EF  
-4️⃣ Run `dotnet ef migrations add …` normally  
-5️⃣ Return renamed snapshots to their rightful folders afterward  
+The templates and test projects follow this workflow:
+
+1. Choose the provider you want to generate a migration for  
+2. Keep that provider’s snapshot active  
+3. Temporarily disable the snapshots for the other providers  
+4. Run `dotnet ef migrations add ...` normally  
+5. Restore the disabled snapshots afterward  
+
+In our setup, “disable” simply means renaming the non-active `*ModelSnapshot.cs` files through PowerShell so EF Core ignores them during migration generation.
 
 ### Key takeaway
 
-You are not tricking EF.  
-You are helping EF live in a world it was not originally designed for.
+In many enterprise-grade multi-database solutions, the standard approach is to keep one migration project per provider.
+
+EfCore.Boost shows an alternative approach that is lighter for development, testing, and templates:
+
+- one migration project
+- multiple providers
+- one active snapshot at a time
+- simple script-driven switching between providers
+
+You are not changing how EF Core works.  
+You are creating the conditions EF Core needs in order to generate correct migrations in a multi-provider setup.
 
 ---
 
@@ -166,84 +191,44 @@ It currently:
 
 
 ```powershell
-function Set-DefaultAppConnName {
-    param(
-        [string]$SolutionRoot,
-        [string]$Name
-    )
-    #it can be a little confusing where dotnet migration tool chooses to load appettings.json
-    $settingsPath = Join-Path $SolutionRoot "xUnitTests\appsettings.json"
-    if (-not (Test-Path $settingsPath)) {
-        throw "appsettings.json not found at: $settingsPath"
-    }
-    Write-Host "Updating DefaultAppConnName -> '$Name'"
-    $content = Get-Content $settingsPath -Raw
-    $updated = $content -replace '("DefaultAppConnName"\s*:\s*")([^"]*)(")', "`$1$Name`$3"
-    Set-Content $settingsPath $updated -Encoding UTF8
-}
-
 function Set-MigrationProvider {
-    <#
-    .SYNOPSIS
-      Enables migrations for a single provider and disables the others by renaming .cs <-> .xcs.
-    .DESCRIPTION
-      This enables us to build migrations for each of the 3 provider types that each reqruie its own implementation of initial migration.
-      So when we do migration for MsSQL, possible migration-cs files must be deleted or better yet renamed so there is ony one project-buildable-migration
-      active at each point.
-
-    .PARAMETER require
-      Root of the solution (the folder containing xUnitTests, etc.)
-
-    .PARAMETER Provider
-      One of: MsSQL, PgSQL, MySQL
-    #>
     param(
-        [Parameter(Mandatory = $true)] [string]$SolutionRoot,
-        [Parameter(Mandatory = $true)] [ValidateSet("MsSQL","PgSQL","MySQL")] [string]$Provider
+        [Parameter(Mandatory = $true)][string]$ProjectDir,
+        [Parameter(Mandatory = $true)][ValidateSet("MsSQL","PgSQL","MySQL")][string]$Provider
     )
-
-   $projFolder = Join-Path $SolutionRoot "xUnitTests"
-    if (-not (Test-Path $projFolder)) {
-        throw "xUnitTests folder not found at: $projFolder"
+    if (-not (Test-Path $ProjectDir)) {
+        throw "Migration project folder not found at: $ProjectDir"
     }
-
-    Write-Host "xUnitTests: $projFolder"
-    Write-Host "Activating migrations for provider: $projFolder"
+    $projFolder = $ProjectDir
+    Write-Host "Migration project: $projFolder"
+    Write-Host "Activating migrations for provider: $Provider"
     Write-Host ""
-
     $providers = @("MsSQL","PgSQL","MySQL")
     foreach ($p in $providers) {
-        $migDir = Join-Path $projFolder "TestDb\Migrations\$p"
+        $migDir = Join-Path $projFolder "Migrations\$p"
         if (-not (Test-Path $migDir)) {
             Write-Host "Skipping missing folder: $migDir"
             continue
         }
-
         $enable = ($p -eq $Provider)
         if ($enable) {
             Write-Host "Preparing CLEAN migration folder for provider '$p' at $migDir"
-
-            # Remove ALL .cs and .xcs files under this provider (including Mg* subdirs)
             Get-ChildItem -Path $migDir -Recurse -File |
                 Where-Object { $_.Extension -in '.cs', '.xcs' } |
                 Remove-Item -Force
         }
         else {
             Write-Host "Disabling migrations under $migDir (provider '$p')"
-
-            # Rename all .cs files under this provider (including subdirs) to .cs.xcs
             Get-ChildItem -Path $migDir -Recurse -File |
                 Where-Object { $_.Extension -eq '.cs' } |
                 ForEach-Object {
-                    $newName = $_.FullName + ".xcs"
-                    Rename-Item $_.FullName $newName -Force
+                    Rename-Item $_.FullName ($_.FullName + ".xcs") -Force
                 }
         }
     }
     Write-Host ""
     Write-Host "Done. Active migration provider: $Provider"
 }
-
 ```
 
 ---
@@ -252,7 +237,6 @@ function Set-MigrationProvider {
 
 This script:
 
-- prepares PostgreSQL as the active migration target
 - ensures other provider snapshots do not interfere
 - runs EF migrations
 - collects resulting SQL
@@ -261,72 +245,59 @@ This script:
 
 ```powershell
 param(
-    [string]$SolutionRoot,
-    [string]$SqlOutFileName = "Migrations\DbDeploy_PgSQL.PgSQL"
+    [string]$ProjectDir,
+    [string]$ConnName = "TestPg",
+    [string]$SqlOutFileName = "Migrations\DbDeploy_PgSQL.pgsql"
 )
-
-# If no SolutionRoot passed, infer from script location
-if (-not $SolutionRoot) {
-    $DbDir   = Split-Path $PSScriptRoot -Parent    
-    $ProjectDir   = Split-Path $DbDir -Parent    
-    $SolutionRoot = Split-Path $ProjectDir -Parent           
+# If no ProjectDir passed, infer from script location:
+# script lives in /PS under the project folder
+if (-not $ProjectDir) {
+    $ProjectDir = Split-Path $PSScriptRoot -Parent
 }
 $ErrorActionPreference = "Stop"
-
 Write-Host "=== EF PgSQL: Creating initial migrations for Postgres ==="
-Write-Host "Solution root: $SolutionRoot"
-
-# Build relative paths dynamically
-$Startup = Join-Path $SolutionRoot "xUnitTests\xUnitTests.csproj"
-$Project = $Startup
-
-Write-Host "Project path:  $Project"
-Write-Host "Startup path:  $Startup"
+# Build paths relative to project dir
+$Project = Join-Path $ProjectDir "TestDb.Migrate.csproj"
+Write-Host "PSScriptRoot: $PSScriptRoot"
+Write-Host "ProjectDir:   $ProjectDir"
+Write-Host "Project name: $Project"
+Write-Host "ConnName:     $ConnName"
 Write-Host ""
-
-# Import helpers:  resolve path relative to this script
+# Import helpers relative to this script
 $helperPath = Join-Path $PSScriptRoot "helpers.ps1"
-. $helperPath   # ← dot + space + path = "dot-source"
-
-# Make sure we have Postgres as default database in config
-Set-DefaultAppConnName -SolutionRoot $SolutionRoot -Name "TestPg"
-Set-MigrationProvider   -SolutionRoot $SolutionRoot -Provider "PgSQL"
-
+. $helperPath
+# Make sure we have PgSQL as current provider
+Set-MigrationProvider -ProjectDir $ProjectDir -Provider "PgSQL"
 $migrations = @(
-    @{Name="InitDbTest"; Context="DbTest"; OutDir="TestDb/Migrations/PgSQL/MgDbTest"; OutFile="TestDb/Migrations/PgSQL/InitDbTest.PgSQL"  }
+    @{ Name = "InitDbTest"; Context = "DbTest"; OutDir = "Migrations/PgSQL/MgDbTest"; OutFile = "Migrations/PgSQL/InitDbTest.pgsql" }
 )
 $filesInOrder = @(
-    "TestDb/Migrations/PgSQL/InitDbTest.PgSQL",
-    "TestDb/PgSQL.PgSQL"
+    "Migrations/PgSQL/InitDbTest.pgsql",
+    "SQL/PgSQL.pgsql"
 )
-$mergedSQLFile = "";
-
 foreach ($m in $migrations) {
     Write-Host "-> Creating migration $($m.Name) ($($m.Context))"
     dotnet ef migrations add $m.Name `
         --context $m.Context `
         --project $Project `
-        --output-dir $m.OutDir  #`
-        #--startup-project $Startup
+        --output-dir $m.OutDir `
+        -- `
+        --connName $ConnName
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "dotnet ef failed for migration $($m.Name) ($($m.Context)) with exit code $LASTEXITCODE"
-        break
+        throw "dotnet ef migrations add failed for migration $($m.Name) ($($m.Context)) with exit code $LASTEXITCODE"
     }
+    $outFile = Join-Path $ProjectDir $m.OutFile
     Write-Host "-> Creating migration SQL $($m.Name) ($($m.Context))"
-    $outFil = Join-Path $ProjectDir $($m.OutFile)
-    Write-Host "Command: dotnet ef migrations script 0 $($m.Name) --context $($m.Context) --project $($Project) --startup-project $($Startup) --output $($m.OutFile)"
     dotnet ef migrations script 0 $m.Name `
         --context $m.Context `
         --project $Project `
-        --output $outFil #`
-         #--startup-project $Startup `
+        --output $outFile `
+        -- `
+        --connName $ConnName
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "dotnet ef failed for migration $($m.Name) ($($m.Context)) with exit code $LASTEXITCODE"
-        break
+        throw "dotnet ef migrations script failed for migration $($m.Name) ($($m.Context)) with exit code $LASTEXITCODE"
     }
 }
-# Merge the migration with our custom SQL into one deployment script
-# Resolve to full paths relative to DbAppBase
 $existingFiles = @()
 foreach ($relPath in $filesInOrder) {
     $fullPath = Join-Path $ProjectDir $relPath
@@ -339,37 +310,159 @@ foreach ($relPath in $filesInOrder) {
 if ($existingFiles.Count -eq 0) {
     throw "No input SQL files found. Nothing to merge."
 }
-# Create or overwrite output file
-$deployPath = Join-Path $DbDir $SqlOutFileName
-"/* 
+$deployPath = Join-Path $ProjectDir $SqlOutFileName
+@"
+/*
     Database deploy script (PgSQL)
     Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
-*/" | Set-Content -Path $deployPath -Encoding UTF8
-
-# Merge with section headers
+    ConnName: $ConnName
+*/
+"@ | Set-Content -Path $deployPath -Encoding UTF8
 foreach ($file in $existingFiles) {
     $name = [System.IO.Path]::GetFileName($file)
     Write-Host "Appending: $name"
-
     @(
         ""
         "/*** BEGIN $name ***/"
         ""
     ) | Add-Content -Path $deployPath
-
     Get-Content $file | Add-Content -Path $deployPath
-
     @(
         ""
+        "GO"
         "/*** END $name ***/"
         ""
     ) | Add-Content -Path $deployPath
 }
-
 Write-Host ""
 Write-Host "✅ Done. Deploy script created at:"
-Write-Host "   $deployPath"
+Write-Host "  $deployPath"
 ```
+
+---
+
+# 7. Simplifying Migration Setup with a Design-Time Factory
+
+EF Core requires a **design-time DbContext factory** when using `dotnet ef` commands.  
+In many projects, this becomes repetitive and tightly coupled to a specific database provider or connection.
+
+EfCore.Boost introduces a clean, flexible pattern that keeps migration projects **provider-agnostic** and easy to maintain.
+
+---
+
+## The idea
+
+Instead of hardcoding provider logic or connection strings into the migration project:
+
+- use a shared **design-time factory base**
+- resolve configuration dynamically
+- select the connection via a parameter (`--connName`)
+- let a central factory handle provider selection
+
+This keeps your migration project lightweight and reusable across environments.
+
+---
+
+## Example (from test project)
+
+```csharp
+namespace TestDb.Migrate
+{
+    /// <summary>
+    /// Design-time factory used by EF Core tooling (dotnet ef).
+    ///
+    /// SecureContextFactory resolves:
+    /// - connection strings
+    /// - provider (SqlServer, PostgreSQL, MySQL, etc.)
+    /// - environment-specific settings (local, docker, Azure, ...)
+    ///
+    /// You can optionally pass a connection name:
+    ///   dotnet ef migrations add Init -- --connName=PgLocal
+    /// </summary>
+    public sealed class DbTestContextFactory : DesignDbContextFactoryBase<DbTest>
+    {
+        protected override DbTest CreateContext(IConfigurationRoot configuration, string connName)
+            => SecureContextFactory.CreateDbContextForMigrations<DbTest, DbTestContextFactory>(configuration, connName);
+    }
+}
+```
+
+---
+
+## appsettings.json (in migration project)
+
+The migration project contains its own configuration file, typically:
+
+```json
+{
+  "DBConnections": {
+    "MsSqlLocal": {
+      "Provider": "SqlServer",
+      "ConnectionString": "Server=localhost;Database=TestDb;Trusted_Connection=True;"
+    },
+    "PgLocal": {
+      "Provider": "PostgreSql",
+      "ConnectionString": "Host=localhost;Database=testdb;Username=postgres;Password=postgres"
+    },
+    "MySqlLocal": {
+      "Provider": "MySql",
+      "ConnectionString": "Server=localhost;Database=testdb;User=root;Password=root"
+    }
+  }
+}
+```
+
+The `connName` parameter maps directly to this section.
+
+---
+
+## Running migrations
+
+```bash
+dotnet ef migrations add Init -- --connName=MsSqlLocal
+dotnet ef migrations add Init -- --connName=PgLocal
+dotnet ef migrations add Init -- --connName=MySqlLocal
+```
+
+Each run:
+
+- selects a provider via configuration
+- uses the same migration project
+- produces provider-specific migrations
+
+---
+
+## Test project reference
+
+You can find a working example here:
+
+https://github.com/your-repo/EfCore.Boost/tree/main/test/TestDb.Migrate
+
+(Adjust the link to match your actual repository structure.)
+
+---
+
+## How it fits with multi-provider migrations
+
+Combined with the snapshot strategy:
+
+- the **factory selects provider and connection**
+- scripts ensure **only one snapshot is active**
+- EF Core behaves as if it is working with a single provider
+
+---
+
+## Key takeaway
+
+EfCore.Boost separates concerns cleanly:
+
+- **factory → decides provider and connection**
+- **configuration → defines environments**
+- **scripts → control active snapshot**
+- **EF Core → generates migrations**
+
+This results in a flexible, low-friction setup without needing multiple migration projects.
+
 
 ---
 
@@ -387,3 +480,4 @@ Key ideas from this guide:
 
 EfCore.Boost does **not** own your migration workflow.  
 It simply lives comfortably inside one that has been thoughtfully designed.
+

@@ -128,5 +128,5 @@ foreach ($file in $existingFiles) {
 }
 
 Write-Host ""
-Write-Host "Done. Deploy script created at:"
+Write-Host "✅Done. Deploy script created at:"
 Write-Host "  $deployPath"

@@ -12,8 +12,6 @@ namespace TestDb.Migrate
     /// </summary>
     public sealed class DbTestContextFactory : DesignDbContextFactoryBase<DbTest>
     {
-        protected override string GetDefaultConnectionName() => "DefaultConnection";
-
         protected override DbTest CreateContext(IConfigurationRoot configuration, string connName)
             => SecureContextFactory.CreateDbContextForMigrations<DbTest, DbTestContextFactory>(configuration, connName);
     }
