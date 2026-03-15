@@ -386,6 +386,10 @@ namespace TestDb.Migrate
     }
 }
 ```
+Where: 
+- **DbTestContextFactory** is the name we give the factory.
+- **DbTest** is the DbContext we are making migration for.
+
 
 ---
 
@@ -436,7 +440,7 @@ Each run:
 
 You can find a working example here:
 
-https://https://github.com/Svakinn/EfCoreBoost/tree/main/tests/TestDb.Migrate/
+https://github.com/Svakinn/EfCoreBoost/tree/main/tests/TestDb.Migrate/
 
 ---
 
