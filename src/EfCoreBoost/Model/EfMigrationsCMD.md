@@ -436,9 +436,7 @@ Each run:
 
 You can find a working example here:
 
-https://github.com/your-repo/EfCore.Boost/tree/main/test/TestDb.Migrate
-
-(Adjust the link to match your actual repository structure.)
+https://https://github.com/Svakinn/EfCoreBoost/tree/main/tests/TestDb.Migrate/
 
 ---
 
