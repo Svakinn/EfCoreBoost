@@ -1,32 +1,15 @@
 ﻿// Copyright © 2026 Sveinn S. Erlendsson
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using EfCore.Boost.CFG;
 using EfCore.Boost.DbRepo;
 using EfCore.Boost.EDM;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Configuration;
 using Microsoft.OData.Edm;
-using Microsoft.OData.ModelBuilder;
-using Microsoft.SqlServer.Server;
-using MySqlConnector;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
-using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EfCore.Boost.UOW
 {
@@ -39,7 +22,7 @@ namespace EfCore.Boost.UOW
     public interface IDbReadUow : IDisposable
     {
         /// <summary>
-        /// Rerturns the EDMX metadata XML representation of the model. Used by OData endpoints.
+        /// Returns the EDMX metadata XML representation of the model. Used by OData endpoints.
         /// </summary>
         /// <returns></returns>
         string Metadata();
@@ -67,7 +50,7 @@ namespace EfCore.Boost.UOW
         /// Builds an IQueryable<T> from a provider-correct routine (function or query-shaped procedure).
         /// The routine must return rows matching entity T, otherwise materialization will fail.
         /// The query is not executed here; it runs when enumerated and may be further composed.
-        /// Composability (Where/OrderBy) depends on provider and SQL form. PstgreSQL and SQL Server are
+        /// Composability (Where/OrderBy) depends on provider and SQL form. PostgresSQL and SQL Server are
         /// generally more capable than MySQL in this area
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -88,7 +71,7 @@ namespace EfCore.Boost.UOW
         Task<int> RunRoutineNonQueryAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of RunRoutineNonQueryAsync
+        /// Synchronized version of RunRoutineNonQueryAsync
         /// </summary>
         /// <param name="schema"></param>
         /// <param name="routineName"></param>
@@ -109,7 +92,7 @@ namespace EfCore.Boost.UOW
         Task ExecSqlScriptAsync(string scriptContent, bool useTransaction = false, CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of ExecSqlScriptAsync
+        /// Synchronized version of ExecSqlScriptAsync
         /// </summary>
         /// <param name="scriptContent"></param>
         /// <param name="useTransaction"></param>
@@ -123,7 +106,7 @@ namespace EfCore.Boost.UOW
         Task<int> ExecuteNonQueryAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of ExecuteNonQueryAsync
+        /// Synchronized version of ExecuteNonQueryAsync
         /// </summary>
         int ExecuteNonQuerySynchronized(string sql, List<DbParmInfo>? parameters = null);
 
@@ -134,15 +117,15 @@ namespace EfCore.Boost.UOW
         /// connection (including bulk operations that accept a DbTransaction) can participate.
         /// Notes:
         /// - If the provider enables transient retries (e.g. Azure SQL), the work delegate may be retried.
-        /// - Keep <paramref name="work"/> deterministic and avoid non-idempotent external side-effects.
+        /// - Keep <paramref name="work"/> deterministic and avoid non-idempotent external side effects.
         /// </summary>
         /// <param name="work">Async delegate to execute within the transaction.</param>
         /// <param name="iso">Isolation level for the transaction.</param>
         /// <param name="ct">Cancellation token.</param>
-        Task RunInTransactionAsync(Func<CancellationToken, Task> work, System.Data.IsolationLevel iso = System.Data.IsolationLevel.ReadCommitted, CancellationToken ct = default);
+        Task RunInTransactionAsync(Func<CancellationToken, Task> work, IsolationLevel iso = IsolationLevel.ReadCommitted, CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of RunInTransactionAsync
+        /// Synchronized version of RunInTransactionAsync
         /// </summary>
         /// <param name="work"></param>
         /// <param name="iso"></param>
@@ -159,7 +142,7 @@ namespace EfCore.Boost.UOW
         Task<long?> RunRoutineLongAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of RunRoutineLongAsync
+        /// Synchronized version of RunRoutineLongAsync
         /// </summary>
         /// <param name="schema"></param>
         /// <param name="routineName"></param>
@@ -173,12 +156,12 @@ namespace EfCore.Boost.UOW
         /// <param name="schema">Schema name</param>
         /// <param name="routineName">Routine name (Case sensitive)</param>
         /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancelation token</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns></returns>
         Task<int?> RunRoutineIntAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of RunRoutineStringAsync
+        /// Synchronized version of RunRoutineStringAsync
         /// </summary>
         /// <param name="schema"></param>
         /// <param name="routineName"></param>
@@ -192,7 +175,7 @@ namespace EfCore.Boost.UOW
         /// <param name="schema">Schema name</param>
         /// <param name="routineName">Routine name (Case sensitive)</param>
         /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancelation token</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns></returns>
         Task<string?> RunRoutineStringAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
@@ -202,12 +185,12 @@ namespace EfCore.Boost.UOW
         /// <param name="schema">Schema name</param>
         /// <param name="routineName">Routine name (Case sensitive)</param>
         /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancelation token</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns></returns>
         Task<List<long>> RunRoutineLongListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of RunRoutineLongListAsync
+        /// Synchronized version of RunRoutineLongListAsync
         /// </summary>
         /// <param name="schema"></param>
         /// <param name="routineName"></param>
@@ -221,12 +204,12 @@ namespace EfCore.Boost.UOW
         /// <param name="schema">Schema name</param>
         /// <param name="routineName">Routine name (Case sensitive)</param>
         /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancelation token</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns></returns>
         Task<List<int>> RunRoutineIntListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of RunRoutineIntListAsync
+        /// Synchronized version of RunRoutineIntListAsync
         /// </summary>
         /// <param name="schema"></param>
         /// <param name="routineName"></param>
@@ -240,12 +223,12 @@ namespace EfCore.Boost.UOW
         /// <param name="schema">Schema name</param>
         /// <param name="routineName">Routine name (Case sensitive)</param>
         /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
-        /// <param name="ct">Cancelation token</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns></returns>
         Task<List<string>> RunRoutineStringListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of RunRoutineStringListAsync
+        /// Synchronized version of RunRoutineStringListAsync
         /// </summary>
         /// <param name="schema"></param>
         /// <param name="routineName"></param>
@@ -254,20 +237,20 @@ namespace EfCore.Boost.UOW
         List<string> RunRoutineStringListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
 
         /// <summary>
-        /// Raw sql runner, returning scalar long value
+        /// Raw SQL runner, returning scalar long value
         /// </summary>
         /// <remarks>
-        /// Raw sql is not cross-db compatible and should be avoided.
+        /// Raw SQL is not cross-db compatible and should be avoided.
         /// Proper way would be to set up routine and call that one instead.
         /// </remarks>
         /// <param name="sql">Raw SQL to execute</param>
         /// <param name="parameters">An optional list of parameters to pass to the routine. If null, no parameters are used.</param>
-        /// <param name="ct">Cancelation token</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns></returns>
         Task<long?> GetLongScalarAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of GetLongScalarAsync
+        /// Synchronized version of GetLongScalarAsync
         /// </summary>
         /// <param name="sql"></param>
         /// <param name="parameters"></param>
@@ -285,7 +268,7 @@ namespace EfCore.Boost.UOW
         Task SaveChangesAsync(CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of SaveChangesAsync
+        /// Synchronized version of SaveChangesAsync
         /// </summary>
         void SaveChangesSynchronized();
 
@@ -298,7 +281,7 @@ namespace EfCore.Boost.UOW
         Task SaveChangesAndNewAsync(CancellationToken ct = default);
 
         /// <summary>
-        /// Syncronized version of SaveChangesAndNewAsync
+        /// Synchronized version of SaveChangesAndNewAsync
         /// </summary>
         void SaveChangesAndNewSynchronized();
 
@@ -328,7 +311,7 @@ namespace EfCore.Boost.UOW
         bool IsAutoDetectChangesEnabled();
 
         /// <summary>
-        /// Triggers manual change detection. Useful when <c>AutoDetectChanges</c> is disabled
+        /// Triggers manual change detection. Useful when <c>AutoDetectChanges</c> is disabled,
         /// and you need EF to process changes before calling <c>SaveChanges</c>.
         /// </summary>
         void DetectChanges();
@@ -375,7 +358,7 @@ namespace EfCore.Boost.UOW
         // Not valid while a transaction is active on this UOW instance.
         public async Task SaveChangesAndNewAsync(CancellationToken ct = default)
         {
-            if (_currentTx != null)
+            if (this.CurrentTx != null)
                 throw new InvalidOperationException("SaveChangesAndNewAsync() cannot be used while a transaction is active. Don´t use this method within transaction block !.");
             try
             {
@@ -394,7 +377,7 @@ namespace EfCore.Boost.UOW
         //See interface for documentation
         public void SaveChangesAndNewSynchronized()
         {
-            if (_currentTx != null)
+            if (this.CurrentTx != null)
                 throw new InvalidOperationException("SaveChangesAndNewSynchronized() cannot be used while a transaction is active. Don´t use this method within transaction block !.");
             try
             {
@@ -460,21 +443,21 @@ namespace EfCore.Boost.UOW
     /// </summary>
     public abstract class DbReadUow<TCtx> : IDbReadUow where TCtx : DbContext
     {
-        protected readonly Func<TCtx> CtxFactory;
+        private readonly Func<TCtx> _ctxFactory;
         protected TCtx Ctx;
-        public DatabaseType DbType { get; protected set; }
-        protected bool _disposed;
+        public DatabaseType DbType { get; private set; }
+        private bool _disposed;
         //EDM model caching
-        protected static IEdmModel? _cachedEdmModel;
-        protected static readonly object _edmLock = new();
+        private IEdmModel? _cachedEdmModel;
+        private readonly object _edmLock = new();
         //Transaction support
-        protected IDbContextTransaction? _currentTx;
-        protected readonly SemaphoreSlim _sync = new(1, 1);
+        protected IDbContextTransaction? CurrentTx;
+        private readonly SemaphoreSlim _sync = new(1, 1);
 
         protected DbReadUow(Func<TCtx> ctxFactory)
         {
-            CtxFactory = ctxFactory;
-            Ctx = CtxFactory();
+            this._ctxFactory = ctxFactory;
+            Ctx = this._ctxFactory();
             DbType = DetectDbType(Ctx);
         }
 
@@ -484,7 +467,7 @@ namespace EfCore.Boost.UOW
         protected void RecreateContext()
         {
             Ctx.Dispose();
-            Ctx = CtxFactory();
+            Ctx = this._ctxFactory();
             DbType = DetectDbType(Ctx);
         }
 
@@ -514,38 +497,35 @@ namespace EfCore.Boost.UOW
         //See interface for documentation
         public string Metadata()
         {
-            return EdmContextBuilder.BuildXMLModelFromContext(this.Ctx);
+            return EdmContextBuilder.BuildXmlModelFromContext(this.Ctx);
         }
 
         ///See interface for documentation
         public IEdmModel GetModel()
         {
-            if (_cachedEdmModel != null) return _cachedEdmModel;
-            lock (_edmLock)
+            if (this._cachedEdmModel != null) return this._cachedEdmModel;
+            lock (this._edmLock)
             {
-                _cachedEdmModel ??= EdmContextBuilder.BuildEdmModelFromContext(Ctx);
+                this._cachedEdmModel ??= EdmContextBuilder.BuildEdmModelFromContext(Ctx);
             }
-            return _cachedEdmModel;
+            return this._cachedEdmModel;
         }
 
         /// <summary>
         /// Used for generating exception message including all inner exceptions
         /// </summary>
         /// <param name="ex"></param>
-        /// <returns>Encaptulated full error text</returns>
+        /// <returns>Encapsulated full error text</returns>
         public static string SqlExceptionMessages(SqlException ex)
         {
             var ret = "";
-            if (ex != null)
+            if (ex.Errors != null && ex.Errors.Count > 0)
             {
-                if (ex.Errors != null && ex.Errors.Count > 0)
+                foreach (var err in ex.Errors)
                 {
-                    foreach (var err in ex.Errors)
-                    {
-                        ret += "\r\n" + err.ToString();
-                    }
-                    ret += "\r\n";
+                    ret += "\r\n" + err;
                 }
+                ret += "\r\n";
             }
             return ret;
         }
@@ -558,7 +538,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.NonQuery, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -568,7 +548,7 @@ namespace EfCore.Boost.UOW
         //See interface for documentation
         public async Task<int> ExecuteNonQueryAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = sql;
             oc.Cmd.CommandType = CommandType.Text;
             ToDbParms(parameters, oc.Cmd);
@@ -581,7 +561,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.NonQuery, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -591,7 +571,7 @@ namespace EfCore.Boost.UOW
         //See interface for documentation
         public int ExecuteNonQuerySynchronized(string sql, List<DbParmInfo>? parameters = null)
         {
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
             oc.Cmd.CommandText = sql;
             oc.Cmd.CommandType = CommandType.Text;
             ToDbParms(parameters, oc.Cmd);
@@ -604,7 +584,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -618,7 +598,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -632,7 +612,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -646,7 +626,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -660,7 +640,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -674,7 +654,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -688,12 +668,12 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
             var list = new List<long>();
-            using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
+            await using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
                 if (!reader.IsDBNull(0))
@@ -708,7 +688,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -728,12 +708,12 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
             var list = new List<int>();
-            using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
+            await using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
                 if (!reader.IsDBNull(0))
@@ -748,7 +728,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -768,12 +748,12 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
             var list = new List<string>();
-            using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
+            await using var reader = await oc.Cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
                 if (!reader.IsDBNull(0))
@@ -788,7 +768,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
             oc.Cmd.CommandText = call.Text;
             oc.Cmd.CommandType = CalcCommandType(call.Mode);
             ToDbParms(parameters, oc.Cmd);
@@ -806,16 +786,16 @@ namespace EfCore.Boost.UOW
 
         #region Transactions
         //See interface for documentation
-        protected async Task RunInTransactionAsync(Func<DbTransaction, CancellationToken, Task> work, System.Data.IsolationLevel iso = System.Data.IsolationLevel.ReadCommitted, CancellationToken ct = default)
+        private async Task RunInTransactionAsync(Func<DbTransaction, CancellationToken, Task> work, IsolationLevel iso = IsolationLevel.ReadCommitted, CancellationToken ct = default)
         {
             if (work == null) throw new ArgumentNullException(nameof(work));
-            if (_currentTx != null) throw new InvalidOperationException("A transaction is already active on this UOW instance. Use nested logic inside the same RunInTransaction call.");
+            if (this.CurrentTx != null) throw new InvalidOperationException("A transaction is already active on this UOW instance. Use nested logic inside the same RunInTransaction call.");
 
             var strat = Ctx.Database.CreateExecutionStrategy();
             await strat.ExecuteAsync(async () =>
             {
                 await using var efTx = await Ctx.Database.BeginTransactionAsync(iso, ct);
-                _currentTx = efTx;
+                this.CurrentTx = efTx;
                 try
                 {
                     var dbTx = efTx.GetDbTransaction();
@@ -829,28 +809,28 @@ namespace EfCore.Boost.UOW
                 }
                 finally
                 {
-                    _currentTx = null;
+                    this.CurrentTx = null;
                 }
             });
         }
 
         //See interface for documentation
-        public Task RunInTransactionAsync(Func<CancellationToken, Task> work, System.Data.IsolationLevel iso = System.Data.IsolationLevel.ReadCommitted, CancellationToken ct = default)
-                => RunInTransactionAsync(async (tx, c) => await work(c), iso, ct);
+        public Task RunInTransactionAsync(Func<CancellationToken, Task> work, IsolationLevel iso = IsolationLevel.ReadCommitted, CancellationToken ct = default)
+                => RunInTransactionAsync(async (_, c) => await work(c), iso, ct);
 
         //See interface for documentation
         public void RunInTransactionSynchronized(Action work, IsolationLevel iso = IsolationLevel.ReadCommitted)
         {
             if (work == null) throw new ArgumentNullException(nameof(work));
-            if (_currentTx != null) throw new InvalidOperationException("A transaction is already active on this UOW instance. Use nested logic inside the same RunInTransaction call.");
-            _sync.Wait();
+            if (this.CurrentTx != null) throw new InvalidOperationException("A transaction is already active on this UOW instance. Use nested logic inside the same RunInTransaction call.");
+            this._sync.Wait();
             try
             {
                 var strat = Ctx.Database.CreateExecutionStrategy();
                 strat.Execute(() =>
                 {
                     using var efTx = Ctx.Database.BeginTransaction(iso);
-                    _currentTx = efTx;
+                    this.CurrentTx = efTx;
                     try
                     {
                         work();
@@ -863,13 +843,13 @@ namespace EfCore.Boost.UOW
                     }
                     finally
                     {
-                        _currentTx = null;
+                        this.CurrentTx = null;
                     }
                 });
             }
             finally
             {
-                _sync.Release();
+                this._sync.Release();
             }
         }
 
@@ -880,15 +860,15 @@ namespace EfCore.Boost.UOW
         public async Task ExecSqlScriptAsync(string scriptContent, bool useTransaction = false, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(scriptContent)) return;
-            var scripts = ScriptSplitter(scriptContent)?.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-            if (scripts == null || scripts.Count == 0) return;
+            var scripts = ScriptSplitter(scriptContent).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            if (scripts.Count == 0) return;
             if (!useTransaction)
             {
                 foreach (var sql in scripts)
                     await ExecuteNonQueryAsync(sql, null, ct);
                 return;
             }
-            await RunInTransactionAsync(async (tx, c) =>
+            await RunInTransactionAsync(async (_, c) =>
             {
                 foreach (var sql in scripts)
                     await ExecuteNonQueryAsync(sql, null, c);
@@ -899,22 +879,22 @@ namespace EfCore.Boost.UOW
         public void ExecSqlScriptSynchronized(string scriptContent, bool useTransaction = false)
         {
             if (string.IsNullOrWhiteSpace(scriptContent)) return;
-            var scripts = ScriptSplitter(scriptContent)?.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-            if (scripts == null || scripts.Count == 0) return;
+            var scripts = ScriptSplitter(scriptContent).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            if (scripts.Count == 0) return;
             if (!useTransaction)
             {
                 foreach (var sql in scripts)
-                    _ = ExecuteNonQuerySynchronized(sql, null);
+                    _ = ExecuteNonQuerySynchronized(sql);
                 return;
             }
             RunInTransactionSynchronized(() =>
             {
                 foreach (var sql in scripts)
-                    ExecuteNonQuerySynchronized(sql, null);
-            }, IsolationLevel.ReadCommitted);
+                    ExecuteNonQuerySynchronized(sql);
+            });
         }
 
-        private IEnumerable<string>? ScriptSplitter(string scriptContent)
+        private IEnumerable<string> ScriptSplitter(string scriptContent)
         {
             if (DbType == DatabaseType.MySql)
                 return SqlScriptSplitters.SplitMySql(scriptContent);
@@ -938,13 +918,13 @@ namespace EfCore.Boost.UOW
                 if (param.IsOut)
                 {
                     pa.Direction = ParameterDirection.Output;
-                    pa.Value = param.OutValue ?? DBNull.Value;
+                    pa.Value = param.OutValue;
                     if (param.DbType == null)
                         throw new InvalidOperationException($"Output parameter '{param.Name}' requires DbType.");
                     pa.DbType = param.DbType.Value;
                     param.HookUpOutValue(pa);
                 }
-                else pa.Value = param.ObjValue ?? DBNull.Value;
+                else pa.Value = param.ObjValue;
                 cmd.Parameters.Add(pa);
             }
         }
@@ -954,7 +934,7 @@ namespace EfCore.Boost.UOW
         //See interface for documentation
         public async Task<long?> GetLongScalarAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
-            using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
             oc.Cmd.CommandText = sql;
             oc.Cmd.CommandType = CommandType.Text;
             ToDbParms(parameters, oc.Cmd);
@@ -965,7 +945,7 @@ namespace EfCore.Boost.UOW
         //See interface for documentation
         public long? GetLongScalarSynchronized(string sql, List<DbParmInfo>? parameters = null)
         {
-            using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
             oc.Cmd.CommandText = sql;
             oc.Cmd.CommandType = CommandType.Text;
             ToDbParms(parameters, oc.Cmd);
@@ -975,13 +955,14 @@ namespace EfCore.Boost.UOW
         #endregion
 
         #region trunc helpers
-        protected string? sTrunc(string? str, int maxLen = 0)
+
+        private string? STrunc(string? str, int maxLen = 0)
         {
             if (str == null) return null;
             if (maxLen == 0 || maxLen >= str.Length) return str;
             return str[..maxLen];
         }
-        protected string sTruncS(string? str, int maxLen = 0)
+        protected string STruncS(string? str, int maxLen = 0)
         {
             if (str == null) return "";
             if (maxLen == 0 || maxLen >= str.Length) return str;
@@ -990,7 +971,7 @@ namespace EfCore.Boost.UOW
 
         /// <summary>
         /// PostgreSQL timestamp columns may be configured as 'without time zone'. When saving UTC DateTime values into such columns,
-        /// we normalize DateTimeKind to Unspecified to avoid provider conversion issues.
+        /// we normalize DateTimeKind to "Unspecified" to avoid provider conversion issues.
         /// </summary>
         protected virtual void NormalizeDateTimeValues()
         {
@@ -1020,8 +1001,8 @@ namespace EfCore.Boost.UOW
         }
 
         /// <summary>
-        /// In case string values exceed max length defined in model, truncate them before saving so we don´t get exceptions from the database for this issue
-        /// You can argue that its better to know about it, but in most cases its better to just truncate and move on
+        /// In case string values exceed max length defined in model, truncate them before saving so we don't get exceptions from the database for this issue
+        /// You can argue that it's better to know about it, but in most cases it's better to just truncate and move on
         /// </summary>
         protected virtual void TruncateStringValues()
         {
@@ -1036,7 +1017,7 @@ namespace EfCore.Boost.UOW
                         var maxLength = prop.Metadata.GetMaxLength();
                         if (maxLength.HasValue && strVal.Length > maxLength.Value)
                         {
-                            prop.CurrentValue = sTrunc(strVal, maxLength.Value);
+                            prop.CurrentValue = STrunc(strVal, maxLength.Value);
                         }
                     }
                 }
@@ -1055,8 +1036,8 @@ namespace EfCore.Boost.UOW
                 {
                     var pa = cmd.CreateParameter();
                     pa.ParameterName = p.Name;
-                    pa.Value = p.ObjValue ?? DBNull.Value;
-                    return pa;
+                    pa.Value = p.ObjValue;
+                    return (object)pa;
                 })
                 .ToArray();
             return Ctx.Set<T>().FromSqlRaw(call.Text, dbParams).AsNoTracking();
@@ -1068,9 +1049,9 @@ namespace EfCore.Boost.UOW
 
         protected virtual void Dispose(bool disposing)
         {
-            if (_disposed) return;
+            if (this._disposed) return;
             if (disposing) Ctx.Dispose();
-            _disposed = true;
+            this._disposed = true;
         }
 
         public void Dispose()
@@ -1094,12 +1075,12 @@ namespace EfCore.Boost.UOW
             OutValue = DBNull.Value;
             IsOut = false;
         }
-        public string Name { get; set; } = default!;
-        public object ObjValue { get; set; } = default!;
-        public bool IsOut { get; set; } = false;
-        public object OutValue { get; set; } = default!;
+        public string Name { get; set; }
+        public object ObjValue { get; set; }
+        public bool IsOut { get; set; }
+        public object OutValue { get; set; }
         public DbType? DbType { get; set; }
-        protected DbParameter? ParmStore { get; set; }
+        private DbParameter? ParmStore { get; set; }
         public Object? GetOutValue()
         {
             if (IsOut && ParmStore != null)

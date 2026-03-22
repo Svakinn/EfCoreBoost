@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using EfCore.Boost.DbRepo;
 
 namespace EfCore.Boost.UOW
 {

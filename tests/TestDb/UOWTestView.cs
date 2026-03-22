@@ -1,4 +1,5 @@
 ﻿using EfCore.Boost;
+using EfCore.Boost.DbRepo;
 using EfCore.Boost.UOW;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

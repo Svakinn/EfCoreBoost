@@ -72,7 +72,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EfCore.Boost;
+namespace EfCore.Boost.DbRepo;
 
 /// <summary>
 /// Defines a set of OData query constraints and permissions that control which query options are allowed and their limits for an OData endpoint.
@@ -139,10 +139,10 @@ public partial class EfReadRepo<T> where T : class
     /// <summary>
     /// Prepares an OData query plan for filtering, ordering, and paging.
     /// The returned plan contains two IQueryable pipelines: one for the result items and one for the total count.
-    /// No database queries are executed at this stage.    /// 
+    /// No database queries are executed at this stage.    ///
     /// After building the plan, the caller may:
     ///  • materialize it directly (typed results), or
-    ///  • apply $expand / $select shaping before materialization.    /// 
+    ///  • apply $expand / $select shaping before materialization.    ///
     /// All operations are constrained by the provided ODataPolicy.
     /// Disallowed options (for example OrderBy or Filter) are ignored
     /// and recorded in the plan's Report list instead of throwing.
@@ -235,18 +235,18 @@ public partial class EfReadRepo<T> where T : class
         var countRequested = options.Count?.Value == true;
         var pagingUsed = (skip.HasValue && skip.Value > 0) || (top.HasValue && top.Value > 0);
         ret.CountRequested = policy.AllowCount && (forceCount || countRequested || pagingUsed);
-        if (!policy.AllowCount && (forceCount || countRequested)) 
+        if (!policy.AllowCount && (forceCount || countRequested))
             ODQueryUtil.AddReport(ret.Report, "CountNotAllowed");
         return ret;
     }
 
     /// <summary>
-    /// Applies OData $expand requests to the plan as Entity Framework Include paths.    
+    /// Applies OData $expand requests to the plan as Entity Framework Include paths.
     /// Only the navigation paths themselves are used. Any nested options inside $expand
-    /// such as $filter, $orderby, $top, or $select are ignored.    /// 
-    /// This method modifies only the ItemsQuery of the plan. The CountQuery is not affected.    
+    /// such as $filter, $orderby, $top, or $select are ignored.    ///
+    /// This method modifies only the ItemsQuery of the plan. The CountQuery is not affected.
     /// Expand requests are validated against the provided ODataPolicy. Disallowed or
-    /// unsupported expands are ignored and recorded in the plan's Report instead of throwing. 
+    /// unsupported expands are ignored and recorded in the plan's Report instead of throwing.
     /// This mode is intended for scenarios where the client is allowed to request navigation loading but not arbitrary shaping.
     /// Use with care, as Includes can significantly affect query performance.
     /// </summary>
@@ -286,10 +286,10 @@ public partial class EfReadRepo<T> where T : class
     }
 
     /// <summary>
-    /// Executes a prepared OData query plan and materializes the result as repository entities. 
+    /// Executes a prepared OData query plan and materializes the result as repository entities.
     /// The ItemsQuery of the plan is executed to produce the result set.
-    /// If the plan requires an inline count, the CountQuery is executed separately to compute the total number of matching root entities.    /// 
-    /// This method can only be used for non-shaped plans. If the plan has been shapedusing $select or $expand projection, 
+    /// If the plan requires an inline count, the CountQuery is executed separately to compute the total number of matching root entities.    ///
+    /// This method can only be used for non-shaped plans. If the plan has been shapedusing $select or $expand projection,
     /// this method will throw.
     /// </summary>
     /// <param name="plan">
@@ -359,9 +359,9 @@ public partial class EfReadRepo<T> where T : class
                 r.InlineCount = null;
             return r;
         }
-        catch (Exception e) { 
-            r.FillException(e); 
-            return r; 
+        catch (Exception e) {
+            r.FillException(e);
+            return r;
         }
     }
 
@@ -402,9 +402,9 @@ public partial class EfReadRepo<T> where T : class
     }
 
     /// <summary>
-    /// Applies OData $select and/or $expand as projection (shaping) to the plan's ItemsQuery. 
-    /// After this step, the query no longer returns repository entities. The result element type becomes an internal OData wrapper/projection type, 
-    /// so the query must be materialized as shaped objects (for example QueryResult&lt;object&gt;).    /// 
+    /// Applies OData $select and/or $expand as projection (shaping) to the plan's ItemsQuery.
+    /// After this step, the query no longer returns repository entities. The result element type becomes an internal OData wrapper/projection type,
+    /// so the query must be materialized as shaped objects (for example QueryResult&lt;object&gt;).    ///
     /// Policy rules are enforced before shaping. Disallowed select/expand requests are ignored and recorded in the plan's Report instead of throwing.
     /// </summary>
     /// <param name="plan">
@@ -453,7 +453,7 @@ public partial class EfReadRepo<T> where T : class
                 }
             }
         }
-        if (!hasSelect && !hasExpand) 
+        if (!hasSelect && !hasExpand)
             return plan.ItemsQuery;
         plan.IsShaped = true;
         // We no longer can map it to T !
@@ -462,9 +462,9 @@ public partial class EfReadRepo<T> where T : class
     }
 
     /// <summary>
-    /// Executes a shaped OData query and materializes the result as OData projection objects.    
+    /// Executes a shaped OData query and materializes the result as OData projection objects.
     /// The provided shapedQuery is expected to be the result of ApplyODataSelectExpand and therefore returns OData wrapper objects rather than
-    /// repository entities.     
+    /// repository entities.
     /// The plan's CountQuery is used to compute the inline count when required.
     /// </summary>
     /// <param name="plan">

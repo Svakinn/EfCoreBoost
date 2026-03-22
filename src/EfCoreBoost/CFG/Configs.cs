@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System;
 using System.Globalization;
 
 namespace EfCore.Boost.CFG
@@ -15,7 +14,7 @@ namespace EfCore.Boost.CFG
         }
     }
 
-    public static class DbConnectionCFG
+    public static class DbConnectionCfg
     {
         public static DbConnectionInfo? Get(IConfiguration configuration, string cfgName)
         {
@@ -23,15 +22,17 @@ namespace EfCore.Boost.CFG
             if (string.IsNullOrWhiteSpace(cfgName)) return null;
             var s = configuration.GetSection("DBConnections").GetSection(cfgName);
             if (!s.Exists()) return null;
-            var ret = new DbConnectionInfo();
-            ret.ConnectionString = CfgRead.Str(s, "ConnectionString") ?? string.Empty;
-            ret.Provider = CfgRead.Str(s, "Provider") ?? string.Empty;
-            ret.UseAzure = CfgRead.Bool(s, "UseAzure") ?? false;
-            ret.UseManagedIdentity = CfgRead.Bool(s, "UseManagedIdentity") ?? false;
-            ret.AzureTenantId = CfgRead.Str(s, "AzureTenantId") ?? string.Empty;
-            ret.AzureClientId = CfgRead.Str(s, "AzureClientId") ?? string.Empty;
-            ret.AzureClientSecret = CfgRead.Str(s, "AzureClientSecret") ?? string.Empty;
-            ret.CommandTimeoutSeconds = CfgRead.Int(s, "CommandTimeoutSeconds");
+            var ret = new DbConnectionInfo
+            {
+                ConnectionString = CfgRead.Str(s, "ConnectionString") ?? string.Empty,
+                Provider = CfgRead.Str(s, "Provider") ?? string.Empty,
+                UseAzure = CfgRead.Bool(s, "UseAzure") ?? false,
+                UseManagedIdentity = CfgRead.Bool(s, "UseManagedIdentity") ?? false,
+                AzureTenantId = CfgRead.Str(s, "AzureTenantId") ?? string.Empty,
+                AzureClientId = CfgRead.Str(s, "AzureClientId") ?? string.Empty,
+                AzureClientSecret = CfgRead.Str(s, "AzureClientSecret") ?? string.Empty,
+                CommandTimeoutSeconds = CfgRead.Int(s, "CommandTimeoutSeconds")
+            };
             ret.RetryCount = CfgRead.Int(s, "RetryCount") ?? ret.RetryCount;
             ret.MaxRetryDelaySeconds = CfgRead.Int(s, "RetryDelaySeconds") ?? CfgRead.Int(s, "MaxRetryDelaySeconds") ?? ret.MaxRetryDelaySeconds;
             ret.UseUtcSessionTimeZone = CfgRead.Bool(s, "UseUtcSessionTimeZone") ?? ret.UseUtcSessionTimeZone;
@@ -70,13 +71,13 @@ namespace EfCore.Boost.CFG
     public sealed class DbConnectionInfo
     {
         public string ConnectionString { get; set; } = string.Empty;
-        public bool UseAzure { get; set; } = false;
-        public bool UseManagedIdentity { get; set; } = false;
+        public bool UseAzure { get; set; }
+        public bool UseManagedIdentity { get; set; }
         public string AzureTenantId { get; set; } = string.Empty;
         public string AzureClientId { get; set; } = string.Empty;
         public string AzureClientSecret { get; set; } = string.Empty;
         public string Provider { get; set; } = string.Empty; // SqlServer, Postgres, MySql
-        public int? CommandTimeoutSeconds { get; set; } = null;
+        public int? CommandTimeoutSeconds { get; set; }
         public int? RetryCount { get; set; } = 5;
         public int? MaxRetryDelaySeconds { get; set; } = 30;
         public bool UseUtcSessionTimeZone { get; set; } = true;

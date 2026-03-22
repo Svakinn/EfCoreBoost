@@ -3,30 +3,22 @@
 
 // Includes: EDM metadata support, scalar query helpers, async-only design, tracked vs. non-tracked distinction, OData integration, bulk insert/delete helpers
 
-using EfCore.Boost.DbRepo;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
 using Microsoft.OData.ModelBuilder;
-using Npgsql;
 using NpgsqlTypes;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading;
 using System.Xml;
 
-namespace EfCore.Boost;
+namespace EfCore.Boost.DbRepo;
 
 ///
 /// Enumeration to define the supported database engines.
@@ -109,7 +101,7 @@ public interface IReadRepo<T> where T : class
 
     /// <summary>
     /// Streams entities using async iteration (no tracking).
-    /// Usefull for large data fetches, i.e. data exports.
+    /// Useful for large data fetches, i.e. data exports.
     /// Saves on memory usage and wait time from db.
     /// </summary>
     /// <remarks>
@@ -406,7 +398,7 @@ public interface IReadRepo<T> where T : class
     /// </summary>
     /// <remarks>
     /// shapedQuery should be created by ApplyODataSelectExpand. InlineCount is computed from plan.CountQuery
-    /// only when plan.CountRequested is true.
+    /// only when "plan.CountRequested" is true.
     /// </remarks>
     /// <param name="plan">A plan produced by BuildODataQueryPlan.</param>
     /// <param name="shapedQuery">The shaped query returned by ApplyODataSelectExpand.</param>
@@ -418,8 +410,8 @@ public interface IReadRepo<T> where T : class
     /// Synchronous version of MaterializeODataShapedAsync.
     /// </summary>
     /// <remarks>
-    /// shapedQuery should be created by ApplyODataSelectExpand. InlineCount is computed from plan.CountQuery
-    /// only when plan.CountRequested is true.
+    /// ShapedQuery should be created by ApplyODataSelectExpand. InlineCount is computed from plan.CountQuery
+    /// only when "plan.CountRequested" is true.
     /// </remarks>
     /// <param name="plan">A plan produced by BuildODataQueryPlan.</param>
     /// <param name="shapedQuery">The shaped query returned by ApplyODataSelectExpand.</param>
@@ -460,9 +452,9 @@ public interface IRepo<T> : IReadRepo<T> where T : class
 
     /// <summary>
     /// Tracked first row (or null)
-    /// Behaves like FirstOrDefault - no exeptions thrown
+    /// Behaves like FirstOrDefault - no exceptions thrown
     /// If you need errors thrown if not found or more than one found:
-    /// Ten do the normal QueryTacked().Where(..).FirstAsync / SingleAsync path
+    /// Ten do the normal QueryTacked().Where(...).FirstAsync / SingleAsync path
     /// </summary>
     /// <param name="filter"></param>
     /// <param name="ct"></param>
@@ -470,7 +462,7 @@ public interface IRepo<T> : IReadRepo<T> where T : class
     Task<T?> RowTrackedAsync(Expression<Func<T, bool>> filter, CancellationToken ct = default);
 
     /// <summary>
-    /// Syncronized version of First
+    /// Synchronized version of First
     /// </summary>
     /// <param name="filter"></param>
     /// <returns></returns>
@@ -547,7 +539,7 @@ public interface IRepo<T> : IReadRepo<T> where T : class
     /// <returns></returns>
     Task BulkDeleteByIdsAsync(IEnumerable<long> ids, CancellationToken ct = default);
     /// <summary>
-    /// Syncronized version of BulkDeleteById
+    /// Synchronized version of BulkDeleteById
     /// </summary>
     /// <param name="ids"></param>
     void BulkDeleteByIdsSynchronized(IEnumerable<long> ids);
@@ -556,15 +548,14 @@ public interface IRepo<T> : IReadRepo<T> where T : class
     /// No checks performed
     /// Uses transaction (Dbs current if exists, otherwise a new ambient one)
     /// Allows for inserting identity values and maintaining the sequence
-    /// Transation is committed if no transaction is passed in
     /// </summary>
-    /// <param name="items">Rows to be inserted (preferably outside of the dbset scope)</param>
+    /// <param name="items">Rows to be inserted (preferably outside the dataset scope)</param>
     /// <param name="includeIdentityValues">If we want to insert identity values</param>
     /// <param name="ct"></param>
     /// <returns></returns>
     Task BulkInsertAsync(List<T> items, bool includeIdentityValues = false, CancellationToken ct = default);
     /// <summary>
-    /// Syncronized version of BulkInsert
+    /// Synchronized version of BulkInsert
     /// </summary>
     /// <param name="items"></param>
     /// <param name="includeIdentityValues"></param>
@@ -632,34 +623,30 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="ArgumentException"></exception>
-    protected Expression<Func<T, bool>> BuildPkPredicate(params object[] key)
+    private Expression<Func<T, bool>> BuildPkPredicate(params object[] key)
     {
         var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new InvalidOperationException($"Entity {typeof(T).Name} not found in model.");
         var pk = et.FindPrimaryKey()?.Properties ?? throw new InvalidOperationException($"Entity {typeof(T).Name} has no primary key.");
         if (pk.Count != key.Length) throw new ArgumentException("Key count mismatch.", nameof(key));
         var p = Expression.Parameter(typeof(T), "e");
         Expression? body = null;
-        for (int i = 0; i < pk.Count; i++)
+        for (var i = 0; i < pk.Count; i++)
         {
             var prop = pk[i];
             var clr = prop.ClrType;
             var keyVal = key[i];
-
-            if (keyVal == null && clr.IsValueType && Nullable.GetUnderlyingType(clr) == null)
-                throw new ArgumentException($"Null key value for non-nullable key '{prop.Name}'.", nameof(key));
-            var left = Expression.Call(typeof(EF), nameof(EF.Property), new[] { clr }, p, Expression.Constant(prop.Name));
+            var left = Expression.Call(typeof(EF), nameof(EF.Property), [clr], p, Expression.Constant(prop.Name));
             ConstantExpression right;
             try
             {
                 var converted = ConvertKeyValue(keyVal, clr);
+                if (converted == null && clr.IsValueType && Nullable.GetUnderlyingType(clr) == null)
+                    throw new ArgumentException($"Null key value for non-nullable key '{prop.Name}'.", nameof(key));
                 right = Expression.Constant(converted, clr);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not ArgumentException)
             {
-                throw new ArgumentException(
-                    $"Key value '{keyVal}' ({ (keyVal == null ? "Null" : keyVal.GetType().Name)}) cannot be converted to '{clr.Name}' for key '{prop.Name}'.",
-                    nameof(key),
-                    ex);
+                throw new ArgumentException($"Key value '{keyVal}' ({(keyVal.GetType().Name)}) cannot be converted to '{clr.Name}' for key '{prop.Name}'.", nameof(key), ex);
             }
             var eq = Expression.Equal(left, right);
             body = body == null ? eq : Expression.AndAlso(body, eq);
@@ -667,7 +654,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
         return Expression.Lambda<Func<T, bool>>(body!, p);
     }
 
-    protected object?[] NormalizeKeyValues(params object[] key)
+    protected object?[] NormalizeKeyValues(params object?[] key)
     {
         var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new InvalidOperationException($"Entity {typeof(T).Name} not found in model.");
         var pk = et.FindPrimaryKey()?.Properties ?? throw new InvalidOperationException($"Entity {typeof(T).Name} has no primary key.");
@@ -678,17 +665,17 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
             var prop = pk[i];
             var clr = prop.ClrType;
             var keyVal = key[i];
-            if (keyVal == null && clr.IsValueType && Nullable.GetUnderlyingType(clr) == null) throw new ArgumentException($"Null key value for non-nullable key '{prop.Name}'.", nameof(key));
             try
             {
-                result[i] = ConvertKeyValue(keyVal, clr);
+                var converted = ConvertKeyValue(keyVal, clr);
+                if (converted == null && clr.IsValueType && Nullable.GetUnderlyingType(clr) == null)
+                    throw new ArgumentException($"Null key value for non-nullable key '{prop.Name}'.", nameof(key));
+                result[i] = converted;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not ArgumentException)
             {
                 throw new ArgumentException(
-                    $"Key value '{keyVal}' ({(keyVal == null ? "Null" : keyVal.GetType().Name)}) cannot be converted to '{clr.Name}' for key '{prop.Name}'.",
-                    nameof(key),
-                    ex);
+                    $"Key value '{keyVal}' ({(keyVal?.GetType().Name ?? "null")}) cannot be converted to '{clr.Name}' for key '{prop.Name}'.", nameof(key), ex);
             }
         }
         return result;
@@ -697,16 +684,12 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
     private static object? ConvertKeyValue(object? value, Type targetType)
     {
         if (value == null) return null;
-
         var nonNullType = Nullable.GetUnderlyingType(targetType) ?? targetType;
         var valueType = value.GetType();
-
         if (nonNullType.IsAssignableFrom(valueType))
             return value;
-
         if (nonNullType.IsEnum)
             return Enum.ToObject(nonNullType, value);
-
         return Convert.ChangeType(value, nonNullType, System.Globalization.CultureInfo.InvariantCulture);
     }
 
@@ -776,7 +759,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
     public Task<bool?> GetBoolScalarAsync(string query, params object[] parameters) => GetBoolScalarAsync(query, CancellationToken.None, parameters);
     public async Task<bool?> GetBoolScalarAsync(string query, CancellationToken ct, params object[] parameters)
     {
-        using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+        await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = await oc.Cmd.ExecuteScalarAsync(ct);
@@ -787,7 +770,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     public bool? GetBoolScalarSynchronized(string query, params object[] parameters)
     {
-        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+        using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = oc.Cmd.ExecuteScalar();
@@ -799,7 +782,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     public async Task<long?> GetLongScalarAsync(string query, CancellationToken ct, params object[] parameters)
     {
-        using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+        await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = await oc.Cmd.ExecuteScalarAsync(ct);
@@ -809,7 +792,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     public long? GetLongScalarSynchronized(string query, params object[] parameters)
     {
-        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+        using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = oc.Cmd.ExecuteScalar();
@@ -820,7 +803,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
     public Task<decimal?> GetDecimalScalarAsync(string query, params object[] parameters) => GetDecimalScalarAsync(query, CancellationToken.None, parameters);
     public async Task<decimal?> GetDecimalScalarAsync(string query, CancellationToken ct, params object[] parameters)
     {
-        using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+        await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = await oc.Cmd.ExecuteScalarAsync(ct);
@@ -830,7 +813,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     public decimal? GetDecimalScalarSynchronized(string query, params object[] parameters)
     {
-        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+        using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters) ;
         var result = oc.Cmd.ExecuteScalar();
@@ -841,7 +824,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
     public Task<string?> GetStringScalarAsync(string query, params object[] parameters) => GetStringScalarAsync(query, CancellationToken.None, parameters);
     public async Task<string?> GetStringScalarAsync(string query, CancellationToken ct, params object[] parameters)
     {
-        using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+        await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
         oc.Cmd.CommandText = query;
         AddParameters(oc.Cmd, parameters);
         var result = await oc.Cmd.ExecuteScalarAsync(ct);
@@ -851,7 +834,7 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
 
     public string? GetStringScalarSynchronized(string query, params object[] parameters)
     {
-        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+        using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
         oc.Cmd.CommandText = query;
         this.AddParameters(oc.Cmd, parameters);
         var result = oc.Cmd.ExecuteScalar();
@@ -874,14 +857,12 @@ public partial class EfReadRepo<T>(DbContext dbContext, DatabaseType dbType = Da
     /// Adds provided parameters to a command, validating that they are proper DbParameter
     /// instances created by the provider.
     /// </summary>
-    protected void AddParameters(DbCommand cmd, params object[] parameters)
+    private void AddParameters(DbCommand cmd, params object[] parameters)
     {
-        if (parameters == null || parameters.Length == 0)
+        if (parameters.Length == 0)
             return;
         foreach (var param in parameters)
         {
-            if (param == null)
-                continue;
             if (param is DbParameter dbParam)
                 cmd.Parameters.Add(dbParam);
             else
@@ -983,7 +964,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     }
 
     /// <summary>
-    /// Spead up bulk-delete by delaying Tracking checks
+    /// Speed up bulk-delete by delaying Tracking checks
     /// </summary>
     /// <param name="entities"></param>
     public void DeleteManyBrute(IEnumerable<T> entities)
@@ -1043,12 +1024,12 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             await BulkDeleteByIdsAsync(ids, ambient, ct);
             return;
         }
-        // Is required if dbcontext has not been saved/committed yet
+        // Is required if the DbContext has not been saved/committed yet
         var strat = Ctx.Database.CreateExecutionStrategy();
         await strat.ExecuteAsync(async () =>
         {
             await Ctx.Database.OpenConnectionAsync(ct); //Make sure connection is open before starting transaction
-            using var efTx = await Ctx.Database.BeginTransactionAsync(ct);
+            await using var efTx = await Ctx.Database.BeginTransactionAsync(ct);
             try
             {
                 await BulkDeleteByIdsAsync(ids, efTx.GetDbTransaction(), ct);
@@ -1077,7 +1058,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             BulkDeleteByIdsCoreSynchronized(ids, ambient);
             return;
         }
-        // Is required if dbcontext has not been saved/committed yet
+        // Is required if the DbContext has not been saved/committed yet
         var strat = Ctx.Database.CreateExecutionStrategy();
         strat.Execute(() =>
         {
@@ -1096,7 +1077,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         });
     }
 
-    protected async Task BulkDeleteByIdsAsync(IEnumerable<long> ids, DbTransaction trans, CancellationToken ct = default)
+    private async Task BulkDeleteByIdsAsync(IEnumerable<long> ids, DbTransaction trans, CancellationToken ct = default)
     {
         var idArray = ids as long[] ?? ids.ToArray();
         if (idArray.Length == 0)
@@ -1104,7 +1085,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var fullTableName = this.CalcSqlTableName();
         var (pkColumnName, keyClrType) = this.FindTabPrimIdCol();
         var quotedIdColumn = Quote(pkColumnName);
-        using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+        await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
         oc.Cmd.Transaction = trans;
         const int batchSize = 1000;
         for (int i = 0; i < idArray.Length; i += batchSize)
@@ -1123,7 +1104,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
                 p.ParameterName = paramName;
                 object value = keyClrType == typeof(long)
                 ? idArray[j] : Convert.ChangeType(idArray[j], keyClrType, System.Globalization.CultureInfo.InvariantCulture);
-                p.Value = value ?? DBNull.Value;
+                p.Value = value;
                 oc.Cmd.Parameters.Add(p);
             }
             sb.Append(")");
@@ -1132,7 +1113,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         }
     }
 
-    protected void BulkDeleteByIdsCoreSynchronized(IEnumerable<long> ids, DbTransaction trans)
+    private void BulkDeleteByIdsCoreSynchronized(IEnumerable<long> ids, DbTransaction trans)
     {
         // Materialize once, and bail early if nothing to do
         var idArray = ids as long[] ?? ids.ToArray();
@@ -1141,7 +1122,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var fullTableName = this.CalcSqlTableName();
         var (pkColumnName, keyClrType) = this.FindTabPrimIdCol();
         var quotedIdColumn = Quote(pkColumnName);
-        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+        using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
         oc.Cmd.Transaction = trans;
         const int batchSize = 1000;
         for (int i = 0; i < idArray.Length; i += batchSize)
@@ -1160,7 +1141,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
                 p.ParameterName = paramName;
                 object value = keyClrType == typeof(long)
                  ? idArray[j] : Convert.ChangeType(idArray[j], keyClrType, System.Globalization.CultureInfo.InvariantCulture);
-                p.Value = value ?? DBNull.Value;
+                p.Value = value;
                 oc.Cmd.Parameters.Add(p);
             }
             sb.Append(")");
@@ -1170,12 +1151,12 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     }
 
     /// <summary>
-    /// Search for single integer valued primary key, throws exeption if cnditions are not matched
+    /// Search for single integer valued primary key, throws exception if conditions are not matched
     /// </summary>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="NotSupportedException"></exception>
-    protected (string ColumnName, Type KeyClrType) FindTabPrimIdCol()
+    private (string ColumnName, Type KeyClrType) FindTabPrimIdCol()
     {
         var entityType = Ctx.Model.FindEntityType(typeof(T)) ?? throw new InvalidOperationException($"Entity type {typeof(T).Name} is not part of the current DbContext model.");
         var key = entityType.FindPrimaryKey() ?? throw new InvalidOperationException($"Entity type {typeof(T).Name} does not have a primary key defined.");
@@ -1189,7 +1170,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             throw new InvalidOperationException($"Table name not resolved for {typeof(T).Name}.");
         var schema = entityType.GetSchema();
         var tableId = StoreObjectIdentifier.Table(tableName, schema);
-        var columnName = pkProperty.GetColumnName(tableId) ?? pkProperty.GetColumnName() ?? pkProperty.Name;
+        var columnName = pkProperty.GetColumnName(tableId) ?? pkProperty.GetColumnName();
         return (columnName, clrType);
     }
 
@@ -1210,7 +1191,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             BulkInsertCoreSynchronized(items, ambient, includeIdentityValues);
             return;
         }
-        // Is required if dbcontext has not been saved/committed yet
+        // Is required if the DbContext has not been saved/committed yet
         var strat = Ctx.Database.CreateExecutionStrategy();
         strat.Execute(() =>
         {
@@ -1229,10 +1210,10 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         });
     }
 
-    protected void BulkInsertCoreSynchronized(List<T> items, DbTransaction trans, bool includeIdentityValues = false)
+    private void BulkInsertCoreSynchronized(List<T> items, DbTransaction trans, bool includeIdentityValues = false)
     {
         if (this.DbType == DatabaseType.SqlServer)
-            this.MSBulkInsertSynchronized(items, trans, includeIdentityValues);
+            this.MsBulkInsertSynchronized(items, trans, includeIdentityValues);
         else if (DbType == DatabaseType.PostgreSql)
             this.PgBulkInsertSynchronized(items, trans, includeIdentityValues);
         else //Assume mysql
@@ -1252,7 +1233,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     ///
     /// Additional behavior:
     /// - Supports explicitly inserting identity values (for a single identity column).
-    ///   When enabled, identity reseeding will be handled automatically afterwards (where applicable).
+    ///   When enabled, identity reseeding will be handled automatically afterward (where applicable).
     /// - Entities are not tracked by the DbContext during this operation.
     ///   No call to uow.SaveChanges is required unless the caller manages its own transaction.
     ///
@@ -1274,7 +1255,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             await BulkInsertCoreAsync(items, ambient, includeIdentityValues, ct);
             return;
         }
-        // Is required if dbcontext has not been saved/committed yet
+        // Is required if the DbContext has not been saved/committed yet
         var strat = Ctx.Database.CreateExecutionStrategy();
         await strat.ExecuteAsync(async () =>
         {
@@ -1296,43 +1277,39 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         });
     }
 
-    protected async Task BulkInsertCoreAsync(List<T> items, DbTransaction trans, bool includeIdentityValues = false, CancellationToken ct = default)
+    private async Task BulkInsertCoreAsync(List<T> items, DbTransaction trans, bool includeIdentityValues = false, CancellationToken ct = default)
     {
         if (this.DbType == DatabaseType.SqlServer)
-            await this.MSBulkInsertAsync(items, trans, includeIdentityValues, ct);
+            await this.MsBulkInsertAsync(items, trans, includeIdentityValues, ct);
         else if (DbType == DatabaseType.PostgreSql)
             await this.PgBulkInsertAsync(items, trans, includeIdentityValues, ct);
         else //Assume mysql
             await this.MyBulkInsertAsync(items, trans, includeIdentityValues, ct);
     }
 
-    readonly SemaphoreSlim _bulkSync = new(1, 1);
     protected sealed record BulkColPlan(PropertyInfo ClrProp, string ColumnName, Type DataType);
 
-    protected List<BulkColPlan> BuildBulkPlan<TEntity>(bool includeStoreGenerated, Func<Microsoft.EntityFrameworkCore.Metadata.IProperty, bool>? extraSkipEfProp = null)
+    protected List<BulkColPlan> BuildBulkPlan<TEntity>(bool includeStoreGenerated, Func<IProperty, bool>? extraSkipEfProp = null)
     {
         var et = Ctx.Model.FindEntityType(typeof(TEntity)) ?? throw new InvalidOperationException($"Entity metadata not found for {typeof(TEntity).Name}");
         var schema = et.GetSchema() ?? null;
         var table = et.GetTableName() ?? throw new InvalidOperationException($"Table name not found for {typeof(TEntity).Name}");
-        var store = Microsoft.EntityFrameworkCore.Metadata.StoreObjectIdentifier.Table(table, schema);
+        var store = StoreObjectIdentifier.Table(table, schema);
 
         var cols = new List<BulkColPlan>();
         foreach (var p in et.GetProperties())
         {
             if (p.IsShadowProperty()) continue;
             if (p.PropertyInfo == null) continue;
-
-            if (!includeStoreGenerated && p.ValueGenerated == Microsoft.EntityFrameworkCore.Metadata.ValueGenerated.OnAdd)
-                continue;
-
-            if (extraSkipEfProp != null && extraSkipEfProp(p))
-                continue;
-
             var colName = p.GetColumnName(store);
             if (string.IsNullOrWhiteSpace(colName)) continue;
-
+            var autoIncCol = includeStoreGenerated ? null : GetAutoIncrementColumnName<TEntity>();
+            if (!includeStoreGenerated && string.Equals(colName, autoIncCol, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (extraSkipEfProp != null && extraSkipEfProp(p))
+                continue;
             var t = Nullable.GetUnderlyingType(p.ClrType) ?? p.ClrType;
-            cols.Add(new BulkColPlan(p.PropertyInfo, colName!, t));
+            cols.Add(new BulkColPlan(p.PropertyInfo, colName, t));
         }
         return cols;
     }
@@ -1343,7 +1320,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var schema = et.GetSchema();
         var table = et.GetTableName()
             ?? throw new InvalidOperationException($"Table name not found for {typeof(TEntity).Name}");
-        var store = Microsoft.EntityFrameworkCore.Metadata.StoreObjectIdentifier.Table(table, schema);
+        var store = StoreObjectIdentifier.Table(table, schema);
         //Prefer PK columns (99% case)
         var pk = et.FindPrimaryKey();
         if (pk != null)
@@ -1361,19 +1338,17 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             if (col != null) return col;
         }
         return null;
-        string? TryGetAutoInc(
-            Microsoft.EntityFrameworkCore.Metadata.IProperty p,
-            Microsoft.EntityFrameworkCore.Metadata.StoreObjectIdentifier store)
+        string? TryGetAutoInc(IProperty p, StoreObjectIdentifier storeObjName)
         {
             if (p.IsShadowProperty() || p.PropertyInfo == null) return null;
             return DbType switch
             {
                 DatabaseType.SqlServer =>
-                    p.FindAnnotation("SqlServer:ValueGenerationStrategy")?.Value?.ToString() == "IdentityColumn" ? p.GetColumnName(store) : null,
+                    p.FindAnnotation("SqlServer:ValueGenerationStrategy")?.Value?.ToString() == "IdentityColumn" ? p.GetColumnName(storeObjName) : null,
                 DatabaseType.MySql =>
-                    p.FindAnnotation("MySql:ValueGenerationStrategy")?.Value?.ToString() == "IdentityColumn" ? p.GetColumnName(store) : null,
+                    p.FindAnnotation("MySql:ValueGenerationStrategy")?.Value?.ToString() == "IdentityColumn" ? p.GetColumnName(storeObjName) : null,
                 DatabaseType.PostgreSql =>
-                    p.FindAnnotation("Npgsql:ValueGenerationStrategy")?.Value?.ToString() is "IdentityAlwaysColumn" or "IdentityByDefaultColumn" or "SerialColumn"  ? p.GetColumnName(store) : null,
+                    p.FindAnnotation("Npgsql:ValueGenerationStrategy")?.Value?.ToString() is "IdentityAlwaysColumn" or "IdentityByDefaultColumn" or "SerialColumn"  ? p.GetColumnName(storeObjName) : null,
                 _ => null
             };
         }
@@ -1382,9 +1357,8 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     protected DataTable BuildDataTable<TEntity>(IReadOnlyList<TEntity> items, IReadOnlyList<BulkColPlan> cols)
     {
         var dt = new DataTable();
-        for (int i = 0; i < cols.Count; i++)
-            dt.Columns.Add(cols[i].ColumnName, cols[i].DataType);
-
+        foreach (var col in cols)
+            dt.Columns.Add(col.ColumnName, col.DataType);
         foreach (var item in items)
         {
             var row = dt.NewRow();
@@ -1407,10 +1381,10 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     /// <param name="ct"></param>
     /// <returns></returns>
     ///
-    protected async Task MSBulkInsertAsync(List<T> items, DbTransaction trans, bool includeIdentityValues = false, CancellationToken ct = default)
+    protected async Task MsBulkInsertAsync(List<T> items, DbTransaction trans, bool includeIdentityValues = false, CancellationToken ct = default)
     {
         if (DbType != DatabaseType.SqlServer)
-            throw new NotSupportedException("MSBulkinsert is supported only for SQL Server");
+            throw new NotSupportedException("MsBulkinsert is supported only for SQL Server");
         if (trans.Connection is not SqlConnection sqlConn)
             throw new InvalidOperationException("Bulk insert requires SQL Server transaction/connection");
         var entityType = Ctx.Model.FindEntityType(typeof(T)) ?? throw new InvalidOperationException("Entity metadata not found");
@@ -1420,7 +1394,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         SqlBulkCopyOptions opts = SqlBulkCopyOptions.Default;
         if (includeIdentityValues) opts |= SqlBulkCopyOptions.KeepIdentity;
         //NOTE: ms-table locking is only beneficial to large data inserts
-        //In multi threaded env where lots of inserts take place, locking can be counter productive
+        //In multithreaded env where lots of inserts take place, locking can be counterproductive
         //Thus we set the lock limit to 5000 records.
         if (items.Count >= 5000) opts |= SqlBulkCopyOptions.TableLock;
         SqlCommand? cmd = null;
@@ -1433,7 +1407,8 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         }
         try
         {
-            using var bulkCopy = new SqlBulkCopy(sqlConn, opts, (SqlTransaction)trans) { DestinationTableName = tableName };
+            using var bulkCopy = new SqlBulkCopy(sqlConn, opts, (SqlTransaction)trans);
+            bulkCopy.DestinationTableName = tableName;
             foreach (DataColumn col in dt.Columns)
                 bulkCopy.ColumnMappings.Add(col.ColumnName, col.ColumnName);
             await bulkCopy.WriteToServerAsync(dt, ct);
@@ -1458,7 +1433,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     /// <param name="items"></param>
     /// <param name="includeIdentityValues"></param>
     /// <param name="trans"></param>
-    protected void MSBulkInsertSynchronized(List<T> items, DbTransaction trans, bool includeIdentityValues = false)
+    protected void MsBulkInsertSynchronized(List<T> items, DbTransaction trans, bool includeIdentityValues = false)
     {
         if (DbType != DatabaseType.SqlServer)
             throw new NotSupportedException("Bulk insert is supported only for SQL Server");
@@ -1483,7 +1458,8 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         }
         try
         {
-            using var bulkCopy = new SqlBulkCopy(sqlConn, opts, (SqlTransaction)trans) { DestinationTableName = tableName };
+            using var bulkCopy = new SqlBulkCopy(sqlConn, opts, (SqlTransaction)trans);
+            bulkCopy.DestinationTableName = tableName;
             foreach (DataColumn col in dt.Columns)
                 bulkCopy.ColumnMappings.Add(col.ColumnName, col.ColumnName);
             bulkCopy.WriteToServer(dt);
@@ -1551,7 +1527,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         }
         var inclColName = includeIdentityValues ? GetAutoIncrementColumnName<T>() : null;
         if (includeIdentityValues && !string.IsNullOrWhiteSpace(inclColName))
-            MySqlReseedAutoIncrementSyncronized(fullTableName, inclColName, trans);
+            MySqlReseedAutoIncrementSynchronized(fullTableName, inclColName, trans);
     }
 
     protected async Task MyBulkInsertAsync(List<T> items, DbTransaction trans, bool includeIdentityValues = false, CancellationToken ct = default)
@@ -1611,9 +1587,12 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         if (items == null) throw new ArgumentNullException(nameof(items));
         if (items.Count == 0) return;
         if (trans == null) throw new ArgumentNullException(nameof(trans));
-        if (DbType != DatabaseType.PostgreSql) throw new NotSupportedException("Bulk insert is supported only for PostgreSQL");
-        if (trans.Connection is not Npgsql.NpgsqlConnection pgConn) throw new InvalidOperationException("Bulk insert requires PostgreSQL connection");
-        var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new InvalidOperationException("Entity metadata not found");
+        if (DbType != DatabaseType.PostgreSql)
+            throw new NotSupportedException("Bulk insert is supported only for PostgreSQL");
+        if (trans.Connection is not Npgsql.NpgsqlConnection pgConn)
+            throw new InvalidOperationException("Bulk insert requires PostgreSQL connection");
+        var et = Ctx.Model.FindEntityType(typeof(T)) ??
+                 throw new InvalidOperationException("Entity metadata not found");
         var schema = et.GetSchema() ?? "public";
         var table = et.GetTableName() ?? throw new InvalidOperationException("Table name not found");
         var fullTableName = $"\"{schema}\".\"{table}\"";
@@ -1622,16 +1601,19 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         //not any OVERRIDING clause (COPY doesn't take that clause).
         var cols = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues);
         var copySql = $"COPY {fullTableName} ({string.Join(", ", cols.Select(c => $"\"{c.ColumnName}\""))}) FROM STDIN (FORMAT BINARY)";
-        //await using var writer = await pgConn.BeginBinaryImportAsync(copySql, ct);
-        await using (var writer = pgConn.BeginBinaryImport(copySql))
         {
+            await using var writer = await pgConn.BeginBinaryImportAsync(copySql, ct);
             foreach (var item in items)
             {
                 await writer.StartRowAsync(ct);
                 foreach (var col in cols)
                 {
                     var val = col.ClrProp.GetValue(item);
-                    if (val == null) { await writer.WriteNullAsync(ct); continue; }
+                    if (val == null)
+                    {
+                        await writer.WriteNullAsync(ct);
+                        continue;
+                    }
                     var typ = InferNpgsqlDbType(col.ClrProp.PropertyType);
                     await writer.WriteAsync(val, typ, ct);
                 }
@@ -1640,11 +1622,11 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         }
         if (includeIdentityValues)
         {
-            //NOTE: Posgres requires manual id-re-seeding after identity-bulk-insert
+            //NOTE: Postgres requires manual id-re-seeding after identity-bulk-insert
             var inclColName = includeIdentityValues ? GetAutoIncrementColumnName<T>() : null;
             if (includeIdentityValues && !string.IsNullOrWhiteSpace(inclColName))
                 await PgReseedAutoIncrementAsync(fullTableName, inclColName, trans, ct);
-       }
+        }
     }
 
     protected void PgBulkInsertSynchronized(List<T> items, DbTransaction trans, bool includeIdentityValues = false)
@@ -1680,10 +1662,10 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         }
         if (includeIdentityValues)
         {
-            //NOTE: Posgres requires manual id-re-seeding after identity-bulk-insert
+            //NOTE: Postgres requires manual id-re-seeding after identity-bulk-insert
             var inclColName = includeIdentityValues ? GetAutoIncrementColumnName<T>() : null;
             if (includeIdentityValues && !string.IsNullOrWhiteSpace(inclColName))
-               PgReseedAutoIncrementSyncronized(fullTableName, inclColName, trans);
+               PgReseedAutoIncrementSynchronized(fullTableName, inclColName, trans);
         }
     }
 
@@ -1721,7 +1703,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
-    private void MySqlReseedAutoIncrementSyncronized(string fullTableName, string idColumnName, DbTransaction trans)
+    private void MySqlReseedAutoIncrementSynchronized(string fullTableName, string idColumnName, DbTransaction trans)
     {
         var conn = trans.Connection ?? throw new InvalidOperationException("Transaction has no connection.");
         using var cmd = conn.CreateCommand();
@@ -1733,7 +1715,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         cmd.ExecuteNonQuery();
     }
 
-    private void PgReseedAutoIncrementSyncronized(string fullTableName, string idColumnName, DbTransaction trans)
+    private void PgReseedAutoIncrementSynchronized(string fullTableName, string idColumnName, DbTransaction trans)
     {
         var conn = trans.Connection ?? throw new InvalidOperationException("Transaction has no connection.");
         using var cmd = conn.CreateCommand();
@@ -1814,31 +1796,27 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     }
 }
 
-public class EfLongIdRepo<T> : EfRepo<T>, ILongIdRepo<T> where T : class
+public class EfLongIdRepo<T>(DbContext ctx, DatabaseType dbType) : EfRepo<T>(ctx, dbType), ILongIdRepo<T> where T : class
 {
-    public EfLongIdRepo(DbContext ctx, DatabaseType dbType) : base(ctx, dbType) { }
     public Task<T?> RowByIdUnTrackedAsync(long id) => RowByKeyUnTrackedAsync(id);
     public T? RowByIdUnTrackedSynchronized(long id) => RowByKeyUnTrackedSynchronized(id);
     public Task<T?> RowByIdTrackedAsync(long id) => RowByKeyTrackedAsync(id);
     public T? RowByIdTrackedSynchronized(long id) => RowByKeyTrackedSynchronized(id);
-
 }
 
 // Read-only long-Id repo
-public class EfLongIdReadRepo<T> : EfReadRepo<T>, ILongIdReadRepo<T> where T : class
+public class EfLongIdReadRepo<T>(DbContext ctx, DatabaseType dbType) : EfReadRepo<T>(ctx, dbType), ILongIdReadRepo<T> where T : class
 {
-    public EfLongIdReadRepo(DbContext ctx, DatabaseType dbType) : base(ctx, dbType) { }
     public Task<T?> RowByIdUnTrackedAsync(long id) => RowByKeyUnTrackedAsync(id);
     public T? RowByIdUnTrackedSynchronized(long id) => RowByKeyUnTrackedSynchronized(id);
 }
-
 
 public class QueryResult<T> where T : class
 {
     public IList<T> Results { get; set; } = new List<T>();
     public long? InlineCount { get; set; }
-    public int PageNo { get; set; } = 0;
-    public int ErrorNo { get; set; } = 0;
+    public int PageNo { get; set; }
+    public int ErrorNo { get; set; }
     public string ErrorMessage { get; set; } = string.Empty;
     public string ErrorDetails { get; set; } = string.Empty;
 
@@ -1848,7 +1826,7 @@ public class QueryResult<T> where T : class
     public bool HasError => ErrorNo != 0;
 
     public static QueryResult<T> Ok(IList<T> results, long? inlineCount = null, int pageNo = 0)
-         => new() { Results = results ?? new List<T>(), InlineCount = inlineCount, PageNo = pageNo };
+         => new() { Results = results, InlineCount = inlineCount, PageNo = pageNo };
 
     public static QueryResult<T> Fail(Exception e)
     {

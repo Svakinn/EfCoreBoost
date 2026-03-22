@@ -233,14 +233,12 @@ No. Single-provider systems benefit from structure, safe OData usage, bulk perfo
 ---
 
 ### Does EfBoost remove the ability to access DbContext?
-**Yes. Intentionally.**  
-DbContext still exists under the hood and EfCore.Boost builds and configures it.
-But it is not exposed for direct use.
-All data access should instead go through the Unit of Work:
-- DbUow for read-write operations
-- DbReadUow for read-only operations  
+EfCore.Boost shapes and configures the DbContext and uses it internally, but it is not exposed through the Unit of Work.  
+All normal data access should go through:
+- **DbUow** for read-write operations
+- **DbReadUow** for read-only operations  
 
-This keeps boundaries explicit and intent clear.
+You can still access *DbContext* by other means if needed, but there should be no practical reason to do so.
 
 ---
 

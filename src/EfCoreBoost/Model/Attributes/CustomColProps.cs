@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace EfCore.Boost.Model.Attributes
 {
     /// <summary>
@@ -150,7 +145,7 @@ namespace EfCore.Boost.Model.Attributes
     {
     }
 
-    //Html stored as text
+    //HTML stored as text
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
     public sealed class HtmlAttribute : Attribute
     {

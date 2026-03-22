@@ -85,13 +85,12 @@ namespace EfCore.Boost.Design
         /// <returns>
         /// The argument value if found; otherwise, <see langword="null"/>.
         /// </returns>
-        protected static string? GetArg(string[] args, string key)
+        private static string? GetArg(string[] args, string key)
         {
-            for (int i = 0; i < args.Length; i++)
+            for (var i = 0; i < args.Length; i++)
             {
                 if (args[i].Equals(key, StringComparison.OrdinalIgnoreCase))
                     return i + 1 < args.Length ? args[i + 1] : null;
-
                 if (args[i].StartsWith(key + "=", StringComparison.OrdinalIgnoreCase))
                     return args[i][(key.Length + 1)..];
             }

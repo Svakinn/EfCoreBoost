@@ -1,5 +1,5 @@
-﻿using EfCore.Boost;
-using EfCore.Boost.UOW;
+﻿using EfCore.Boost.UOW;
+using EfCore.Boost.DbRepo;
 using Microsoft.Extensions.Configuration;
 using static TestDb.DbTest;
 
@@ -13,7 +13,7 @@ namespace TestDb
         public EfRepo<MyTable> MyTables => new(Ctx, DbType);
         public EfRepo<MyTableRef> MyTableRefs => new(Ctx, DbType);
 
-        // Views are read-only and we can have readonly repos within RW-uow like here below
+        // Views are read-only, and we can have readonly repos within RW-uow like here below
         // However we move this to the UOWTestView.cs to demonstrate Unit of Work that is entirely readonly - cannot be used to update any data in the underlying DbContext.
         //public EfReadRepo<MyTableRefView> MyTableRefViews => new(Ctx, DbType);
 
@@ -22,7 +22,7 @@ namespace TestDb
         #region using the uow to call custom objects
         /// <summary>
         /// Calling Stored Procedure cannot be 100% streamlined between database flavors, format and naming is different.
-        /// Postgres does not support procedures and MySQL not shcemas )
+        /// Postgres does not support procedures and MySQL not shcemas
         /// Ef-Boost provides some helpers, performing the Ado-level-commands and retreiving data.
         /// This method retrieves and reserves sequence numbers to list.
         /// </summary>
@@ -42,7 +42,7 @@ namespace TestDb
         }
 
         /// <summary>
-        /// Scalar routine example.   
+        /// Scalar routine example.
         /// </summary>
         /// <param name="myId"></param>
         /// <returns></returns>

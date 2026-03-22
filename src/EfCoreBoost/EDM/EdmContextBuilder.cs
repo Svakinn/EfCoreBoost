@@ -5,10 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
 using Microsoft.OData.ModelBuilder;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Xml;
 
@@ -71,7 +67,7 @@ namespace EfCore.Boost.EDM
             }
         }
 
-        public static string SerializeEdmModelXML(IEdmModel model)
+        private static string SerializeEdmModelXml(IEdmModel model)
         {
             using var sw = new StringWriter();
             using var xw = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true });
@@ -84,10 +80,10 @@ namespace EfCore.Boost.EDM
             return string.Join("\n", errors.Select(e => e.ErrorMessage));
         }
 
-        public static string BuildXMLModelFromContext(DbContext context)
+        public static string BuildXmlModelFromContext(DbContext context)
         {
             var model = BuildEdmModelFromContext(context);
-            return SerializeEdmModelXML(model);
+            return SerializeEdmModelXml(model);
         }
     }
 }

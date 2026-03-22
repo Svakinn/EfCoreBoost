@@ -1,13 +1,7 @@
 ﻿using EfCore.Boost.Model.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Pomelo.EntityFrameworkCore.MySql;
-using System;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace EfCore.Boost.Model
 {
@@ -29,9 +23,6 @@ namespace EfCore.Boost.Model
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
                 var clr = entity.ClrType;
-                // Skip views or non-CLR-backed entity types
-                if (clr == null )
-                    continue;
                 var isView = Attribute.IsDefined(clr, typeof(ViewKeyAttribute), inherit: false);
                 var conCurrCount = 0;
                 foreach (var pi in clr.GetProperties(BindingFlags.Instance | BindingFlags.Public))
@@ -81,7 +72,7 @@ namespace EfCore.Boost.Model
             return t == typeof(int) || t == typeof(long);
         }
 
-        private static bool HasAnyDefault(Microsoft.EntityFrameworkCore.Metadata.IMutableProperty p)  => p.GetDefaultValue() != null || !string.IsNullOrWhiteSpace(p.GetDefaultValueSql());
+        private static bool HasAnyDefault(IMutableProperty p)  => p.GetDefaultValue() != null || !string.IsNullOrWhiteSpace(p.GetDefaultValueSql());
 
         private static void EnsureDefaultNumIfMissing(ModelBuilder modelBuilder, Type clr, PropertyInfo pi)
         {
@@ -131,7 +122,7 @@ namespace EfCore.Boost.Model
                     $"[DbUid] can only be applied to int/long/Guid properties. " +
                     $"Property: {entity.ClrType.Name}.{pi.Name}, type: {clrType.Name}");
 
-            // If entity already has a PK and it's not this property -> you may want to throw
+            // If entity already has a PK, and it's not this property -> you may want to throw
             var existingPk = entity.FindPrimaryKey();
             if (existingPk != null && !existingPk.Properties.Contains(prop))
             {
@@ -149,7 +140,7 @@ namespace EfCore.Boost.Model
             {
                 // Using provider strategy; you can customize to use sequences/HiLo later
                 prop.SetValueGenerationStrategy(
-                    Microsoft.EntityFrameworkCore.Metadata.SqlServerValueGenerationStrategy.IdentityColumn);
+                    SqlServerValueGenerationStrategy.IdentityColumn);
             }
             else if (isNpgsql)
             {
@@ -171,7 +162,7 @@ namespace EfCore.Boost.Model
             // Table-driven rules: add new attributes here
             // URL is mapped to Med (256).
             StrRule[] rules =
-            {
+            [
                 // Explicit size buckets
                 new(typeof(StrCodeAttribute), StrBucket.Code),
                 new(typeof(StrShortAttribute), StrBucket.Short),
@@ -209,8 +200,8 @@ namespace EfCore.Boost.Model
                 new(typeof(MarkdownAttribute), StrBucket.Text),
                 new(typeof(RichTextAttribute), StrBucket.Text),
                 new(typeof(JsonAttribute), StrBucket.Text),
-                new(typeof(EditorAttribute), StrBucket.Text),
-            };
+                new(typeof(EditorAttribute), StrBucket.Text)
+            ];
             StrBucket bucket = StrBucket.None;
             Type? firstAttr = null;
             foreach (var r in rules)
@@ -224,7 +215,7 @@ namespace EfCore.Boost.Model
                 }
                 if (bucket != r.Bucket)
                     throw new InvalidOperationException(
-                        $"Property '{prop.DeclaringType?.Name}.{prop.Name}' has multiple string intent attributes " +
+                        $"Property '{prop.DeclaringType.Name}.{prop.Name}' has multiple string intent attributes " +
                         $"('{firstAttr?.Name}', '{r.AttrType.Name}'). Only one string intent/size attribute is allowed.");
                 // If same bucket (aliases), allow it.
             }

@@ -4,19 +4,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.Edm.Csdl;
 using Microsoft.OData.ModelBuilder;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace EfCore.Boost.EDM
 {
     public static class EdmBuilder
     {
-        public static Microsoft.OData.Edm.IEdmModel BuildEdmModelFromContext<T>() where T : DbContext, new()
+        private static Microsoft.OData.Edm.IEdmModel BuildEdmModelFromContext<T>() where T : DbContext, new()
         {
             var builder = new ODataConventionModelBuilder();
 
@@ -33,26 +28,24 @@ namespace EfCore.Boost.EDM
             return builder.GetEdmModel();
         }
 
-        public static string SerializeEdmModelXML(Microsoft.OData.Edm.IEdmModel model)
+        private static string SerializeEdmModelXml(Microsoft.OData.Edm.IEdmModel model)
         {
-            using (var sw = new StringWriter())
-            using (var xw = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true }))
+            using var sw = new StringWriter();
+            using var xw = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true });
+            if (CsdlWriter.TryWriteCsdl(model, xw, CsdlTarget.OData, out var errors))
             {
-                if (CsdlWriter.TryWriteCsdl(model, xw, CsdlTarget.OData, out var errors))
-                {
-                    xw.Flush();
-                    return sw.ToString(); // EDMX XML
-                }
-                else
-                {
-                    return string.Join("\n", errors.Select(e => e.ErrorMessage));
-                }
+                xw.Flush();
+                return sw.ToString(); // EDMX XML
+            }
+            else
+            {
+                return string.Join("\n", errors.Select(e => e.ErrorMessage));
             }
         }
 
-        public static string BuildXMLModelFromContext<T>() where T : DbContext, new()
+        public static string BuildXmlModelFromContext<T>() where T : DbContext, new()
         {
-            return SerializeEdmModelXML(BuildEdmModelFromContext<T>());
+            return SerializeEdmModelXml(BuildEdmModelFromContext<T>());
         }
     }
 }

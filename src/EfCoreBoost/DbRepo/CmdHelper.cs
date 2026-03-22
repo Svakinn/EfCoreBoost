@@ -1,33 +1,21 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EfCore.Boost.DbRepo
 {
-    internal class CmdHelper
+    internal static class CmdHelper
     {
         /// <summary>
         /// Carries connection and command
-        /// The important part is that when disposed, the connection is not destroed (being the dbcontext connection)
-        /// However the Command is destroed.
-        /// I.e. using var oc = CmdHelper.OpenCmdSyncronized(Ctx)  is quite safe to use "using"
+        /// The important part is that when disposed, the connection is not destroyed (being the DbContext connection)
+        /// However the Command is destroyed.
+        /// I.e. using var oc = CmdHelper.OpenCmdSynchronized(Ctx)  is quite safe to use "using"
         /// </summary>
-        internal readonly struct Opened : IDisposable, IAsyncDisposable
+        internal readonly struct Opened(DbConnection conn, DbCommand cmd) : IDisposable, IAsyncDisposable
         {
-            public DbConnection Conn { get; }
-            public DbCommand Cmd { get; }
-
-            public Opened(DbConnection conn, DbCommand cmd)
-            {
-                Conn = conn;
-                Cmd = cmd;
-            }
+            public DbConnection Conn { get; } = conn;
+            public DbCommand Cmd { get; } = cmd;
 
             public void Dispose() => Cmd.Dispose();
             public ValueTask DisposeAsync()
@@ -39,14 +27,14 @@ namespace EfCore.Boost.DbRepo
 
         /// <summary>
         /// Returns the DbContexts connection, properly opened when needed
-        /// This is important since we want to make sure on-connected triggers from EF fire appropriatly
+        /// This is important since we want to make sure on-connected triggers from EF fire appropriate
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns>
-        /// Dispose-save structue with the command and connection, meaning that the command gets destroyed,
+        /// Dispose-save structure with the command and connection, meaning that the command gets destroyed,
         /// but not the connection that belongs to the DbContext
         /// </returns>
-        public static Opened OpenCmdSyncronized(DbContext ctx)
+        public static Opened OpenCmdSynchronized(DbContext ctx)
         {
             ctx.Database.OpenConnection(); // no-op if already open; fires interceptor if it opens
             var conn = ctx.Database.GetDbConnection();
@@ -62,7 +50,7 @@ namespace EfCore.Boost.DbRepo
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        public static DbConnection OpenConnectionSyncronized(DbContext ctx)
+        public static DbConnection OpenConnectionSynchronized(DbContext ctx)
         {
             ctx.Database.OpenConnection(); // no-op if already open; fires interceptor if it opens
             return ctx.Database.GetDbConnection();
@@ -73,12 +61,12 @@ namespace EfCore.Boost.DbRepo
         /// If transaction is active on the connection, that one gets hoked to our command
         /// </summary>
         /// <param name="ctx"></param>
-        /// <param name="ct">Cancelation token</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns>
-        /// Dispose-save structue with the command and connection, meaning that the command gets destroyed,
+        /// Dispose-save structure with the command and connection, meaning that the command gets destroyed,
         /// but not the connection that belongs to the DbContext
         /// </returns>
-        public async static Task<Opened> OpenCmdAsync(DbContext ctx, CancellationToken ct)
+        public static async Task<Opened> OpenCmdAsync(DbContext ctx, CancellationToken ct)
         {
             await ctx.Database.OpenConnectionAsync(ct); // goes through EF => interceptor fires
             var conn = ctx.Database.GetDbConnection();
@@ -91,12 +79,12 @@ namespace EfCore.Boost.DbRepo
 
         /// <summary>
         /// Returns the DbContexts connection, properly opened when needed
-        /// This is important since we want to make sure on-connected triggers from EF fire appropriatly
+        /// This is important since we want to make sure on-connected triggers from EF fire appropriately
         /// </summary>
         /// <param name="ctx"></param>
-        /// <param name="ct">Cancelation token</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns></returns>
-        public async static Task<DbConnection> OpenConnectionAsync(DbContext ctx, CancellationToken ct)
+        public static async Task<DbConnection> OpenConnectionAsync(DbContext ctx, CancellationToken ct)
         {
             await ctx.Database.OpenConnectionAsync(ct); // goes through EF => interceptor fires when needed
             return ctx.Database.GetDbConnection();

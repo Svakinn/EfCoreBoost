@@ -1,6 +1,6 @@
 ﻿/*
     Database deploy script (MySQL)
-    Generated: 2026-03-10 01:12:22
+    Generated: 2026-03-22 11:38:18
     ConnName: TestMy
 */
 
@@ -45,13 +45,13 @@ CREATE TABLE `my_MyTableRef` (
 ) CHARACTER SET=utf8mb4;
 
 INSERT INTO `my_MyTable` (`Id`, `Balance`, `Code`, `Created`, `Discount`, `Heading`, `LastChanged`, `LastChangedBy`, `RowID`, `RowVersion`, `Status`)
-VALUES (-2, 200.0, 'Mn', TIMESTAMP '2026-03-10 01:12:19', 0.0, 'Mando', TIMESTAMP '2026-03-10 01:12:19', 'Stefan', '706ce846-8524-428f-bfb5-412b117c6c51', 0, 2),
-(-1, 350.0, 'BD', TIMESTAMP '2026-03-10 01:12:19', 5.0, 'Baldo', TIMESTAMP '2026-03-10 01:12:19', 'Baldr', 'f578850b-f2fb-49dc-9001-045e8f39c61b', 0, 1);
+VALUES (-2, 200.0, 'Mn', TIMESTAMP '2026-03-22 11:38:15', 0.0, 'Mando', TIMESTAMP '2026-03-22 11:38:15', 'Stefan', '6b2c983f-33f6-4f4f-99c6-b5fe59506d52', 0, 2),
+(-1, 350.0, 'BD', TIMESTAMP '2026-03-22 11:38:15', 5.0, 'Baldo', TIMESTAMP '2026-03-22 11:38:15', 'Baldr', '0591627c-e456-486c-a326-bfacf1a17303', 0, 1);
 
 INSERT INTO `my_MyTableRef` (`Id`, `Amount`, `Created`, `LastChanged`, `LastChangedBy`, `MyInfo`, `ParentId`, `RowVersion`)
-VALUES (-3, 200.0, TIMESTAMP '2026-03-10 01:12:19', TIMESTAMP '2026-03-10 01:12:19', 'Stefan', 'OtherData', -2, 0),
-(-2, 50.0, TIMESTAMP '2026-03-10 01:12:19', TIMESTAMP '2026-03-10 01:12:19', 'Baldr', 'BiggerData', -1, 0),
-(-1, 300.0, TIMESTAMP '2026-03-10 01:12:19', TIMESTAMP '2026-03-10 01:12:19', 'Baldr', 'BigData', -1, 0);
+VALUES (-3, 200.0, TIMESTAMP '2026-03-22 11:38:15', TIMESTAMP '2026-03-22 11:38:15', 'Stefan', 'OtherData', -2, 0),
+(-2, 50.0, TIMESTAMP '2026-03-22 11:38:15', TIMESTAMP '2026-03-22 11:38:15', 'Baldr', 'BiggerData', -1, 0),
+(-1, 300.0, TIMESTAMP '2026-03-22 11:38:15', TIMESTAMP '2026-03-22 11:38:15', 'Baldr', 'BigData', -1, 0);
 
 CREATE INDEX `IX_my_MyTable_LastChanged` ON `my_MyTable` (`LastChanged`);
 
@@ -62,12 +62,11 @@ CREATE INDEX `IX_my_MyTableRef_MyInfo` ON `my_MyTableRef` (`MyInfo`);
 CREATE INDEX `IX_my_MyTableRef_ParentId` ON `my_MyTableRef` (`ParentId`);
 
 INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20260310011219_InitDbTest', '8.0.24');
+VALUES ('20260322113815_InitDbTest', '8.0.24');
 
 COMMIT;
 
 
-GO
 /*** END InitDbTest.mysql ***/
 
 
@@ -161,6 +160,5 @@ BEGIN
 END$$
 DELIMITER ;
 
-GO
 /*** END MySQL.mysql ***/
 

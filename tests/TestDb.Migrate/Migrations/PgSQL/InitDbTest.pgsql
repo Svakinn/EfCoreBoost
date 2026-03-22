@@ -45,16 +45,16 @@ CREATE TABLE my."MyTableRef" (
 );
 
 INSERT INTO my."MyTable" ("Id", "Balance", "Code", "Created", "Discount", "Heading", "LastChanged", "LastChangedBy", "RowID", "RowVersion", "Status")
-VALUES (-2, 200.0, 'Mn', TIMESTAMPTZ '2026-03-10T01:12:36.589409+00:00', 0.0, 'Mando', TIMESTAMPTZ '2026-03-10T01:12:36.589409+00:00', 'Stefan', '998cbbc6-7c86-4a55-9b27-a8282c13a6e2', 0, 2);
+VALUES (-2, 200.0, 'Mn', TIMESTAMPTZ '2026-03-22T11:38:26.457385+00:00', 0.0, 'Mando', TIMESTAMPTZ '2026-03-22T11:38:26.457385+00:00', 'Stefan', '78c3d2ed-77b8-4669-9afe-8260b25de03f', 0, 2);
 INSERT INTO my."MyTable" ("Id", "Balance", "Code", "Created", "Discount", "Heading", "LastChanged", "LastChangedBy", "RowID", "RowVersion", "Status")
-VALUES (-1, 350.0, 'BD', TIMESTAMPTZ '2026-03-10T01:12:36.589406+00:00', 5.0, 'Baldo', TIMESTAMPTZ '2026-03-10T01:12:36.589406+00:00', 'Baldr', '5b63dc6d-42b5-4d3e-a259-62b826649579', 0, 1);
+VALUES (-1, 350.0, 'BD', TIMESTAMPTZ '2026-03-22T11:38:26.457383+00:00', 5.0, 'Baldo', TIMESTAMPTZ '2026-03-22T11:38:26.457383+00:00', 'Baldr', 'a59ad86d-a231-484d-8d77-a60997ab6ecb', 0, 1);
 
 INSERT INTO my."MyTableRef" ("Id", "Amount", "Created", "LastChanged", "LastChangedBy", "MyInfo", "ParentId", "RowVersion")
-VALUES (-3, 200.0, TIMESTAMPTZ '2026-03-10T01:12:36.589421+00:00', TIMESTAMPTZ '2026-03-10T01:12:36.589421+00:00', 'Stefan', 'OtherData', -2, 0);
+VALUES (-3, 200.0, TIMESTAMPTZ '2026-03-22T11:38:26.457393+00:00', TIMESTAMPTZ '2026-03-22T11:38:26.457393+00:00', 'Stefan', 'OtherData', -2, 0);
 INSERT INTO my."MyTableRef" ("Id", "Amount", "Created", "LastChanged", "LastChangedBy", "MyInfo", "ParentId", "RowVersion")
-VALUES (-2, 50.0, TIMESTAMPTZ '2026-03-10T01:12:36.589421+00:00', TIMESTAMPTZ '2026-03-10T01:12:36.589421+00:00', 'Baldr', 'BiggerData', -1, 0);
+VALUES (-2, 50.0, TIMESTAMPTZ '2026-03-22T11:38:26.457393+00:00', TIMESTAMPTZ '2026-03-22T11:38:26.457393+00:00', 'Baldr', 'BiggerData', -1, 0);
 INSERT INTO my."MyTableRef" ("Id", "Amount", "Created", "LastChanged", "LastChangedBy", "MyInfo", "ParentId", "RowVersion")
-VALUES (-1, 300.0, TIMESTAMPTZ '2026-03-10T01:12:36.589421+00:00', TIMESTAMPTZ '2026-03-10T01:12:36.589421+00:00', 'Baldr', 'BigData', -1, 0);
+VALUES (-1, 300.0, TIMESTAMPTZ '2026-03-22T11:38:26.457392+00:00', TIMESTAMPTZ '2026-03-22T11:38:26.457392+00:00', 'Baldr', 'BigData', -1, 0);
 
 CREATE INDEX "IX_MyTable_LastChanged" ON my."MyTable" ("LastChanged");
 
@@ -78,7 +78,7 @@ SELECT setval(
     false);
 
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260310011236_InitDbTest', '8.0.24');
+VALUES ('20260322113826_InitDbTest', '8.0.24');
 
 COMMIT;
 

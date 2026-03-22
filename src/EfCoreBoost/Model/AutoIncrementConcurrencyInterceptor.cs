@@ -3,12 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EfCore.Boost.Model
 {
@@ -63,7 +58,7 @@ namespace EfCore.Boost.Model
             IProperty? match = null;
             foreach (var p in entityType.GetProperties())
             {
-                //Only appllies on integers or long
+                //Only applies on integers or long
                 if (p.ClrType != typeof(long) && p.ClrType != typeof(int))
                     continue;
                 var pi = p.PropertyInfo;

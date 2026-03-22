@@ -13,13 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="TestDb\Ps\Helpers.ps1" />
-    <Content Include="TestDb\Ps\MsMigrate.ps1" />
-    <Content Include="TestDb\Ps\MyMigrate.ps1" />
-    <Content Include="TestDb\Ps\PgMigrate.ps1" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -79,5 +72,20 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+    <ItemGroup>
+        <!-- Deploy scripts from /Migrations -->
+        <Content Include="..\TestDb.Migrate\Migrations\DbDeploy_MsSql.sql;
+                    ..\TestDb.Migrate\Migrations\DbDeploy_MySql.mysql;
+                    ..\TestDb.Migrate\Migrations\DbDeploy_PgSql.pgsql">
+            <Link>Migrate\%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+
+        <!-- Top-level SQL files from /SQL -->
+        <Content Include="..\TestDb.Migrate\SQL\*.*">
+            <Link>Sql\%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
 
 </Project>

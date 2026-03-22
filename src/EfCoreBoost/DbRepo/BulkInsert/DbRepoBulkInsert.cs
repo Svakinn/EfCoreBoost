@@ -3,20 +3,15 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 // Provider-specific BulkInsertAsync implementation (SqlServer, Postgres, MySql) + helpers.
-using EfCore.Boost.DbRepo;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
-using NpgsqlTypes;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 
-namespace EfCore.Boost;
+
+// ReSharper disable once CheckNamespace
+namespace EfCore.Boost.DbRepo;
 
 public partial class EfRepo<T> where T : class
 {
@@ -50,7 +45,7 @@ public partial class EfRepo<T> where T : class
     }
 
     // ---- SQL Server ----
-    protected async Task BulkInsert_SqlServerAsync(List<T> items, CancellationToken ct)
+    private async Task BulkInsert_SqlServerAsync(List<T> items, CancellationToken ct)
     {
         var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new("Entity metadata not found");
         var schema = et.GetSchema();
@@ -60,13 +55,14 @@ public partial class EfRepo<T> where T : class
         var dt = ToDataTable(items, inc);
         var conn = await CmdHelper.OpenConnectionAsync(Ctx, ct); //The DbContexts connection, correctly opened
         if (conn is not SqlConnection sc) throw new("SqlServer connection required");
-        using var b = new SqlBulkCopy(sc) { DestinationTableName = full };
+        using var b = new SqlBulkCopy(sc);
+        b.DestinationTableName = full;
         foreach (DataColumn c in dt.Columns)
             b.ColumnMappings.Add(c.ColumnName, c.ColumnName);
-        await b.WriteToServerAsync(dt);
+        await b.WriteToServerAsync(dt,ct);
     }
 
-    protected void BulkInsert_SqlServerSynchronized(List<T> items)
+    private void BulkInsert_SqlServerSynchronized(List<T> items)
     {
         var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new("Entity metadata not found");
         var schema = et.GetSchema();
@@ -74,16 +70,17 @@ public partial class EfRepo<T> where T : class
         var full = schema == null ? $"[{table}]" : $"[{schema}].[{table}]";
         var inc = ProjectScalarNonIdentityProps();
         var dt = ToDataTable(items, inc);
-        var conn = CmdHelper.OpenConnectionSyncronized(Ctx);
+        var conn = CmdHelper.OpenConnectionSynchronized(Ctx);
         if (conn is not SqlConnection sc) throw new("SqlServer connection required");
-        using var b = new SqlBulkCopy(sc) { DestinationTableName = full };
+        using var b = new SqlBulkCopy(sc);
+        b.DestinationTableName = full;
         foreach (DataColumn c in dt.Columns)
             b.ColumnMappings.Add(c.ColumnName, c.ColumnName);
         b.WriteToServer(dt);
     }
 
     // ---- PostgreSQL ----
-    protected async Task BulkInsert_PostgresAsync(List<T> items, CancellationToken ct)
+    private async Task BulkInsert_PostgresAsync(List<T> items, CancellationToken ct)
     {
         var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new("Entity metadata not found");
         var schema = et.GetSchema() ?? "public";
@@ -92,29 +89,30 @@ public partial class EfRepo<T> where T : class
         var inc = ProjectScalarNonIdentityProps();
         var conn = await CmdHelper.OpenConnectionAsync(Ctx, ct);
         if (conn is not Npgsql.NpgsqlConnection pg) throw new("PostgreSQL connection required");
-        using var w = await pg.BeginBinaryImportAsync($"COPY \"{schema}\".\"{table}\" ({string.Join(", ", cols)}) FROM STDIN (FORMAT BINARY)");
+        await using var w = await pg.BeginBinaryImportAsync($"COPY \"{schema}\".\"{table}\" ({string.Join(", ", cols)}) FROM STDIN (FORMAT BINARY)", ct);
         foreach (var it in items) {
-            await w.StartRowAsync();
+            await w.StartRowAsync(ct);
             foreach (var p in inc) {
                 var raw = p.GetValue(it);
                 var val = PrepareForPostgres(raw);
                 var t = InferNpgsqlDbType(p.PropertyType);
                 if (val == null)
-                    await w.WriteNullAsync();
+                    await w.WriteNullAsync(ct);
                 else
-                    await w.WriteAsync(val, t);
+                    await w.WriteAsync(val, t, ct);
             }
         }
-        await w.CompleteAsync();
+        await w.CompleteAsync(ct);
     }
-    protected void BulkInsert_PostgresSynchronized(List<T> items)
+
+    private void BulkInsert_PostgresSynchronized(List<T> items)
     {
         var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new("Entity metadata not found");
         var schema = et.GetSchema() ?? "public";
         var table = et.GetTableName() ?? throw new("No table name");
         var cols = ProjectScalarNonIdentityProps().Select(p => $"\"{p.Name}\"").ToArray();
         var inc = ProjectScalarNonIdentityProps();
-        var conn = CmdHelper.OpenConnectionSyncronized(Ctx);
+        var conn = CmdHelper.OpenConnectionSynchronized(Ctx);
         if (conn is not Npgsql.NpgsqlConnection pg) throw new("PostgreSQL connection required");
         using var w = pg.BeginBinaryImport($"COPY \"{schema}\".\"{table}\" ({string.Join(", ", cols)}) FROM STDIN (FORMAT BINARY)");
         foreach (var it in items)
@@ -135,14 +133,14 @@ public partial class EfRepo<T> where T : class
     }
 
     // ---- MySQL ----
-    protected async Task BulkInsert_MySqlAsync(List<T> items, CancellationToken ct)
+    private async Task BulkInsert_MySqlAsync(List<T> items, CancellationToken ct)
     {
         var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new("Entity metadata not found");
         var schema = et.GetSchema();
         var table = et.GetTableName() ?? throw new("No table name");
         var inc = ProjectScalarNonIdentityProps();
 
-        using var oc = await CmdHelper.OpenCmdAsync(Ctx,ct);
+        await using var oc = await CmdHelper.OpenCmdAsync(Ctx,ct);
         // Fast path if MySqlConnector is available
         if (Type.GetType("MySqlConnector.MySqlBulkCopy, MySqlConnector") is not null && oc.Conn is MySqlConnector.MySqlConnection my) {
             var dt = ToDataTable(items, inc);
@@ -150,7 +148,7 @@ public partial class EfRepo<T> where T : class
             var b = new MySqlConnector.MySqlBulkCopy(my) { DestinationTableName = dest };
             for (int i = 0; i < dt.Columns.Count; i++)
                 b.ColumnMappings.Add(new MySqlConnector.MySqlBulkCopyColumnMapping(i, dt.Columns[i].ColumnName));
-            await b.WriteToServerAsync(dt);
+            await b.WriteToServerAsync(dt, ct);
             return;
         }
         // Fallback: chunked multi-row INSERT (parameterized)
@@ -174,16 +172,17 @@ public partial class EfRepo<T> where T : class
                 values.Add($"({string.Join(", ", parts)})");
             }
             oc.Cmd.CommandText = $"INSERT INTO {(schema == null ? $"`{table}`" : $"`{schema}`.`{table}`")} ({cols}) VALUES {string.Join(", ", values)}";
-            await oc.Cmd.ExecuteNonQueryAsync();
+            await oc.Cmd.ExecuteNonQueryAsync(ct);
         }
     }
-    protected void BulkInsert_MySqlSynchronized(List<T> items)
+
+    private void BulkInsert_MySqlSynchronized(List<T> items)
     {
         var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new("Entity metadata not found");
         var schema = et.GetSchema();
         var table = et.GetTableName() ?? throw new("No table name");
         var inc = ProjectScalarNonIdentityProps();
-        using var oc = CmdHelper.OpenCmdSyncronized(Ctx);
+        using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
         // Fast path if MySqlConnector is available
         if (Type.GetType("MySqlConnector.MySqlBulkCopy, MySqlConnector") is not null && oc.Conn is MySqlConnector.MySqlConnection my)
         {
@@ -224,7 +223,7 @@ public partial class EfRepo<T> where T : class
     }
 
     // ---- Helpers ----
-    protected static DataTable ToDataTable(List<T> items, List<PropertyInfo> inc) {
+    private static DataTable ToDataTable(List<T> items, List<PropertyInfo> inc) {
         var dt = new DataTable();
         foreach (var p in inc)
             dt.Columns.Add(p.Name, Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType);
@@ -236,17 +235,17 @@ public partial class EfRepo<T> where T : class
         return dt;
     }
 
-    protected static bool IsScalar(Type t) {
+    private static bool IsScalar(Type t) {
         t = Nullable.GetUnderlyingType(t) ?? t;
         return t.IsPrimitive || t == typeof(string) || t == typeof(decimal) || t == typeof(DateTime) || t == typeof(DateTimeOffset) || t == typeof(Guid) || t == typeof(byte[]) || t == typeof(TimeSpan);
     }
 
-    protected static bool IsDbGenerated(PropertyInfo p) {
+    private static bool IsDbGenerated(PropertyInfo p) {
         var a = p.GetCustomAttribute<DatabaseGeneratedAttribute>();
         return a?.DatabaseGeneratedOption == DatabaseGeneratedOption.Identity;
     }
 
-    protected static List<PropertyInfo> ProjectScalarNonIdentityProps() {
+    private static List<PropertyInfo> ProjectScalarNonIdentityProps() {
         var list = new List<PropertyInfo>();
         foreach (var p in typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public)) {
             if (IsDbGenerated(p))

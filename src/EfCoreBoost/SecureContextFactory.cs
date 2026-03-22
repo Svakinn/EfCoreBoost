@@ -38,7 +38,7 @@ namespace EfCore.Boost
                     throw new Exception("DefaultAppConnName missing or no value in config file !");
                 configName = dbConnName;
             }
-            var dbCfg = DbConnectionCFG.Get(configuration, configName);
+            var dbCfg = DbConnectionCfg.Get(configuration, configName);
             if (dbCfg == null || string.IsNullOrWhiteSpace(dbCfg.ConnectionString))
                 throw new Exception("DbConfig for " + configName + " is missing !");
             return CreateDbContext<T>(

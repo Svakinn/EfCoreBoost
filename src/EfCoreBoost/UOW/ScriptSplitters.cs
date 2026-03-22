@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace EfCore.Boost.UOW
 {
@@ -130,13 +126,13 @@ namespace EfCore.Boost.UOW
         // MySQL: supports DELIMITER changes and splits by current delimiter (default ';').
         // Ignores delimiters inside:
         // - single quotes: '...'
-        // - double quotes: "..." (strings depending on sql_mode, but we treat as string for safety)
+        // - double quotes: "..." (strings depending on SQL-mode, but we treat as string for safety)
         // - backticks: `...` (identifiers)
         // - line comments: -- ... , # ...
         // - block comments: /* ... */
         // DELIMITER directives must appear alone on a line (common mysql-cli style):
         //   DELIMITER $$
-        //   CREATE PROCEDURE ... $$ 
+        //   CREATE PROCEDURE ... $$
         //   DELIMITER ;
         public static IEnumerable<string> SplitMySql(string sql)
         {
@@ -226,7 +222,7 @@ namespace EfCore.Boost.UOW
                 if (c == '#') { sb.Append(c); i++; inLine = true; continue; }
                 if (c == '-' && i + 1 < n && sql[i + 1] == '-')
                 {
-                    // MySQL treats '-- ' (dash dash space) as comment (mysql-cli style). We'll accept '--' if followed by whitespace or EOL.
+                    // MySQL treats '-- ' (dash space) as comment (mysql-cli style). We'll accept '--' if followed by whitespace or EOL.
                     var next = i + 2 < n ? sql[i + 2] : '\n';
                     if (char.IsWhiteSpace(next) || next == '\r' || next == '\n')
                     {
@@ -264,7 +260,7 @@ namespace EfCore.Boost.UOW
 
         static readonly Regex GoRegex = new(@"^\s*GO(?:\s+(?<count>\d+))?\s*(?:--.*)?$",  RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        // MsSQL: split by lines containing only "GO" (case insensitive)
+        // MsSQL: split by lines containing only "GO" (case-insensitive)
         public static IEnumerable<string> SplitMsSql(string sql)
         {
             if (string.IsNullOrWhiteSpace(sql)) yield break;
@@ -272,7 +268,6 @@ namespace EfCore.Boost.UOW
             var sb = new StringBuilder();
             using var reader = new StringReader(sql);
             string? line;
-
             while ((line = reader.ReadLine()) != null)
             {
                 var m = GoRegex.Match(line);
