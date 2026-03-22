@@ -8,7 +8,7 @@
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>1.0.8</Version>
+    <Version>1.0.9</Version>
     <Authors>Sveinn S. Erlendsson</Authors>
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
@@ -19,17 +19,10 @@ Migrations for the test db also moved to seporate project.
 Now more convenient way to write design time DbTestContextFactory using DesignDbContextFactoryBase T
 	</Description>
     <PackageReleaseNotes>
-    Concurrency handling. 
-    More descriptive attributes on table columns. 
-    Multiple Repo methods renamed:
-      ByKeyAsync -> FindRowByKeyAsync
-      ByKeyNoTrackAsync -> RowByKeyUnTrackedAsync
-      FirstNoTrackAsync -> RowUnTrackedAsync
-      QueryNoTrack -> QueryUnTracked
-      QueryNoTrackAsync -> QueryUnTrackedAsync
-      StreamNoTrackAsync -> StreamUnTrackedAsync
-      AnyNoTrackAsync -> AnyAsync
-      FirstAsync -> RowTrackedAsync
+Tests reconfigured for the TestDb.Migrate project.
+Important bugfix regarding the RowKey-lookup functions i.e. RowByKeyTrackedAsync
+Bugfixes regarding MySQL-guid handling. 
+Bugfix regarding Postgres bulk-insert.
     </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;efboost;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-famework;dotnet;ef-core-migrations</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
