@@ -149,7 +149,7 @@ namespace EfCore.Boost
                 case "mysql": //version 8.0 is bare minimum for Pomelo, lesser versions require different migration output
                     optionsBuilder.UseMySql(
                         connectionString,
-                        ServerVersion.Create(8, 0, 0, ServerType.MySql),
+                        ServerVersion.Create(8, 0, 13, ServerType.MySql),  //8.0.13+ supports UUID()
                         mySql =>
                         {
                             if (!string.IsNullOrWhiteSpace(migrationAssembly))

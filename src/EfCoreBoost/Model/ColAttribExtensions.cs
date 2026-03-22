@@ -105,7 +105,7 @@ namespace EfCore.Boost.Model
             {
                 prop.SetColumnType("char(36)");
                 // Adjust later if you implement proper uuid generation in MySQL
-                prop.SetDefaultValueSql("''");
+                prop.SetDefaultValueSql("(UUID())"); //works for MySQL 8.0.13+ & MariaDb 10.2+
             }
         }
 

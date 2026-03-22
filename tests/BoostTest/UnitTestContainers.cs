@@ -348,8 +348,8 @@ namespace BoostTest
             //
             // Bulk- insert & delete tests
             //
-            var tt = new DbTest.MyTable { Id = 10, LastChanged = DateTime.UtcNow, LastChangedBy = "gorm", RowID = Guid.NewGuid() };
-            var tt2 = new DbTest.MyTable { Id = 11, LastChanged = DateTime.UtcNow, LastChangedBy = "gorm2", RowID = Guid.NewGuid() };
+            var tt = new DbTest.MyTable { Id = 10, LastChanged = DateTime.UtcNow, LastChangedBy = "gorm" };
+            var tt2 = new DbTest.MyTable { Id = 11, LastChanged = DateTime.UtcNow, LastChangedBy = "gorm2" };
             await uow.RunInTransactionAsync(async ct =>
             {
                 await uow.MyTables.BulkInsertAsync([tt, tt2], true, ct);

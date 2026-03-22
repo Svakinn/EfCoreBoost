@@ -11,7 +11,7 @@ ALTER DATABASE CHARACTER SET utf8mb4;
 CREATE TABLE `my_MyTable` (
     `Id` bigint NOT NULL AUTO_INCREMENT,
     `RowVersion` bigint NOT NULL,
-    `RowID` char(36) COLLATE ascii_general_ci NOT NULL DEFAULT '',
+    `RowID` char(36) COLLATE ascii_general_ci NOT NULL DEFAULT (UUID()),
     `Code` varchar(30) CHARACTER SET utf8mb4 NOT NULL,
     `Heading` varchar(256) CHARACTER SET utf8mb4 NULL,
     `Balance` decimal(19,4) NOT NULL,
@@ -37,13 +37,13 @@ CREATE TABLE `my_MyTableRef` (
 ) CHARACTER SET=utf8mb4;
 
 INSERT INTO `my_MyTable` (`Id`, `Balance`, `Code`, `Created`, `Discount`, `Heading`, `LastChanged`, `LastChangedBy`, `RowID`, `RowVersion`, `Status`)
-VALUES (-2, 200.0, 'Mn', TIMESTAMP '2026-03-22 11:38:15', 0.0, 'Mando', TIMESTAMP '2026-03-22 11:38:15', 'Stefan', '6b2c983f-33f6-4f4f-99c6-b5fe59506d52', 0, 2),
-(-1, 350.0, 'BD', TIMESTAMP '2026-03-22 11:38:15', 5.0, 'Baldo', TIMESTAMP '2026-03-22 11:38:15', 'Baldr', '0591627c-e456-486c-a326-bfacf1a17303', 0, 1);
+VALUES (-2, 200.0, 'Mn', TIMESTAMP '2026-03-22 22:35:11', 0.0, 'Mando', TIMESTAMP '2026-03-22 22:35:11', 'Stefan', '1b419824-b70a-4155-8818-ec554723d46c', 0, 2),
+(-1, 350.0, 'BD', TIMESTAMP '2026-03-22 22:35:11', 5.0, 'Baldo', TIMESTAMP '2026-03-22 22:35:11', 'Baldr', '0ef18829-a2a4-45b6-8237-de239e28374e', 0, 1);
 
 INSERT INTO `my_MyTableRef` (`Id`, `Amount`, `Created`, `LastChanged`, `LastChangedBy`, `MyInfo`, `ParentId`, `RowVersion`)
-VALUES (-3, 200.0, TIMESTAMP '2026-03-22 11:38:15', TIMESTAMP '2026-03-22 11:38:15', 'Stefan', 'OtherData', -2, 0),
-(-2, 50.0, TIMESTAMP '2026-03-22 11:38:15', TIMESTAMP '2026-03-22 11:38:15', 'Baldr', 'BiggerData', -1, 0),
-(-1, 300.0, TIMESTAMP '2026-03-22 11:38:15', TIMESTAMP '2026-03-22 11:38:15', 'Baldr', 'BigData', -1, 0);
+VALUES (-3, 200.0, TIMESTAMP '2026-03-22 22:35:11', TIMESTAMP '2026-03-22 22:35:11', 'Stefan', 'OtherData', -2, 0),
+(-2, 50.0, TIMESTAMP '2026-03-22 22:35:11', TIMESTAMP '2026-03-22 22:35:11', 'Baldr', 'BiggerData', -1, 0),
+(-1, 300.0, TIMESTAMP '2026-03-22 22:35:11', TIMESTAMP '2026-03-22 22:35:11', 'Baldr', 'BigData', -1, 0);
 
 CREATE INDEX `IX_my_MyTable_LastChanged` ON `my_MyTable` (`LastChanged`);
 
@@ -54,7 +54,7 @@ CREATE INDEX `IX_my_MyTableRef_MyInfo` ON `my_MyTableRef` (`MyInfo`);
 CREATE INDEX `IX_my_MyTableRef_ParentId` ON `my_MyTableRef` (`ParentId`);
 
 INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20260322113815_InitDbTest', '8.0.24');
+VALUES ('20260322223511_InitDbTest', '8.0.24');
 
 COMMIT;
 

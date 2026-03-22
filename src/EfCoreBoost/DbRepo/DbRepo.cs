@@ -16,7 +16,9 @@ using System.Data;
 using System.Data.Common;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Xml;
+using EfCore.Boost.Model.Attributes;
 
 namespace EfCore.Boost.DbRepo;
 
@@ -1212,12 +1214,64 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
 
     private void BulkInsertCoreSynchronized(List<T> items, DbTransaction trans, bool includeIdentityValues = false)
     {
+        var guidPlan = PrepareDbGuidBulkPlan(items);
         if (this.DbType == DatabaseType.SqlServer)
-            this.MsBulkInsertSynchronized(items, trans, includeIdentityValues);
+            this.MsBulkInsertSynchronized(items, trans, guidPlan.OmitColumnNames, includeIdentityValues);
         else if (DbType == DatabaseType.PostgreSql)
-            this.PgBulkInsertSynchronized(items, trans, includeIdentityValues);
+            this.PgBulkInsertSynchronized(items, trans, guidPlan.OmitColumnNames, includeIdentityValues);
         else //Assume mysql
-            this.MyBulkInsertSynchronized(items, trans, includeIdentityValues);
+            this.MyBulkInsertSynchronized(items, trans, guidPlan.OmitColumnNames, includeIdentityValues);
+    }
+
+    protected sealed record DbGuidBulkPlan(HashSet<string> OmitColumnNames);
+
+    /// <summary>
+    /// So when we have DbGuidAttribute we expect the database to set default values
+    /// If no value for that column is passed in, bulk insert omits it but... if there is value in the data to be inserted we need different approach.
+    /// In that case we need to generate data for any null values and include the column in bulk-insert operation
+    /// </summary>
+    /// <param name="items"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    protected DbGuidBulkPlan PrepareDbGuidBulkPlan(List<T> items)
+    {
+        var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new InvalidOperationException($"Entity metadata not found for {typeof(T).Name}");
+        var schema = et.GetSchema();
+        var table = et.GetTableName() ?? throw new InvalidOperationException($"Table name not found for {typeof(T).Name}");
+        var store = StoreObjectIdentifier.Table(table, schema);
+        var omit = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in et.GetProperties())
+        {
+            var pi = p.PropertyInfo;
+            if (pi == null) continue;
+            if (pi.GetCustomAttribute<DbGuidAttribute>() == null) continue;
+            var clr = Nullable.GetUnderlyingType(p.ClrType) ?? p.ClrType;
+            if (clr != typeof(Guid)) throw new InvalidOperationException($"[DbGuid] can only be used on Guid/Guid?. {typeof(T).Name}.{pi.Name}");
+            var colName = p.GetColumnName(store);
+            if (string.IsNullOrWhiteSpace(colName)) continue;
+            bool anySet = false;
+            foreach (var item in items)
+            {
+                var val = pi.GetValue(item);
+                if (val is Guid g && g != Guid.Empty)
+                {
+                    anySet = true;
+                    break;
+                }
+            }
+            if (!anySet)
+            {
+                omit.Add(colName);
+                continue;
+            }
+            foreach (var item in items)
+            {
+                var val = pi.GetValue(item);
+                if (val == null || (val is Guid g && g == Guid.Empty))
+                    pi.SetValue(item, Guid.NewGuid());
+            }
+        }
+        return new DbGuidBulkPlan(omit);
     }
 
     /// <summary>
@@ -1279,23 +1333,23 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
 
     private async Task BulkInsertCoreAsync(List<T> items, DbTransaction trans, bool includeIdentityValues = false, CancellationToken ct = default)
     {
+        var guidPlan = PrepareDbGuidBulkPlan(items);
         if (this.DbType == DatabaseType.SqlServer)
-            await this.MsBulkInsertAsync(items, trans, includeIdentityValues, ct);
+            await this.MsBulkInsertAsync(items, trans, guidPlan.OmitColumnNames, includeIdentityValues, ct);
         else if (DbType == DatabaseType.PostgreSql)
-            await this.PgBulkInsertAsync(items, trans, includeIdentityValues, ct);
+            await this.PgBulkInsertAsync(items, trans, guidPlan.OmitColumnNames, includeIdentityValues, ct);
         else //Assume mysql
-            await this.MyBulkInsertAsync(items, trans, includeIdentityValues, ct);
+            await this.MyBulkInsertAsync(items, trans, guidPlan.OmitColumnNames, includeIdentityValues, ct);
     }
 
     protected sealed record BulkColPlan(PropertyInfo ClrProp, string ColumnName, Type DataType);
 
-    protected List<BulkColPlan> BuildBulkPlan<TEntity>(bool includeStoreGenerated, Func<IProperty, bool>? extraSkipEfProp = null)
+    protected List<BulkColPlan> BuildBulkPlan<TEntity>(bool includeStoreGenerated, HashSet<string> omitColumnNames , Func<IProperty, bool>? extraSkipEfProp = null)
     {
         var et = Ctx.Model.FindEntityType(typeof(TEntity)) ?? throw new InvalidOperationException($"Entity metadata not found for {typeof(TEntity).Name}");
         var schema = et.GetSchema() ?? null;
         var table = et.GetTableName() ?? throw new InvalidOperationException($"Table name not found for {typeof(TEntity).Name}");
         var store = StoreObjectIdentifier.Table(table, schema);
-
         var cols = new List<BulkColPlan>();
         foreach (var p in et.GetProperties())
         {
@@ -1303,6 +1357,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             if (p.PropertyInfo == null) continue;
             var colName = p.GetColumnName(store);
             if (string.IsNullOrWhiteSpace(colName)) continue;
+            if (omitColumnNames != null && omitColumnNames.Any() && omitColumnNames.Contains(colName)) continue;
             var autoIncCol = includeStoreGenerated ? null : GetAutoIncrementColumnName<TEntity>();
             if (!includeStoreGenerated && string.Equals(colName, autoIncCol, StringComparison.OrdinalIgnoreCase))
                 continue;
@@ -1377,19 +1432,20 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     /// </summary>
     /// <param name="items"></param>
     /// <param name="trans"></param>
+    /// <param name="omitCols"></param>
     /// <param name="includeIdentityValues"></param>
     /// <param name="ct"></param>
     /// <returns></returns>
     ///
-    protected async Task MsBulkInsertAsync(List<T> items, DbTransaction trans, bool includeIdentityValues = false, CancellationToken ct = default)
+    protected async Task MsBulkInsertAsync(List<T> items, DbTransaction trans, HashSet<string> omitCols, bool includeIdentityValues = false, CancellationToken ct = default)
     {
         if (DbType != DatabaseType.SqlServer)
-            throw new NotSupportedException("MsBulkinsert is supported only for SQL Server");
+            throw new NotSupportedException("Ms-Bulkinsert is supported only for SQL Server");
         if (trans.Connection is not SqlConnection sqlConn)
             throw new InvalidOperationException("Bulk insert requires SQL Server transaction/connection");
         var entityType = Ctx.Model.FindEntityType(typeof(T)) ?? throw new InvalidOperationException("Entity metadata not found");
         var tableName = $"[{entityType.GetSchema()}].[{entityType.GetTableName()}]";
-        var cols = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues);
+        var cols = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues, omitColumnNames: omitCols);
         var dt = BuildDataTable(items, cols);
         SqlBulkCopyOptions opts = SqlBulkCopyOptions.Default;
         if (includeIdentityValues) opts |= SqlBulkCopyOptions.KeepIdentity;
@@ -1431,9 +1487,10 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     /// Synchronized Ms-Sql version
     /// </summary>
     /// <param name="items"></param>
+    /// <param name="omitCols"></param>
     /// <param name="includeIdentityValues"></param>
     /// <param name="trans"></param>
-    protected void MsBulkInsertSynchronized(List<T> items, DbTransaction trans, bool includeIdentityValues = false)
+    protected void MsBulkInsertSynchronized(List<T> items, DbTransaction trans, HashSet<string> omitCols, bool includeIdentityValues = false)
     {
         if (DbType != DatabaseType.SqlServer)
             throw new NotSupportedException("Bulk insert is supported only for SQL Server");
@@ -1442,7 +1499,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
 
         var entityType = Ctx.Model.FindEntityType(typeof(T)) ?? throw new InvalidOperationException("Entity metadata not found");
         var tableName = $"[{entityType.GetSchema()}].[{entityType.GetTableName()}]";
-        var cols = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues);
+        var cols = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues, omitColumnNames: omitCols);
         var dt = BuildDataTable(items, cols);
         SqlBulkCopyOptions opts = SqlBulkCopyOptions.Default;
         if (includeIdentityValues) opts |= SqlBulkCopyOptions.KeepIdentity;
@@ -1478,7 +1535,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         }
     }
 
-    protected void MyBulkInsertSynchronized(List<T> items, DbTransaction trans, bool includeIdentityValues = false)
+    protected void MyBulkInsertSynchronized(List<T> items, DbTransaction trans, HashSet<string> omitCols, bool includeIdentityValues = false)
     {
         if (items.Count == 0) return;
         if (DbType != DatabaseType.MySql)
@@ -1486,7 +1543,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         if (trans.Connection!.GetType().FullName?.Contains("MySql", StringComparison.OrdinalIgnoreCase) != true)
             throw new InvalidOperationException("Bulk insert requires MySQL connection");
         var fullTableName = this.CalcSqlTableName();
-        var includedProps = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues);
+        var includedProps = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues, omitColumnNames: omitCols);
         //Build inserts
         int total = items.Count;
         int index = 0;
@@ -1530,7 +1587,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             MySqlReseedAutoIncrementSynchronized(fullTableName, inclColName, trans);
     }
 
-    protected async Task MyBulkInsertAsync(List<T> items, DbTransaction trans, bool includeIdentityValues = false, CancellationToken ct = default)
+    protected async Task MyBulkInsertAsync(List<T> items, DbTransaction trans, HashSet<string> omitCols, bool includeIdentityValues = false, CancellationToken ct = default)
     {
         if (items.Count == 0) return;
         if (DbType != DatabaseType.MySql)
@@ -1538,7 +1595,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         if (trans.Connection!.GetType().FullName?.Contains("MySql", StringComparison.OrdinalIgnoreCase) != true)
             throw new InvalidOperationException("Bulk insert requires MySQL connection");
         var fullTableName = this.CalcSqlTableName();
-        var includedProps = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues);
+        var includedProps = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues, omitColumnNames: omitCols);
         int total = items.Count;
         int index = 0;
         const int batchSize = 1000;
@@ -1582,7 +1639,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     }
 
 
-    protected async Task PgBulkInsertAsync(List<T> items, DbTransaction trans, bool includeIdentityValues = false, CancellationToken ct = default)
+    protected async Task PgBulkInsertAsync(List<T> items, DbTransaction trans, HashSet<string> omitCols, bool includeIdentityValues = false, CancellationToken ct = default)
     {
         if (items == null) throw new ArgumentNullException(nameof(items));
         if (items.Count == 0) return;
@@ -1599,7 +1656,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         //Note: for COPY, Postgres will accept explicit values for identity columns anyway.
         //So includeIdentityValues should ONLY affect whether we include the identity column in cols,
         //not any OVERRIDING clause (COPY doesn't take that clause).
-        var cols = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues);
+        var cols = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues, omitColumnNames: omitCols);
         var copySql = $"COPY {fullTableName} ({string.Join(", ", cols.Select(c => $"\"{c.ColumnName}\""))}) FROM STDIN (FORMAT BINARY)";
         {
             await using var writer = await pgConn.BeginBinaryImportAsync(copySql, ct);
@@ -1629,7 +1686,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         }
     }
 
-    protected void PgBulkInsertSynchronized(List<T> items, DbTransaction trans, bool includeIdentityValues = false)
+    protected void PgBulkInsertSynchronized(List<T> items, DbTransaction trans, HashSet<string> omitCols, bool includeIdentityValues = false)
     {
         if (items == null) throw new ArgumentNullException(nameof(items));
         if (items.Count == 0) return;
@@ -1640,7 +1697,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var schema = et.GetSchema() ?? "public";
         var table = et.GetTableName() ?? throw new InvalidOperationException("Table name not found");
         var fullTableName = $"\"{schema}\".\"{table}\"";
-        var cols = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues);
+        var cols = BuildBulkPlan<T>(includeStoreGenerated: includeIdentityValues, omitColumnNames: omitCols);
         var copySql = $"COPY {fullTableName} ({string.Join(", ", cols.Select(c => $"\"{c.ColumnName}\""))}) FROM STDIN (FORMAT BINARY)";
         using (var writer = pgConn.BeginBinaryImport(copySql))
         {
