@@ -16,7 +16,6 @@ using System.Data;
 using System.Data.Common;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Xml;
 using EfCore.Boost.Model.Attributes;
 
@@ -1440,7 +1439,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     protected async Task MsBulkInsertAsync(List<T> items, DbTransaction trans, HashSet<string> omitCols, bool includeIdentityValues = false, CancellationToken ct = default)
     {
         if (DbType != DatabaseType.SqlServer)
-            throw new NotSupportedException("Ms-Bulkinsert is supported only for SQL Server");
+            throw new NotSupportedException("Ms-Bulk-insert is supported only for SQL Server");
         if (trans.Connection is not SqlConnection sqlConn)
             throw new InvalidOperationException("Bulk insert requires SQL Server transaction/connection");
         var entityType = Ctx.Model.FindEntityType(typeof(T)) ?? throw new InvalidOperationException("Entity metadata not found");

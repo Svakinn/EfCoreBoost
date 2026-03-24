@@ -22,8 +22,8 @@ namespace TestDb
         #region using the uow to call custom objects
         /// <summary>
         /// Calling Stored Procedure cannot be 100% streamlined between database flavors, format and naming is different.
-        /// Postgres does not support procedures and MySQL not shcemas
-        /// Ef-Boost provides some helpers, performing the Ado-level-commands and retreiving data.
+        /// Postgres does not support procedures and MySQL not schemas
+        /// Ef-Boost provides some helpers, performing the Ado-level-commands and retrieving data.
         /// This method retrieves and reserves sequence numbers to list.
         /// </summary>
         /// <param name="count"></param>

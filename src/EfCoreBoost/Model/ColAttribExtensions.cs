@@ -174,7 +174,7 @@ namespace EfCore.Boost.Model
                 new(typeof(CurrencyCodeAttribute), StrBucket.Code),
                 new(typeof(LanguageCodeAttribute), StrBucket.Code),
                 new(typeof(CultureCodeAttribute), StrBucket.Code),
-                new(typeof(MimeTypeAttribute), StrBucket.Short),
+                new(typeof(MimeTypeAttribute), StrBucket.Med),
                 // Semantic: address bits (short-ish)
                 new(typeof(AddressPostalCodeAttribute), StrBucket.Short),
                 new(typeof(AddressStreetNumberAttribute), StrBucket.Short),

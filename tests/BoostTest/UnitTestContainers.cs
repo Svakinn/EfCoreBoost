@@ -8,7 +8,7 @@
 // ensuring that RowId values are valid GUIDs.
 //
 // Connection strings are overridden in-memory using the project configuration
-// (AppSettings.json) so no on-disk config is modified during tests. This ensures fully reproducible, read-only test configuration.
+// AppSettings.json, so no on-disk config is modified during tests. This ensures a fully reproducible, read-only test configuration.
 //
 using System.Data;
 using Microsoft.EntityFrameworkCore;
@@ -169,7 +169,7 @@ namespace BoostTest
             await uowCreate.ExecSqlScriptAsync(await ReadSql("Sql/MsSqlCreateDb.sql"));
             var uow = CreateUow(cfg, connName);
             var uow2 = CreateUow(cfg, connName);
-            await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MsSql.sql")); //Script contains own transactions, therefore cannot run in transaction here
+            await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MsSql.sql")); //Script contains own transactions, therefore, cannot run in transaction here
             var uowV = CreateUowView(cfg, connName);
             return (sql, uow, uow2, uowV);
         }
@@ -192,7 +192,7 @@ namespace BoostTest
                 throw new Exception($"Azure test DB connection string must contain database name '{dbName}'");
             var uow = CreateUow(cc, connName);
             var uow2 = CreateUow(cc, connName);
-            await uow.ExecSqlScriptAsync(await ReadSql("Sql/AzurePrepareDb.sql")); //Cleanup previous runs
+            await uow.ExecSqlScriptAsync(await ReadSql("Sql/AzurePrepareDb.sql")); //Clean up previous runs
             await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MsSql.sql")); //Normal SQL-Server Migrations
             var uowV = CreateUowView(cc, connName);
             return (uow, uow2, uowV);
@@ -246,7 +246,7 @@ namespace BoostTest
         }
 
         /// <summary>
-        ///  Spin up temporary Postgres Server in Docker
+        ///  Spin up a temporary Postgres Server in Docker
         /// </summary>
         /// <returns></returns>
         static async Task<(PostgreSqlContainer Container, UOWTestDb Uow, UOWTestDb Uow2, UOWTestView UowView)> PreparePgSqlContainer()
@@ -276,7 +276,7 @@ namespace BoostTest
             var uowCreate = CreateUow(cfg, connNameCreate);
             await uowCreate.ExecSqlScriptAsync(await ReadSql("Sql/PgSqlCreateDb.pgsql"));
             var uowMigrate = CreateUow(cfg, connName);
-            await uowMigrate.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_PgSql.pgsql")); // Note: Migration script itself contains transactions so we do not run in transaction here
+            await uowMigrate.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_PgSql.pgsql")); // Note: The migration script itself contains transactions, so we do not run in transaction here
             // Force Npgsql to refresh type mappings ("citext", etc.) for this database
             var dbConn = (Npgsql.NpgsqlConnection)uowMigrate.GetDbContext().Database.GetDbConnection();
             if (dbConn.State != ConnectionState.Open)
@@ -299,13 +299,13 @@ namespace BoostTest
         static async Task BasicSmokeAsync(UOWTestDb uow, UOWTestDb uow2, UOWTestView uowV)
         {
             //
-            // Test saving to database
+            // Test saving to a database
             //
             var myRow = await uow.MyTables.QueryTracked().FirstOrDefaultAsync();
-            Assert.IsNotNull(myRow); //do we have our seeded data ?
+            Assert.IsNotNull(myRow); //do we have our seeded data?
             var refRow = new DbTest.MyTableRef { MyInfo = "ref", LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "Philip" };
             myRow.MyTableRefs.Add(refRow);
-            await uow.SaveChangesAsync(); //Wa can add refs to previous row
+            await uow.SaveChangesAsync(); //Wa can add refs to the previous row
             //
             //Test if the auto-incrementor attribute worked [AutoIncrement]:
             //
@@ -326,7 +326,7 @@ namespace BoostTest
             await uow.SaveChangesAsync();
             try
             {
-                myRow2!.Status += 2; //Modify myRow2 on UOW2 and then try to save after UOW has modified and saved same row
+                myRow2!.Status += 2; //Modify myRow2 on UOW2 and then try to save after UOW has modified and saved the same row
                 await uow2.SaveChangesAsync();
             }
             catch (Exception)
@@ -341,7 +341,7 @@ namespace BoostTest
             Assert.IsNotNull(viewItem);
             Assert.IsTrue((viewItem.RowID != Guid.Empty), "RowID should not be empty");
             //
-            //Test calling SP/function for retrieving data from sequence
+            //Test calling SP/function for retrieving data from a sequence
             //
             var idList = await uow.GetNextSequenceIds(10);
             Assert.HasCount(10, idList, "Did not get 10 rows from sequence function");
@@ -356,12 +356,12 @@ namespace BoostTest
             }, ct: CancellationToken.None);
 
             //
-            // Testing that autogenerated sequences function as expected (should be no 12)
+            // Testing that autogenerated sequences function as expected (should be no. 12)
             //
             uow.MyTables.Add(new DbTest.MyTable() { LastChanged = DateTime.UtcNow, LastChangedBy = "swarm", RowID = Guid.NewGuid() });
             await uow.SaveChangesAndNewAsync();
             //
-            // Now delete row no 10
+            // Now delete row no. 10
             //
             await uow.MyTables.BulkDeleteByIdsAsync([10]);
             //
@@ -419,7 +419,7 @@ namespace BoostTest
             var normRow = await uow.MyTables.QueryUnTracked().Where(mm => mm.Id == -1).Include(xx => xx.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToListAsync();
             Assert.IsNotEmpty(normRow);
             //
-            // Expand Odata test, remember to allow to expand with policy:
+            // Expand Odata test, remember to allow expanding with policy:
             //
             var bq = uow.MyTables.QueryUnTracked();
             var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
@@ -456,16 +456,16 @@ namespace BoostTest
         /// <param name="uow"></param>
         /// <param name="uow2"></param>
         /// <param name="uowV"></param>
-        static async Task BasicSmokeSynchronous(UOWTestDb uow, UOWTestDb uow2, UOWTestView uowV)
+        static Task BasicSmokeSynchronous(UOWTestDb uow, UOWTestDb uow2, UOWTestView uowV)
         {
             //
-            // Test saving to database
+            // Test saving to a database
             //
             var myRow = uow.MyTables.QueryTracked().FirstOrDefault();
-            Assert.IsNotNull(myRow); //do we have our seeded data ?
+            Assert.IsNotNull(myRow); //do we have our seeded data?
             var refRow = new DbTest.MyTableRef { MyInfo = "ref", LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "Philip" };
             myRow.MyTableRefs.Add(refRow);
-            uow.SaveChangesSynchronized(); //Wa can add refs to previous row
+            uow.SaveChangesSynchronized(); //Wa can add refs to the previous row
             //
             // Test if the auto-incrementor attribute worked [AutoIncrement]:
             //
@@ -474,7 +474,7 @@ namespace BoostTest
             Assert.IsNotNull(savedRef, "Failed fetching tracked row, just added");
             savedRef.MyInfo = "Ref2";
             uow.SaveChangesSynchronized();
-            var found = await uow.MyTableRefs.RowUnTrackedAsync(tt => tt.Id == savedRef.Id);
+            var found = uow.MyTableRefs.RowUntTackedSynchronized(tt => tt.Id == savedRef.Id);
             Assert.IsNotNull(found,"Failed fetching untracked row, just saved");
             Assert.IsGreaterThan(origRowId, found.RowVersion, "Rowversion not incremented in the saved row " + found.RowVersion);
             //
@@ -486,7 +486,7 @@ namespace BoostTest
             uow.SaveChangesSynchronized();
             try
             {
-                myRow2!.Status += 2; //Modify myRow2 on UOW2 and then try to save after UOW has modified and saved same row
+                myRow2!.Status += 2; //Modify myRow2 on UOW2 and then try to save after UOW has modified and saved the same row
                 uow2.SaveChangesSynchronized();
             }
             catch (Exception)
@@ -501,7 +501,7 @@ namespace BoostTest
             Assert.IsNotNull(viewItem);
             Assert.IsTrue((viewItem.RowID != Guid.Empty), "RowID should not be empty");
             //
-            //Test calling SP/function for retrieving data from sequence
+            //Test calling SP/function for retrieving data from a sequence
             //
             var idList = uow.GetNextSequenceIdsSynchronized(10);
             Assert.HasCount(10, idList, "Did not get 10 rows from sequence function");
@@ -515,12 +515,12 @@ namespace BoostTest
                 uow.MyTables.BulkInsertSynchronized([tt, tt2], true);
             });
             //
-            // Testing that autogenerated sequences function as expected (should be no 12)
+            // Testing that autogenerated sequences function as expected (should be no. 12)
             //
             uow.MyTables.Add(new DbTest.MyTable() { LastChanged = DateTime.UtcNow, LastChangedBy = "swarm", RowID = Guid.NewGuid() });
             uow.SaveChangesAndNewSynchronized();
             //
-            //Now delete row no 10
+            //Now delete row no. 10
             //
             uow.MyTables.BulkDeleteByIdsSynchronized([10]);
             //
@@ -578,7 +578,7 @@ namespace BoostTest
             var normRow = uow.MyTables.QueryUnTracked().Where(xx => xx.Id == -1).Include(zz => zz.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToList();
             Assert.IsNotEmpty(normRow, "Include failed");
             //
-            // Expand test, remember to allow to expand with policy:
+            // Expand test, remember to allow expanding with policy:
             //
             var bq = uow.MyTables.QueryUnTracked();
             var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
@@ -609,6 +609,7 @@ namespace BoostTest
             var shapedQuery4 = uow.MyTables.ApplyODataSelectExpand(plan4);
             var res4 = uow.MyTables.MaterializeODataShapedSynchronized(plan4, shapedQuery4);
             Assert.IsNotEmpty(res4.Results, "Expected at least one result from $filter=Id eq -1 with expanded MyTableRefs, but none were returned.");
+            return Task.CompletedTask;
         }
     }
 }

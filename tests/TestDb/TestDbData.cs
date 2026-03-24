@@ -2,11 +2,10 @@
 
 namespace TestDb
 {
-    public partial class DbTest : DbContext
+    public partial class DbTest
     {
-        protected static void OnModelData(ModelBuilder modelBuilder)
+        private static void OnModelData(ModelBuilder modelBuilder)
         {
-            DateTimeOffset eD = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
             modelBuilder.Entity<MyTable>().HasData(
                 new MyTable() { Id = -1, RowID = Guid.NewGuid(), LastChangedBy = "Baldr", Status = 1, Code = "BD", Balance = 350, Heading = "Baldo", Discount = 5 },
                 new MyTable() { Id = -2, RowID = Guid.NewGuid(), LastChangedBy = "Stefan", Status = 2, Code = "Mn", Balance = 200, Heading = "Mando", Discount = 0  }

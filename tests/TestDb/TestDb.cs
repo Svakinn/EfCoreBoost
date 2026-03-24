@@ -10,7 +10,7 @@ namespace TestDb
     /// Just a simple DbContext for testing the UOW.
     /// Here we define our code first datamodel using the Boost attributes:
     /// [DbAutoUid] for auto generated Id-keys
-    /// [StrShort],[StrMrd],[StrLong],[StrCode],[Text] for broad string lengths (utilizing storing and indexing for MySQL (varchar) & MsSQL (nvarchar)), postgres defaults to citext 
+    /// [StrShort],[StrMrd],[StrLong],[StrCode],[Text] for broad string lengths (utilizing storing and indexing for MySQL (varchar) & MsSQL (nvarchar)), postgres defaults to citext
     /// [ViewKey] for mapping to view and defining primary key for the view (uniqueness of the entities)
     /// </summary>
     /// <param name="options"></param>
@@ -24,7 +24,7 @@ namespace TestDb
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyEfBoostConventions(this, "my");  //Here is where the magic happens with each db-flavor and our Boost attributes, default schema set to "my"
-            OnModelData(modelBuilder); //Data Seader: TestDbData.cs
+            OnModelData(modelBuilder); //Data Seeder: TestDbData.cs
         }
 
         [Index(nameof(RowID), IsUnique = true)]
@@ -34,7 +34,7 @@ namespace TestDb
             [DbAutoUid]
             public long Id { get; set; }
             [AutoIncrementConcurrency]
-            public long RowVersion { get; set; } = 0;   //This is for esting if Automatic concurrency cheks work, not that this is fealgood aproch to real entities that can be updated by anyone
+            public long RowVersion { get; set; }   //This is for testing if Automatic concurrency cheks work, not that this is feelgood approach to real entities that can be updated by anyone
             [DbGuid]
             public Guid RowID { get; set; }   //For testing automatic seeding of GuIds
             [StrCode]
@@ -42,11 +42,11 @@ namespace TestDb
             [Title]
             public string? Heading {  get; set; }
             [Money]
-            public decimal Balance { get; set; } = 0;
+            public decimal Balance { get; set; }
             [Status]
-            public int Status { get; set; } = 0;
+            public int Status { get; set; }
             [Percentage]
-            public decimal Discount { get; set; } = 0;
+            public decimal Discount { get; set; }
             [LastChangedUtc]
             public DateTimeOffset LastChanged { get; set; } = DateTimeOffset.UtcNow;
             [CreatedUtc]
@@ -64,13 +64,13 @@ namespace TestDb
             [DbAutoUid]
             public long Id { get; set; }
             [AutoIncrement]
-            public long RowVersion { get; set; } = 0;  //Note this will auto-increment from previous-server value when saved
+            public long RowVersion { get; set; }  //Note this will auto-increment from previous-server value when saved
             [Required]
             public long ParentId { get; set; }
             [Name]
             public string MyInfo { get; set; } = string.Empty;
             [Money]
-            public decimal Amount { get; set; } = 0;
+            public decimal Amount { get; set; }
             [CreatedUtc]
             public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
             [LastChangedUtc]
@@ -88,7 +88,7 @@ namespace TestDb
             [ExternalRef]
             public long RefId { get; set; }
             public long MyId { get; set; }
-            public long RowVersion { get; set; } = 0;
+            public long RowVersion { get; set; }
             public Guid RowID { get; set; }
             [StrCode]
             public string Code { get; set; } = string.Empty;
@@ -101,7 +101,7 @@ namespace TestDb
             [Name]
             public string MyInfo { get; set; } = string.Empty;
             [Money]
-            public decimal Amount { get; set; } = 0;
+            public decimal Amount { get; set; }
             [LastChangedUtc]
             public DateTimeOffset LastChanged { get; set; }
             [CreatedUtc]
