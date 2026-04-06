@@ -1,10 +1,10 @@
 ﻿<#
 .SYNOPSIS
-Creates EF Core migrations for the MsSQL DbContext.
-Just run by powershell in its current direcory
+EFCore.Boost helper that creates EF Core migrations for the MsSQL DbContext.
+Go to the PS folder in terminal and run the script (i.e. .\PgMigrate.ps1)
 .DESCRIPTION
 The end product/purpose of the migratons is to create SQL-scripts for database initializations for all 3 database flavors, MsSQL, MySql and Postgres.
-For our Testdb to work identically for all 3 databases we need speciffic migrations, SQL-code and Database objects for each flavor.
+For our BoostXDb to work identically for all 3 databases we need speciffic migrations, SQL-code and Database objects for each flavor.
 Thus different Init and Snapshot code for each flavor.
 This needs to be handled by castrating *.cs code for other flavors when building and creatinf for this one.
 It is implemented by removing current flavor migration before rebuilding and by changing the file ending for the other flavors so they are not compiled.

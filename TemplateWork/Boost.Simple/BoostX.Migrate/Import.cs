@@ -12,26 +12,21 @@ public class Import
         // Placeholder for custom import operations
         // Future implementation could handle commands like 'import', 'CreateDb', 'Migrate'
 
-        string command = args.Length > 0 ? args[0].ToLowerInvariant() : "all";
+        string command = args.Length > 0 ? args[0].ToLowerInvariant() : "import";
         Console.WriteLine($"--- Starting Import: {command} ---");
-        await uow.RunInTransactionAsync(async (ct) =>
+
+        switch (command)
         {
-            switch (command)
-            {
-                case "import":
+            case "import":
+                await uow.RunInTransactionAsync(async (ct) =>
+                {
                     await ImportCoreAsync(uow);
-                    break;
-                case "CreateDb":
-                    await CreateDb(createUow);
-                    break;
-                case "Migrate":
-                    await Migrate(uow);
-                    break;
-                default:
-                    Console.WriteLine($"Import command '{command}' not recognized.");
-                    break;
-            }
-        });
+                });
+                break;
+            default:
+                Console.WriteLine($"Import command '{command}' not recognized.");
+                break;
+        }
 
         Console.WriteLine("--- Import Finished ---");
     }
@@ -49,19 +44,15 @@ public class Import
         var entityName = typeof(T).Name;
         Console.WriteLine($"Importing {entityName}s from {fileName}...");
         var csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CSV", fileName);
+        if (!File.Exists(csvPath))
+        {
+            Console.WriteLine($"Warning: CSV file not found: {csvPath}. Skipping import for {entityName}.");
+            return;
+        }
         var helper = new ImportHelper<T>(repo, csvPath, bulkSize, includeIdentities);
         await helper.ImportAsync();
     }
 
-    private async Task Migrate(BoostXUow uow)
-    {
-        throw new NotImplementedException();
-    }
-
-    private async Task CreateDb(BoostXUow uow)
-    {
-        throw new NotImplementedException();
-    }
 
  }
 
