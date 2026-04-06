@@ -28,7 +28,7 @@ $ErrorActionPreference = "Stop"
 Write-Host "=== EF MySQL: Creating initial migrations for MySQL ==="
 
 # Build paths relative to project dir
-$Project = Join-Path $ProjectDir "MyApp.Migrate.csproj"
+$Project = Join-Path $ProjectDir "BoostX.Migrate.csproj"
 
 Write-Host "PSScriptRoot: $PSScriptRoot"
 Write-Host "ProjectDir:   $ProjectDir"
@@ -44,12 +44,12 @@ $helperPath = Join-Path $PSScriptRoot "helpers.ps1"
 Set-MigrationProvider -ProjectDir $ProjectDir -Provider "MySQL"
 
 $migrations = @(
-    @{ Name = "InitDbTest"; Context = "DbTest"; OutDir = "Migrations/MySQL/SnapMyAppDbContext"; OutFile = "Migrations/MySQL/InitMyAppDbContext.mysql" }
+    @{ Name = "InitBoostXDbContext"; Context = "BoostXDbContext"; OutDir = "Migrations/MySQL/SnapBoostXDbContext"; OutFile = "Migrations/MySQL/InitBoostXDbContext.mysql" }
 )
 
 $filesInOrder = @(
-    "Migrations/MySQL/InitDbTest.mysql",
-    "SQL/MyAppMySQL.mysql"
+    "Migrations/MySQL/InitBoostXDbContext.mysql",
+    "SQL/MySQL.mysql"
 )
 
 foreach ($m in $migrations) {

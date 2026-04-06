@@ -11,6 +11,10 @@
 
     <ItemGroup>
       <PackageReference Include="EfCore.Boost" Version="1.0.9" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.21">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
@@ -20,6 +24,9 @@
     <ItemGroup>
       <Folder Include="CSV\" />
       <Folder Include="Migrations\" />
+      <Folder Include="Migrations\MsSQL\" />
+      <Folder Include="Migrations\MySQL\" />
+      <Folder Include="Migrations\PgSQL\" />
         <Folder Include="SQL\" />
         <Folder Include="PS\" />
     </ItemGroup>

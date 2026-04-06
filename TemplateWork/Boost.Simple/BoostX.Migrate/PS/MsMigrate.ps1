@@ -28,7 +28,7 @@ $ErrorActionPreference = "Stop"
 Write-Host "=== EF MsSQL: Creating initial migrations for Microsoft SQL-Server ==="
 
 # Build paths relative to project dir
-$Project = Join-Path $ProjectDir "MyApp.Migrate.csproj"
+$Project = Join-Path $ProjectDir "BoostX.Migrate.csproj"
 
 Write-Host "PSScriptRoot: $PSScriptRoot"
 Write-Host "ProjectDir:   $ProjectDir"
@@ -44,12 +44,12 @@ $helperPath = Join-Path $PSScriptRoot "helpers.ps1"
 Set-MigrationProvider -ProjectDir $ProjectDir -Provider "MsSQL"
 
 $migrations = @(
-    @{ Name = "InitMyAppDbContext"; Context = "MyAppDbContext"; OutDir = "Migrations/MsSQL/SnapMyAppDbContext"; OutFile = "Migrations/MsSQL/InitMyAppDbContext.sql" }
+    @{ Name = "InitBoostXDbContext"; Context = "BoostXDbContext"; OutDir = "Migrations/MsSQL/SnapBoostXDbContext"; OutFile = "Migrations/MsSQL/InitBoostXDbContext.sql" }
 )
 
 $filesInOrder = @(
-    "Migrations/MsSQL/InitMyAppDbContext.sql",
-    "SQL/MyAppMsSQL.sql"
+    "Migrations/MsSQL/InitBoostXDbContext.sql",
+    "SQL/MsSQL.sql"
 )
 
 foreach ($m in $migrations) {

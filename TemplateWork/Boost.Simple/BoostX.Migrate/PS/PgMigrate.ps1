@@ -28,7 +28,7 @@ $ErrorActionPreference = "Stop"
 Write-Host "=== EF PgSQL: Creating initial migrations for Postgres ==="
 
 # Build paths relative to project dir
-$Project = Join-Path $ProjectDir "MyApp.Migrate.csproj"
+$Project = Join-Path $ProjectDir "BoostX.Migrate.csproj"
 
 Write-Host "PSScriptRoot: $PSScriptRoot"
 Write-Host "ProjectDir:   $ProjectDir"
@@ -44,12 +44,12 @@ $helperPath = Join-Path $PSScriptRoot "helpers.ps1"
 Set-MigrationProvider -ProjectDir $ProjectDir -Provider "PgSQL"
 
 $migrations = @(
-    @{ Name = "InitDbTest"; Context = "DbTest"; OutDir = "Migrations/PgSQL/SnapMyAppDbContext"; OutFile = "Migrations/PgSQL/InitMyAppDbContext.pgsql" }
+    @{ Name = "InitBoostXDbContext"; Context = "BoostXDbContext"; OutDir = "Migrations/PgSQL/SnapBoostXDbContext"; OutFile = "Migrations/PgSQL/InitBoostXDbContext.pgsql" }
 )
 
 $filesInOrder = @(
-    "Migrations/PgSQL/InitDbTest.pgsql",
-    "SQL/MyAppPgSQL.pgsql"
+    "Migrations/PgSQL/InitBoostXDbContext.pgsql",
+    "SQL/PgSQL.pgsql"
 )
 
 foreach ($m in $migrations) {
