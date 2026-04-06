@@ -2,7 +2,7 @@ using EfCore.Boost.Model;
 using EfCore.Boost.Model.Attributes;
 using Microsoft.EntityFrameworkCore;
 
-namespace Boost.Model;
+namespace BoostX.Model;
 
 
 

@@ -41,6 +41,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Boost.Simple", "Boost.Simple", "{A49C4AC6-DC16-4DF7-A4F8-88F4F791B4AE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Boost.Simple", "Boost.Simple", "{9648E154-3913-4766-A0E3-564F9AB658B4}"
+	ProjectSection(SolutionItems) = preProject
+		TemplateWork\Boost.Simple\readme.md = TemplateWork\Boost.Simple\readme.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Boost.Geo", "Boost.Geo", "{9387677C-B81E-47F1-8A11-64582C0E966B}"
 EndProject

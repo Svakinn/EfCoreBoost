@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Boost.Model;
+namespace BoostX.Model;
 
 public partial class BoostXDbContext
 {

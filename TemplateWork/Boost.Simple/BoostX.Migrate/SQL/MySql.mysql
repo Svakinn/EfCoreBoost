@@ -11,25 +11,28 @@ BEGIN
     INSERT INTO core_IpInfo (IpNo, LastChangedUtc, Processed) VALUES (p_IpNo, UTC_TIMESTAMP(), FALSE);
     SET FoundId = LAST_INSERT_ID();
   ELSEIF processed = TRUE AND lch + INTERVAL 180 DAY > UTC_TIMESTAMP() THEN
+    -- Recheck hostname after 6 months
     UPDATE core_IpInfo SET Processed = FALSE WHERE Id = FoundId;
   END IF;
   SELECT FoundId AS IpId;
 END$$
 DELIMITER ;
 
+CREATE OR REPLACE VIEW core_IpInfoView AS
+  SELECT i.Id, i.IpNo, i.HostName
+  FROM core_IpInfo i;
+
 DELIMITER $$
-CREATE PROCEDURE core_GetIpViewViewById(IN p_IpNo VARCHAR(50))
+CREATE PROCEDURE core_GetIpViewByIpId(IN p_IpId BIGINT)
 BEGIN
   SELECT
     v.Id,
     v.IpNo,
     v.HostName
   FROM core_IpInfo AS v
-  WHERE v.IpNo = p_IpNo;
+  WHERE v.Id = p_IpId;
 END$$
 DELIMITER ;
 
-CREATE OR REPLACE VIEW core_IpInfoView AS
-  SELECT i.Id, i.IpNo, i.HostName
-  FROM core_IpInfo i;
+
 

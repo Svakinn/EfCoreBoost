@@ -2,9 +2,9 @@ using EfCore.Boost.DbRepo;
 using EfCore.Boost.UOW;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using static Boost.Model.BoostXDbContext;
+using static BoostX.Model.BoostXDbContext;
 
-namespace Boost.Model;
+namespace BoostX.Model;
 
 public class BoostXUow(IConfiguration cfg, string cfgName) : UowFactory<BoostXDbContext>(cfg, cfgName)
 {
@@ -27,9 +27,10 @@ public class BoostXUow(IConfiguration cfg, string cfgName) : UowFactory<BoostXDb
 
     // Example of getting a typed record from a Stored Procedure
     // See the matching Migrate project for the SP/function and the view behind this
-    public async Task<IpInfoView?> GetIpInfoViewByIdAsync(long ipNo)
+    // NOTE: This is not exactly a practical implementation, since you can use the view instead directly, but this is here for demonstration purposes
+    public async Task<IpInfoView?> GetIpInfoViewByIdAsync(long ipId)
     {
-        return await SetUpRoutineQuery<IpInfoView>(BoostXDbContext.DefaultSchemaName, "GetIpViewViewById", [new DbParmInfo("@IpNo", ipNo)]).FirstOrDefaultAsync();
+        return await SetUpRoutineQuery<IpInfoView>(BoostXDbContext.DefaultSchemaName, "GetIpViewByIpId", [new DbParmInfo("@IpId", ipId)]).FirstOrDefaultAsync();
     }
     #endregion
 }

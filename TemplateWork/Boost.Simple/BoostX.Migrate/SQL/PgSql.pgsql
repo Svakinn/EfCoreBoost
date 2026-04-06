@@ -17,32 +17,29 @@ BEGIN
         INSERT INTO core."IpInfo" ("IpNo", "LastChangedUtc", "Processed")
         VALUES (ipno, NOW() AT TIME ZONE 'UTC', false)
         RETURNING "Id" INTO found_id;
-    ELSIF processed AND lch + INTERVAL '60 days' > NOW() AT TIME ZONE 'UTC' THEN
-        -- Reset processed flag
+    ELSIF processed AND lch + INTERVAL '180 days' > NOW() AT TIME ZONE 'UTC' THEN
+        -- Recheck hostname after 6 months
         UPDATE core."IpInfo" SET processed = false WHERE "Id" = found_id;
     END IF;
     RETURN found_id;
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION core."GetIpViewViewById"(ipno TEXT)
-RETURNS BIGINT
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    found_id BIGINT;
-    processed BOOLEAN;
-    lch TIMESTAMP;
-BEGIN
-  SELECT 
-    "Id",
-    "IpNo",
-    "HostName"
-   FROM core."IpInfo"
-   WHERE IpNo = ipno;
-END;
-$$;
-
 CREATE VIEW core."IpInfoView" AS
   SELECT i."Id", i."IpNo", i."HostName"
-  FROM core."IpInfo";9
+  FROM core."IpInfo";
+  
+ CREATE OR REPLACE FUNCTION core."GetIpViewByIpId"(ipid BIGINT)
+ RETURNS SETOF core."IpInfoView" 
+ LANGUAGE plpgsql
+ AS $$
+ BEGIN
+   RETURN QUERY
+   SELECT 
+     "Id",
+     "IpNo",
+     "HostName"
+    FROM core."IpInfo"
+    WHERE "Id" = ipid;
+ END;
+ $$;

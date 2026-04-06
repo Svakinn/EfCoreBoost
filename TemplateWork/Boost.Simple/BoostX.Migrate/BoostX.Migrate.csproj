@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Boost.Migrate</RootNamespace>
+        <ApplicationIcon>icon64.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,6 +20,8 @@
     <ItemGroup>
       <Folder Include="CSV\" />
       <Folder Include="Migrations\" />
+        <Folder Include="SQL\" />
+        <Folder Include="PS\" />
     </ItemGroup>
 
 </Project>

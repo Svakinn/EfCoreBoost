@@ -12,14 +12,18 @@ BEGIN
 	    insert into core.IpInfo (IpNo,LastChangedUtc,Processed) values (@IpNo,SYSUTCDATETIME(),0);
 		set @FoundId = SCOPE_IDENTITY();
   end
-	-- Have hosts renewed 180 days
+	-- Recheck hostname after 6 months
   else if (@processed = 1 and @lCh + 180 > SYSUTCDATETIME()) begin
     update core.IpInfo set Processed = 0 where Id = @FoundId;
   end
   SELECT @FoundId AS IpId;
 END
 GO
-CREATE OR ALTER PROCEDURE [core].[GetIpViewViewById] @IpNo BIGINT AS
+CREATE OR ALTER VIEW [core].[IpInfoView] AS
+SELECT i.Id, i.IpNo, i.HostName
+FROM [core].[IpInfo] i
+GO
+CREATE OR ALTER PROCEDURE [core].[GetIpViewByIpId] @IpId BIGINT AS
 BEGIN
   SET NOCOUNT ON;
   SELECT
@@ -27,10 +31,7 @@ BEGIN
     v.IpNo,
     v.HostName
   FROM [core].[IpInfo] AS v
-  WHERE v.IpNo = @IpNo;
+  WHERE v.Id = @IpId;
 END
 GO
-CREATE OR ALTER VIEW [core].[IpInfoView] AS
-  SELECT i.Id, i.IpNo, i.HostName
-  FROM [core].[IpInfo] i
-go
+
