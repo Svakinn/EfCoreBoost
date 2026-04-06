@@ -1,0 +1,35 @@
+﻿DELIMITER $$
+CREATE PROCEDURE core_GetIpId(IN p_IpNo VARCHAR(50))
+BEGIN
+  DECLARE FoundId   BIGINT   DEFAULT NULL;
+  DECLARE processed BOOLEAN  DEFAULT FALSE;
+  DECLARE lch       DATETIME DEFAULT NULL;
+  DECLARE CONTINUE HANDLER FOR NOT FOUND
+  SET FoundId = NULL;
+  SELECT Id, Processed, LastChangedUtc INTO FoundId, processed, lch FROM core_IpInfo WHERE core_IpInfo.IpNo = p_IpNo LIMIT 1;
+  IF FoundId IS NULL THEN
+    INSERT INTO core_IpInfo (IpNo, LastChangedUtc, Processed) VALUES (p_IpNo, UTC_TIMESTAMP(), FALSE);
+    SET FoundId = LAST_INSERT_ID();
+  ELSEIF processed = TRUE AND lch + INTERVAL 180 DAY > UTC_TIMESTAMP() THEN
+    UPDATE core_IpInfo SET Processed = FALSE WHERE Id = FoundId;
+  END IF;
+  SELECT FoundId AS IpId;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE core_GetIpViewViewById(IN p_IpNo VARCHAR(50))
+BEGIN
+  SELECT
+    v.Id,
+    v.IpNo,
+    v.HostName
+  FROM core_IpInfo AS v
+  WHERE v.IpNo = p_IpNo;
+END$$
+DELIMITER ;
+
+CREATE OR REPLACE VIEW core_IpInfoView AS
+  SELECT i.Id, i.IpNo, i.HostName
+  FROM core_IpInfo i;
+

@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Boost.Migrate</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="EfCore.Boost" Version="1.0.9" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\BoostX.Model\BoostX.Model.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="CSV\" />
+      <Folder Include="Migrations\" />
+    </ItemGroup>
+
+</Project>
