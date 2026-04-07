@@ -6,17 +6,31 @@ namespace BoostX.Model;
 
 
 
+/// <summary>
+/// The primary database context for the BoostX application.
+/// Defines the data model and configures EF Core conventions.
+/// </summary>
 public partial class BoostXDbContext(DbContextOptions<BoostXDbContext> options) : DbContext(options)
 {
+    /// <summary>
+    /// The default database schema name used by this context.
+    /// </summary>
     public const string DefaultSchemaName = "core";
 
     #region dbsets
-    // For OData discoverability we need to expose the DbSet
+    /// <summary>
+    /// Gets or sets the DbSet for IpInfo entities.
+    /// </summary>
     public DbSet<IpInfo> IpInfos { get; set; }
     #endregion
 
     #region onMOdelCreating
 
+    /// <summary>
+    /// Configures the database model during creation.
+    /// Applies EFCore.Boost conventions and seed data.
+    /// </summary>
+    /// <param name="modelBuilder">The builder used to construct the model.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -41,29 +55,64 @@ public partial class BoostXDbContext(DbContextOptions<BoostXDbContext> options) 
 
     #region data model
 
+    /// <summary>
+    /// Represents an entry of IP information with reverse lookup data.
+    /// </summary>
     [Comment("Received IP numbers with reverse lookup data")]
     [Index(nameof(IpNo), IsUnique = true, Name = "IpNoIdx")]
     [Index(nameof(LastChangedUtc), AllDescending = true)]
     [Index(nameof(Processed))]
     public class IpInfo
     {
+        /// <summary>
+        /// Gets or sets the unique identifier for the IP information record.
+        /// </summary>
         [DbAutoUid]
         public long Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets the IP number string.
+        /// </summary>
         [StrShort]
         public string IpNo { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the resolved host name for the IP, if available.
+        /// </summary>
         [StrLong]
         public string? HostName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the IP information has been processed.
+        /// </summary>
         public bool Processed { get; set; }
+
+        /// <summary>
+        /// Gets or sets the UTC timestamp when the record was last changed.
+        /// </summary>
         [LastChangedUtc]
         public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
     }
 
-    // Example view
+    /// <summary>
+    /// Represents a view-optimized model for IP information.
+    /// </summary>
     [ViewKey(nameof(Id))]
     public class IpInfoView
     {
+        /// <summary>
+        /// Gets or sets the ID of the record.
+        /// </summary>
         public long Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets the IP number.
+        /// </summary>
         public string IpNo { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the host name.
+        /// </summary>
         public string? HostName { get; set; }
     }
 

@@ -7,72 +7,161 @@ using Microsoft.Extensions.Configuration;
 
 namespace BoostX.Migrate
 {
-    internal class Program
+    /// <summary>
+    /// Entry point for the BoostX Database Migration Utility.
+    /// This utility handles database creation, schema migration, status checks, and data import.
+    /// </summary>
+    internal static class Program
     {
-        static async Task Main(string[] args)
+        /// <summary>
+        /// Main entry point for the console application.
+        /// Parses command-line arguments and dispatches to the appropriate command handler.
+        /// </summary>
+        /// <param name="args">
+        /// Command-line arguments: [connName] [command]
+        /// command: check, createdb, migrate, import.
+        /// </param>
+        private static async Task Main(string[] args)
         {
             Console.WriteLine("--- BoostX Database Migration Utility ---");
-            // Load configuration
+
+            if (args.Length > 0 && (args[0] == "--help" || args[0] == "-h" || args[0] == "?" || args[0] == "/?"))
+            {
+                ShowUsage();
+                return;
+            }
+
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
                 .AddJsonFile("AppSettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
 
-            // Usage example:
-            // dotnet BoostX.Migrate [connName] [import|check|createdb|migrate]
-            // If the connection name is omitted, it will be read from AppSettings.json["DefaultAppConnName"]
+            // Named arguments logic
+            string? connName = null;
+            string? command = null;
+            var positionalArgs = new List<string>();
 
-            // Determine connection name from args or config
-            string connName = args.Length > 0 ? args[0] : configuration["DefaultAppConnName"] ?? "";
-
-            if (string.IsNullOrWhiteSpace(connName))
+            for (int i = 0; i < args.Length; i++)
             {
-                Console.WriteLine("Error: Connection name not specified. Provide it as an argument or set 'DefaultAppConnName' in AppSettings.json.");
-                return;
-            }
-
-            // Command logic: second argument after connection name (optional)
-            string command = args.Length > 1 ? args[1].ToLowerInvariant() : "check";
-
-            Console.WriteLine($"Using connection: {connName}");
-            Console.WriteLine($"Command: {command}");
-
-            try
-            {
-                if (command == "check")
+                var arg = args[i].ToLowerInvariant();
+                if (arg == "--connection" || arg == "--conn")
                 {
-                    await HandleCheck(configuration, connName);
+                    if (i + 1 < args.Length)
+                    {
+                        connName = args[++i];
+                    }
                 }
-                else if (command == "createdb")
+                else if (arg == "--command" || arg == "--cmd")
                 {
-                    await HandleCreateDb(configuration, connName);
+                    if (i + 1 < args.Length)
+                    {
+                        command = args[++i].ToLowerInvariant();
+                    }
                 }
-                else if (command == "migrate")
+                else if (arg.StartsWith("--") || arg.StartsWith("-"))
                 {
-                    await HandleMigrate(configuration, connName);
-                }
-                else if (command == "import")
-                {
-                    await HandleImport(configuration, connName, args);
+                    // Ignore unknown flags for robustness or show error?
+                    // Let's ignore for now, but allow help to trigger ShowUsage.
                 }
                 else
                 {
+                    positionalArgs.Add(args[i]);
+                }
+            }
+
+            // Positional arguments fallbacks (if not already set by named arguments)
+            if (string.IsNullOrEmpty(connName) && positionalArgs.Count > 0)
+            {
+                connName = positionalArgs[0];
+            }
+            if (string.IsNullOrEmpty(command) && positionalArgs.Count > 1)
+            {
+                command = positionalArgs[1].ToLowerInvariant();
+            }
+
+            // Configuration fallback for connection name
+            if (string.IsNullOrEmpty(connName))
+            {
+                connName = configuration["DefaultAppConnName"] ?? "";
+            }
+
+            // Default command
+            if (string.IsNullOrEmpty(command))
+            {
+                command = "check";
+            }
+
+            if (string.IsNullOrWhiteSpace(connName))
+            {
+                Console.WriteLine("Error: Connection name not specified.");
+                ShowUsage();
+                return;
+            }
+
+            Console.WriteLine($"Using connection: {connName}");
+            Console.WriteLine($"Command: {command}");
+            try
+            {
+                if (command == "check")
+                    await HandleCheck(configuration, connName);
+                else if (command == "createdb" || command == "create")
+                    await HandleCreateDb(configuration, connName);
+                else if (command == "migrate" || command == "update")
+                    await HandleMigrate(configuration, connName);
+                else if (command == "import")
+                    await HandleImport(configuration, connName);
+                else
+                {
                     Console.WriteLine($"Unknown command: {command}");
+                    ShowUsage();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error executing command '{command}': {ex.Message}");
                 if (ex.InnerException != null)
-                {
                     Console.WriteLine($"Inner error: {ex.InnerException.Message}");
-                }
             }
         }
 
+        private static void ShowUsage()
+        {
+            Console.WriteLine("");
+            Console.WriteLine("Usage:");
+            Console.WriteLine("  BoostX.Migrate [connection] [command]");
+            Console.WriteLine("  BoostX.Migrate --connection [connection] --command [command]");
+            Console.WriteLine("");
+            Console.WriteLine("Options:");
+            Console.WriteLine("  --connection, --conn  Name of the connection to use.");
+            Console.WriteLine("  --command, --cmd     Command to execute (default: check).");
+            Console.WriteLine("");
+            Console.WriteLine("Commands:");
+            Console.WriteLine("  check                Checks database status and pending migrations.");
+            Console.WriteLine("  createdb / create    Creates the database if it doesn't exist.");
+            Console.WriteLine("  migrate / update     Runs pending migrations.");
+            Console.WriteLine("  import               Imports seed data.");
+            Console.WriteLine("");
+            Console.WriteLine("Examples:");
+            Console.WriteLine("  BoostX.Migrate MyDb check");
+            Console.WriteLine("  BoostX.Migrate --conn MyDb --cmd migrate");
+            Console.WriteLine("  BoostX.Migrate MyDb");
+        }
+
+        /// <summary>
+        /// Checks the database status, including connectivity and pending migrations.
+        /// </summary>
+        /// <param name="configuration">Application configuration.</param>
+        /// <param name="connName">Name of the connection to check.</param>
         private static async Task HandleCheck(IConfiguration configuration, string connName)
         {
+            var dbCfg = DbConnectionCfg.Get(configuration, connName);
+            if (dbCfg != null && ConnectionHelper.IsCreateConnectionString(dbCfg.ConnectionString, dbCfg.Provider))
+            {
+                Console.WriteLine("Target is a creation database (e.g. master/postgres). Skipping migration check.");
+                return;
+            }
+
             await using var db = SecureContextFactory.CreateDbContext<BoostXDbContext>(configuration, connName);
             try
             {
@@ -83,15 +172,20 @@ namespace BoostX.Migrate
             catch (Exception ex)
             {
                 var msg = ex.Message.ToLowerInvariant();
-                if (msg.Contains("login failed") || msg.Contains("authentication failed") || msg.Contains("password authentication failed") || msg.Contains("access denied for user"))
+                if (msg.Contains("login failed") || msg.Contains("authentication failed") ||
+                    msg.Contains("password authentication failed") || msg.Contains("access denied for user"))
                 {
                     Console.WriteLine("Error: Authentication failed. Please check your username and password.");
                 }
-                else if (msg.Contains("network-related") || msg.Contains("server was not found") || msg.Contains("could not open a connection") || msg.Contains("failed to connect") || msg.Contains("unknown host"))
+                else if (msg.Contains("network-related") || msg.Contains("server was not found") ||
+                         msg.Contains("could not open a connection") || msg.Contains("failed to connect") ||
+                         msg.Contains("unknown host"))
                 {
-                    Console.WriteLine("Error: Database server not reachable. Check your network connection and server address.");
+                    Console.WriteLine(
+                        "Error: Database server not reachable. Check your network connection and server address.");
                 }
-                else if (msg.Contains("does not exist") || msg.Contains("database") && msg.Contains("unknown") || msg.Contains("database") && msg.Contains("not found"))
+                else if (msg.Contains("does not exist") || msg.Contains("database") && msg.Contains("unknown") ||
+                         msg.Contains("database") && msg.Contains("not found"))
                 {
                     Console.WriteLine("Error: The specified database does not exist on the server.");
                 }
@@ -106,6 +200,11 @@ namespace BoostX.Migrate
                 return;
             }
 
+            if (dbCfg != null && ConnectionHelper.IsCreateConnectionString(dbCfg.ConnectionString, dbCfg.Provider))
+            {
+                Console.WriteLine("Target is a creation database (e.g. master/postgres). Skipping migration check.");
+                return;
+            }
             Console.WriteLine("Checking for pending migrations...");
             var pendingMigrations = await db.Database.GetPendingMigrationsAsync();
 
@@ -127,114 +226,12 @@ namespace BoostX.Migrate
             }
         }
 
-        private static async Task HandleCreateDb(IConfiguration configuration, string connName)
-        {
-            string createConnName = GetCreateConnectionName(configuration, connName);
-            Console.WriteLine($"Using create connection: {createConnName}");
-
-            using var uowCreate = new BoostXUow(configuration, createConnName);
-            var sqlFile = GetSqlScriptPath(uowCreate.DbType, true);
-
-            Console.WriteLine($"Executing creation script: {sqlFile}");
-            var sql = await File.ReadAllTextAsync(sqlFile);
-            await uowCreate.ExecSqlScriptAsync(sql);
-            Console.WriteLine("Database created successfully.");
-        }
-
-        private static async Task HandleMigrate(IConfiguration configuration, string connName)
-        {
-            using var uow = new BoostXUow(configuration, connName);
-            var sqlFile = GetSqlScriptPath(uow.DbType, false);
-
-            Console.WriteLine($"Executing migration script: {sqlFile}");
-            var sql = await File.ReadAllTextAsync(sqlFile);
-            // Script contains own transactions, therefore, cannot run in transaction here
-            await uow.ExecSqlScriptAsync(sql);
-            Console.WriteLine("Migration completed successfully.");
-        }
-
-        private static async Task HandleImport(IConfiguration configuration, string connName, string[] args)
-        {
-            string createConnName = GetCreateConnectionName(configuration, connName);
-            using var uow = new BoostXUow(configuration, connName);
-            using var createUow = new BoostXUow(configuration, createConnName);
-
-            var importer = new Import();
-            // Passing original args, skipping connName and command if they were provided
-            await importer.ExecuteAsync(uow, createUow, args.Skip(2).ToArray());
-        }
-
-        private static string GetCreateConnectionName(IConfiguration configuration, string connName)
-        {
-            var dbCfg = DbConnectionCfg.Get(configuration, connName);
-            if (dbCfg == null) return connName;
-
-            if (IsCreateConnectionString(dbCfg.ConnectionString, dbCfg.Provider))
-                return connName;
-
-            // Search for a matching create connection in the same config
-            var dbConnections = configuration.GetSection("DBConnections").GetChildren();
-            foreach (var section in dbConnections)
-            {
-                var otherCfg = DbConnectionCfg.Get(configuration, section.Key);
-                if (otherCfg == null) continue;
-
-                if (otherCfg.Provider == dbCfg.Provider && IsCreateConnectionString(otherCfg.ConnectionString, otherCfg.Provider))
-                {
-                    // Optionally check if they point to the same server/host
-                    if (IsSameServer(dbCfg.ConnectionString, otherCfg.ConnectionString, dbCfg.Provider))
-                    {
-                        return section.Key;
-                    }
-                }
-            }
-
-            // Fallback to naming convention if no match found
-            return connName.EndsWith("Create", StringComparison.OrdinalIgnoreCase) ? connName : connName + "Create";
-        }
-
-        private static bool IsCreateConnectionString(string connectionString, string provider)
-        {
-            var normalizedProvider = SecureContextFactory.NormalizeProvider(provider);
-            return normalizedProvider switch
-            {
-                "sqlserver" => connectionString.Contains("initial catalog=master", StringComparison.OrdinalIgnoreCase) ||
-                               connectionString.Contains("database=master", StringComparison.OrdinalIgnoreCase),
-                "postgresql" => connectionString.Contains("database=postgres", StringComparison.OrdinalIgnoreCase),
-                "mysql" => !connectionString.Contains("database=", StringComparison.OrdinalIgnoreCase),
-                _ => false
-            };
-        }
-
-        private static bool IsSameServer(string connStr1, string connStr2, string provider)
-        {
-            var normalizedProvider = SecureContextFactory.NormalizeProvider(provider);
-            return normalizedProvider switch
-            {
-                "sqlserver" => GetPart(connStr1, "data source") == GetPart(connStr2, "data source") ||
-                               GetPart(connStr1, "server") == GetPart(connStr2, "server"),
-                "postgresql" => GetPart(connStr1, "host") == GetPart(connStr2, "host") &&
-                                GetPart(connStr1, "port") == GetPart(connStr2, "port"),
-                "mysql" => GetPart(connStr1, "server") == GetPart(connStr2, "server") &&
-                           GetPart(connStr1, "port") == GetPart(connStr2, "port"),
-                _ => false
-            };
-        }
-
-        private static string GetPart(string connectionString, string key)
-        {
-            var parts = connectionString.Split(';');
-            foreach (var part in parts)
-            {
-                var kvp = part.Split('=');
-                if (kvp.Length == 2 && kvp[0].Trim().Equals(key, StringComparison.OrdinalIgnoreCase))
-                {
-                    return kvp[1].Trim();
-                }
-            }
-            return string.Empty;
-        }
-
+        /// <summary>
+        /// Constructs the absolute file path for a SQL script.
+        /// </summary>
+        /// <param name="dbType">The database provider type (e.g., SqlServer, PostgreSql).</param>
+        /// <param name="isCreate">True if searching for a database creation script; false if searching for a migration/update script.</param>
+        /// <returns>The full path to the SQL file.</returns>
         private static string GetSqlScriptPath(DatabaseType dbType, bool isCreate)
         {
             string folder = isCreate ? "SQL" : "Migrations";
@@ -245,8 +242,51 @@ namespace BoostX.Migrate
                 DatabaseType.MySql => isCreate ? "MySqlCreateDb.mysql" : "DbDeploy_MySql.mysql",
                 _ => throw new Exception($"Unsupported database type for scripts: {dbType}")
             };
-
             return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, folder, fileName);
+        }
+
+        /// <summary>
+        /// Creates the target database using the appropriate creation SQL script.
+        /// </summary>
+        /// <param name="configuration">Application configuration.</param>
+        /// <param name="connName">Name of the target connection (used to find the corresponding 'Create' connection).</param>
+        private static async Task HandleCreateDb(IConfiguration configuration, string connName)
+        {
+            string createConnName = ConnectionHelper.GetCreateConnectionName(configuration, connName);
+            Console.WriteLine($"Using create connection: {createConnName}");
+            using var uowCreate = new BoostXUow(configuration, createConnName);
+            var sqlFile = GetSqlScriptPath(uowCreate.DbType, true);
+            Console.WriteLine($"Executing creation script: {sqlFile}");
+            var sql = await File.ReadAllTextAsync(sqlFile);
+            await uowCreate.ExecSqlScriptAsync(sql);
+            Console.WriteLine("Database created successfully.");
+        }
+
+        /// <summary>
+        /// Executes the database migration script to update the schema to the latest version.
+        /// </summary>
+        /// <param name="configuration">Application configuration.</param>
+        /// <param name="connName">Name of the connection to migrate.</param>
+        private static async Task HandleMigrate(IConfiguration configuration, string connName)
+        {
+            using var uow = new BoostXUow(configuration, connName);
+            var sqlFile = GetSqlScriptPath(uow.DbType, false);
+            Console.WriteLine($"Executing migration script: {sqlFile}");
+            var sql = await File.ReadAllTextAsync(sqlFile);
+            // Script contains own transactions, therefore, cannot run in transaction here
+            await uow.ExecSqlScriptAsync(sql);
+            Console.WriteLine("Migration completed successfully.");
+        }
+
+        /// <summary>
+        /// Orchestrates the data import process from CSV files into the database.
+        /// </summary>
+        /// <param name="configuration">Application configuration.</param>
+        /// <param name="connName">Name of the connection to import into.</param>
+        private static async Task HandleImport(IConfiguration configuration, string connName)
+        {
+            using var uow = new BoostXUow(configuration, connName);
+            await ImportService.ExecuteAsync(uow);
         }
     }
 }
