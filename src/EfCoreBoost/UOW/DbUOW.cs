@@ -6,6 +6,7 @@ using EfCore.Boost.EDM;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
 using Microsoft.OData.Edm;
 using System.Data;
 using System.Data.Common;
@@ -17,7 +18,7 @@ namespace EfCore.Boost.UOW
     /// <summary>
     /// Unit-of-work over a single DbContext.
     /// Not concurrency-safe: do not use the same UOW instance from multiple concurrent operations.
-    /// Create a new UOW per scope (request/job) and dispose it when done.
+    /// Create a new UOW per scope (request/job) and dispose of it when done.
     /// </summary>
     public interface IDbReadUow : IDisposable
     {
@@ -50,7 +51,7 @@ namespace EfCore.Boost.UOW
         /// Builds an IQueryable<T> from a provider-correct routine (function or query-shaped procedure).
         /// The routine must return rows matching entity T, otherwise materialization will fail.
         /// The query is not executed here; it runs when enumerated and may be further composed.
-        /// Composability (Where/OrderBy) depends on provider and SQL form. PostgresSQL and SQL Server are
+        /// Composability (Where/OrderBy) depends on the provider and SQL form. PostgresSQL and SQL Server are
         /// generally more capable than MySQL in this area
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -101,7 +102,7 @@ namespace EfCore.Boost.UOW
         /// <summary>
         /// Executes a single SQL statement as a non-query (CommandType.Text).
         /// This is intended for one statement only (INSERT, UPDATE, DELETE, DDL, etc.).
-        /// Do not use for multi-statement scripts; use ExecSqlScriptAsync for such instead.
+        /// Do not use it for multi-statement scripts; use ExecSqlScriptAsync for such instead.
         /// </summary>
         Task<int> ExecuteNonQueryAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
@@ -111,12 +112,28 @@ namespace EfCore.Boost.UOW
         int ExecuteNonQuerySynchronized(string sql, List<DbParmInfo>? parameters = null);
 
         /// <summary>
+        /// Executes a single SQL statement as a non-query (CommandType.Text).
+        /// The script is executed as connected to an admin database, instead of the current database.
+        /// Usually this is only used to create a database (migration update related).
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <param name="parameters"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        Task<int> ExecuteNonQueryAdminDbAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Synchronized version of ExecuteNonQueryAdminDbAsync
+        /// </summary>
+        int ExecuteNonQueryAdminDbSynchronized(string sql, List<DbParmInfo>? parameters = null);
+
+        /// <summary>
         /// Runs <paramref name="work"/> inside a resilient EF Core transaction (ExecutionStrategy-aware).
         /// Use this when the operations must be atomic (commit/rollback handled by the UOW).
         /// The transaction is created on the current DbContext connection, so any commands executed on the same
         /// connection (including bulk operations that accept a DbTransaction) can participate.
         /// Notes:
-        /// - If the provider enables transient retries (e.g. Azure SQL), the work delegate may be retried.
+        /// - If the provider enables transient retries (e.g., Azure SQL), the work delegate may be retried.
         /// - Keep <paramref name="work"/> deterministic and avoid non-idempotent external side effects.
         /// </summary>
         /// <param name="work">Async delegate to execute within the transaction.</param>
@@ -241,7 +258,7 @@ namespace EfCore.Boost.UOW
         /// </summary>
         /// <remarks>
         /// Raw SQL is not cross-db compatible and should be avoided.
-        /// Proper way would be to set up routine and call that one instead.
+        /// The proper way would be to set up a routine and call that one instead.
         /// </remarks>
         /// <param name="sql">Raw SQL to execute</param>
         /// <param name="parameters">An optional list of parameters to pass to the routine. If null, no parameters are used.</param>
@@ -332,10 +349,9 @@ namespace EfCore.Boost.UOW
         IDisposable WithAutoDetectChangesDisabled();
     }
 
-    public abstract class DbUow<TCtx> : DbReadUow<TCtx> where TCtx : DbContext
+    public abstract class DbUow<TCtx>(Func<TCtx> ctxFactory) : DbReadUow<TCtx>(ctxFactory)
+        where TCtx : DbContext
     {
-        protected DbUow(Func<TCtx> ctxFactory) : base(ctxFactory) { }
-
         #region save changes
         //See interface for documentation
         public virtual async Task SaveChangesAsync(CancellationToken ct = default)
@@ -419,7 +435,7 @@ namespace EfCore.Boost.UOW
             /// <summary>
             /// Initializes a new instance of the <see cref="DelegateDisposable"/> class with a callback to execute on disposal.
             /// </summary>
-            /// <param name="onDispose">The action to execute when disposed.</param>
+            /// <param name="onDispose">The action to execute when disposed of.</param>
             public DelegateDisposable(Action onDispose) => _onDispose = onDispose;
 
             /// <summary>
@@ -439,7 +455,7 @@ namespace EfCore.Boost.UOW
     }
 
     /// <summary>
-    /// Base unit of work class to be extended by inherited classes, doing the actual db work
+    /// Base unit of a work class to be extended by inherited classes, doing the actual db work
     /// </summary>
     public abstract class DbReadUow<TCtx> : IDbReadUow where TCtx : DbContext
     {
@@ -453,6 +469,16 @@ namespace EfCore.Boost.UOW
         //Transaction support
         protected IDbContextTransaction? CurrentTx;
         private readonly SemaphoreSlim _sync = new(1, 1);
+
+        /// <summary>
+        /// Store configuration for use by helper methods, such as admin connection string building.
+        /// </summary>
+        protected IConfiguration? Configuration { get; set; }
+
+        /// <summary>
+        /// Store the configuration name for use by helper methods, such as admin connection string building.
+        /// </summary>
+        protected string? ConfigName { get; set; }
 
         protected DbReadUow(Func<TCtx> ctxFactory)
         {
@@ -512,14 +538,14 @@ namespace EfCore.Boost.UOW
         }
 
         /// <summary>
-        /// Used for generating exception message including all inner exceptions
+        /// Used for generating an exception message including all inner exceptions
         /// </summary>
         /// <param name="ex"></param>
         /// <returns>Encapsulated full error text</returns>
         public static string SqlExceptionMessages(SqlException ex)
         {
             var ret = "";
-            if (ex.Errors != null && ex.Errors.Count > 0)
+            if (ex.Errors is { Count: > 0 })
             {
                 foreach (var err in ex.Errors)
                 {
@@ -531,6 +557,57 @@ namespace EfCore.Boost.UOW
         }
 
         #region command/script execution
+
+        #region supply admin connection string
+        protected virtual string GetProviderNameFromDbType()
+        {
+            return DbType switch
+            {
+                DatabaseType.SqlServer => "sqlserver",
+                DatabaseType.PostgreSql => "postgresql",
+                DatabaseType.MySql => "mysql",
+                _ => throw new NotSupportedException($"Unsupported DbType '{DbType}'.")
+            };
+        }
+
+        protected virtual string? GetAdminConnectionString()
+        {
+            if (Configuration != null)
+                return SecureContextFactory.BuildAdminConnectionString(Configuration, ConfigName ?? string.Empty);
+            return null;
+        }
+
+        protected virtual string? GetAdminProvider()
+        {
+            if (Configuration != null)
+            {
+                var name = ConfigName ?? Configuration["DefaultAppConnName"];
+                if (!string.IsNullOrWhiteSpace(name))
+                    return EfCore.Boost.CFG.DbConnectionCfg.Get(Configuration, name)?.Provider;
+            }
+            return null;
+        }
+
+        protected virtual DbConnection CreateAdminConnection()
+        {
+            var connStr = GetAdminConnectionString();
+            if (string.IsNullOrWhiteSpace(connStr))
+                throw new InvalidOperationException("Admin connection string not configured for this UOW.");
+
+            var provider = GetAdminProvider();
+            var prov = SecureContextFactory.NormalizeProvider(provider ?? DbType.ToString());
+
+            return prov switch
+            {
+                "sqlserver" => new SqlConnection(connStr),
+                "postgresql" => new Npgsql.NpgsqlConnection(connStr),
+                "mysql" => new MySqlConnector.MySqlConnection(connStr),
+                _ => throw new NotSupportedException($"Admin connection not supported for provider '{prov}'.")
+            };
+        }
+        #endregion
+
+        #region command execution
 
         //See interface for documentation
         public async Task<int> RunRoutineNonQueryAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
@@ -577,6 +654,42 @@ namespace EfCore.Boost.UOW
             ToDbParms(parameters, oc.Cmd);
             return oc.Cmd.ExecuteNonQuery();
         }
+
+        //See interface for documentation
+        public async Task<int> ExecuteNonQueryAdminDbAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(sql))
+                return 0;
+            if (this.CurrentTx != null)
+                throw new InvalidOperationException("ExecuteNonQueryAdminAsync cannot be used while a transaction is active.");
+            await using var conn = CreateAdminConnection();
+            await conn.OpenAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.CommandType = CommandType.Text;
+            ToDbParms(parameters, cmd);
+            return await cmd.ExecuteNonQueryAsync(ct);
+        }
+
+        //See interface for documentation
+        public int ExecuteNonQueryAdminDbSynchronized(string sql, List<DbParmInfo>? parameters = null)
+        {
+            if (string.IsNullOrWhiteSpace(sql))
+                return 0;
+            if (this.CurrentTx != null)
+                throw new InvalidOperationException("ExecuteNonQueryAdminSynchronized cannot be used while a transaction is active.");
+            using var conn = CreateAdminConnection();
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.CommandType = CommandType.Text;
+            ToDbParms(parameters, cmd);
+            return cmd.ExecuteNonQuery();
+        }
+
+        #endregion
+
+        #region Routine execution
 
         //See interface for documentation
         public async Task<long?> RunRoutineLongAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
@@ -781,6 +894,8 @@ namespace EfCore.Boost.UOW
             }
             return list;
         }
+
+        #endregion
 
         #endregion
 
@@ -991,17 +1106,13 @@ namespace EfCore.Boost.UOW
                             prop.CurrentValue = DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
                     }
                     else
-                    if (prop.Metadata.ClrType == typeof(DateTime?) && prop.CurrentValue is DateTime dtN)
-                    {
-                        if (dtN.Kind == DateTimeKind.Utc)
-                            prop.CurrentValue = (DateTime?)DateTime.SpecifyKind(dtN, DateTimeKind.Unspecified);
-                    }
+                    if (prop.Metadata.ClrType == typeof(DateTime?) && prop.CurrentValue is DateTime { Kind: DateTimeKind.Utc } dtN) prop.CurrentValue = (DateTime?)DateTime.SpecifyKind(dtN, DateTimeKind.Unspecified);
                 }
             }
         }
 
         /// <summary>
-        /// In case string values exceed max length defined in model, truncate them before saving so we don't get exceptions from the database for this issue
+        /// In case string values exceed the max length defined in a model, truncate them before saving so we don't get exceptions from the database for this issue
         /// You can argue that it's better to know about it, but in most cases it's better to just truncate and move on
         /// </summary>
         protected virtual void TruncateStringValues()
@@ -1030,7 +1141,7 @@ namespace EfCore.Boost.UOW
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
             var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
-            var cmd = Ctx.Database.GetDbConnection().CreateCommand(); //NoTE: only used for parameter handling so transaction binding the command or open connection is not needed
+            var cmd = Ctx.Database.GetDbConnection().CreateCommand(); //NoTE: only used for parameter handling, so transaction binding the command or open connection is not needed
             var dbParams = parameters
                 .Select(p =>
                 {
@@ -1066,19 +1177,12 @@ namespace EfCore.Boost.UOW
     /// <summary>
     /// Class to define database parameter information for routine calls.
     /// </summary>
-    public class DbParmInfo
+    public class DbParmInfo(string name, object objValue)
     {
-        public DbParmInfo(string name, object objValue)
-        {
-            Name = name;
-            ObjValue = objValue;
-            OutValue = DBNull.Value;
-            IsOut = false;
-        }
-        public string Name { get; set; }
-        public object ObjValue { get; set; }
-        public bool IsOut { get; set; }
-        public object OutValue { get; set; }
+        public string Name { get; set; } = name;
+        public object ObjValue { get; set; } = objValue;
+        public bool IsOut { get; set; } = false;
+        public object OutValue { get; set; } = DBNull.Value;
         public DbType? DbType { get; set; }
         private DbParameter? ParmStore { get; set; }
         public Object? GetOutValue()

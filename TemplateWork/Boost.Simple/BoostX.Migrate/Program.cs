@@ -24,81 +24,58 @@ namespace BoostX.Migrate
         private static async Task Main(string[] args)
         {
             Console.WriteLine("--- BoostX Database Migration Utility ---");
-
             if (args.Length > 0 && (args[0] == "--help" || args[0] == "-h" || args[0] == "?" || args[0] == "/?"))
             {
                 ShowUsage();
                 return;
             }
-
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
                 .AddJsonFile("AppSettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
-
             // Named arguments logic
             string? connName = null;
             string? command = null;
             var positionalArgs = new List<string>();
-
             for (int i = 0; i < args.Length; i++)
             {
                 var arg = args[i].ToLowerInvariant();
                 if (arg == "--connection" || arg == "--conn")
                 {
                     if (i + 1 < args.Length)
-                    {
                         connName = args[++i];
-                    }
                 }
                 else if (arg == "--command" || arg == "--cmd")
                 {
                     if (i + 1 < args.Length)
-                    {
                         command = args[++i].ToLowerInvariant();
-                    }
                 }
                 else if (arg.StartsWith("--") || arg.StartsWith("-"))
                 {
                     // Ignore unknown flags for robustness or show error?
-                    // Let's ignore for now, but allow help to trigger ShowUsage.
+                    // Let's ignore it for now but allow help to trigger ShowUsage.
                 }
                 else
-                {
                     positionalArgs.Add(args[i]);
-                }
             }
-
             // Positional arguments fallbacks (if not already set by named arguments)
             if (string.IsNullOrEmpty(connName) && positionalArgs.Count > 0)
-            {
                 connName = positionalArgs[0];
-            }
             if (string.IsNullOrEmpty(command) && positionalArgs.Count > 1)
-            {
                 command = positionalArgs[1].ToLowerInvariant();
-            }
-
             // Configuration fallback for connection name
             if (string.IsNullOrEmpty(connName))
-            {
                 connName = configuration["DefaultAppConnName"] ?? "";
-            }
-
             // Default command
             if (string.IsNullOrEmpty(command))
-            {
                 command = "check";
-            }
-
             if (string.IsNullOrWhiteSpace(connName))
             {
                 Console.WriteLine("Error: Connection name not specified.");
                 ShowUsage();
                 return;
             }
-
             Console.WriteLine($"Using connection: {connName}");
             Console.WriteLine($"Command: {command}");
             try
@@ -161,7 +138,6 @@ namespace BoostX.Migrate
                 Console.WriteLine("Target is a creation database (e.g. master/postgres). Skipping migration check.");
                 return;
             }
-
             await using var db = SecureContextFactory.CreateDbContext<BoostXDbContext>(configuration, connName);
             try
             {
@@ -207,18 +183,14 @@ namespace BoostX.Migrate
             }
             Console.WriteLine("Checking for pending migrations...");
             var pendingMigrations = await db.Database.GetPendingMigrationsAsync();
-
             int count = 0;
             foreach (var migration in pendingMigrations)
             {
                 Console.WriteLine($" - Pending: {migration}");
                 count++;
             }
-
             if (count == 0)
-            {
                 Console.WriteLine("Database is up to date.");
-            }
             else
             {
                 Console.WriteLine($"Database schema is not up to date. Found {count} pending migration(s).");

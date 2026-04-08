@@ -14,10 +14,9 @@
 //
 // DbContext creation policy is centralized and reusable, while Unit of Work classes remain compact and declarative.
 // -----------------------------------------------------------------------------
-using EfCore.Boost.UOW;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
 
 namespace EfCore.Boost.UOW
 {
@@ -25,7 +24,7 @@ namespace EfCore.Boost.UOW
     /// Defines a factory responsible for creating <see cref="DbContext"/> instances
     /// used by a Unit of Work.
     ///
-    /// The factory abstracts context creation policy, including:
+    /// The factory abstracts context creation policy, including
     /// - provider selection
     /// - secure connection handling
     /// - configuration-based initialization
@@ -40,8 +39,7 @@ namespace EfCore.Boost.UOW
     }
 
     /// <summary>
-    /// Base Unit of Work implementation that obtains its DbContext
-    /// from a factory.
+    /// Base Unit of Work implementation that gets its DbContext from a factory.
     ///
     /// This type centralizes DbContext creation logic and keeps individual
     /// Unit of Work classes free of provider- and security-specific concerns.
@@ -73,10 +71,12 @@ namespace EfCore.Boost.UOW
         /// </summary>
         /// <param name="cfg">Application configuration root.</param>
         /// <param name="cfgName">
-        /// Name of the database connection entry as defined in configuration.
+        /// Name of the database connection entry as defined in the configuration.
         /// </param>
         protected UowFactory(IConfiguration cfg, string cfgName) : this(new SecureCfgUowFactory<TCtx>(cfg, cfgName))
         {
+            this.Configuration = cfg;
+            this.ConfigName = cfgName;
         }
     }
 
@@ -87,14 +87,15 @@ namespace EfCore.Boost.UOW
     /// leverages an underlying unit of work factory to create and manage database contexts. Derived classes can
     /// customize behavior for specific context types or configuration sources.</remarks>
     /// <typeparam name="TCtx">The type of the database context used for read-only operations.</typeparam>
-    public abstract class ReadUowFactory<TCtx> : DbReadUow<TCtx> where TCtx : DbContext
+    public abstract class ReadUowFactory<TCtx>(IUowFactory<TCtx> factory) : DbReadUow<TCtx>(factory.Create) where TCtx : DbContext
     {
-        protected IUowFactory<TCtx> Factory { get; }
-        protected ReadUowFactory(IUowFactory<TCtx> factory) : base(factory.Create)
+        protected IUowFactory<TCtx> Factory { get; } = factory ?? throw new ArgumentNullException(nameof(factory));
+
+        protected ReadUowFactory(IConfiguration cfg, string cfgName) : this(new SecureCfgUowFactory<TCtx>(cfg, cfgName))
         {
-            Factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            this.Configuration = cfg;
+            this.ConfigName = cfgName;
         }
-        protected ReadUowFactory(IConfiguration cfg, string cfgName) : this(new SecureCfgUowFactory<TCtx>(cfg, cfgName)) { }
     }
 
     /// <summary>

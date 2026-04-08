@@ -27,13 +27,15 @@ public static class ImportService
             {
                 var helper = new ImportHelper<BoostXDbContext.IpInfo>(uow.IpInfos, csvPath);
                 var firstRow = await helper.ReadFirstRowAsync();
+                // Since we import with identities, we can use the ID to check if import was already done.
+                // Otherwise, some other unique condition would have been needed.
                 if (firstRow != null && await uow.IpInfos.RowByIdUnTrackedAsync(firstRow.Id) != null)
                 {
                     Console.WriteLine($"IpInfo data already exists (found ID {firstRow.Id}). Skipping import.");
                 }
                 else
                 {
-                    await ImportHelper<BoostXDbContext.IpInfo>.ImportAsync(uow.IpInfos, fileName);
+                    await ImportHelper<BoostXDbContext.IpInfo>.ImportAsync(uow.IpInfos, fileName, 1000, true);
                 }
             }
             else
