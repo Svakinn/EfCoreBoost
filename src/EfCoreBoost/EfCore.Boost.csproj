@@ -8,21 +8,18 @@
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>1.0.9</Version>
+    <Version>1.2.0</Version>
     <Authors>Sveinn S. Erlendsson</Authors>
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>
-Database for test placed in seporate project.
-Migrations for the test db also moved to seporate project.
-Now more convenient way to write design time DbTestContextFactory using DesignDbContextFactoryBase T
-	</Description>
+A lightweight EfCore wrapper for UOW and Repository patterns, providing cross-provider support for common tasks like bulk operations and routine executions.
+    </Description>
     <PackageReleaseNotes>
-Tests reconfigured for the TestDb.Migrate project.
-Important bugfix regarding the RowKey-lookup functions i.e. RowByKeyTrackedAsync
-Bugfixes regarding MySQL-guid handling. 
-Bugfix regarding Postgres bulk-insert.
+Added support for executing multi-statement SQL scripts on admin database via ExecuteAdminDbSqlScriptAsync.
+Important bugfix regarding the RowKey-lookup functions i.e. RowByKeyTrackedAsync.
+Bugfixes regarding MySQL-guid handling and Postgres bulk-insert.
     </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;efboost;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-famework;dotnet;ef-core-migrations</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
