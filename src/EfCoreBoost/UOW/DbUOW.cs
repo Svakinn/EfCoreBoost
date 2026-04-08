@@ -112,20 +112,20 @@ namespace EfCore.Boost.UOW
         int ExecuteNonQuerySynchronized(string sql, List<DbParmInfo>? parameters = null);
 
         /// <summary>
-        /// Executes a single SQL statement as a non-query (CommandType.Text).
-        /// The script is executed as connected to an admin database, instead of the current database.
-        /// Usually this is only used to create a database (migration update related).
+        /// Executes a SQL script (multiple statements) as non-queries.
+        /// The script is executed while connected to an admin database, instead of the current database.
+        /// Usually this is only used for migration tasks like creating or dropping a database.
         /// </summary>
-        /// <param name="sql"></param>
-        /// <param name="parameters"></param>
-        /// <param name="ct"></param>
-        /// <returns></returns>
-        Task<int> ExecuteNonQueryAdminDbAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+        /// <param name="scriptContent">The SQL script to execute.</param>
+        /// <param name="parameters">Optional parameters (not recommended for scripts).</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>Total number of rows affected by all statements.</returns>
+        Task<int> ExecuteAdminDbSqlScriptAsync(string scriptContent, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
-        /// Synchronized version of ExecuteNonQueryAdminDbAsync
+        /// Synchronized version of ExecuteAdminDbSqlScriptAsync
         /// </summary>
-        int ExecuteNonQueryAdminDbSynchronized(string sql, List<DbParmInfo>? parameters = null);
+        int ExecuteAdminDbSqlScriptSynchronized(string scriptContent, List<DbParmInfo>? parameters = null);
 
         /// <summary>
         /// Runs <paramref name="work"/> inside a resilient EF Core transaction (ExecutionStrategy-aware).
@@ -656,35 +656,55 @@ namespace EfCore.Boost.UOW
         }
 
         //See interface for documentation
-        public async Task<int> ExecuteNonQueryAdminDbAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        public async Task<int> ExecuteAdminDbSqlScriptAsync(string scriptContent, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(sql))
+            if (string.IsNullOrWhiteSpace(scriptContent))
                 return 0;
             if (this.CurrentTx != null)
-                throw new InvalidOperationException("ExecuteNonQueryAdminAsync cannot be used while a transaction is active.");
+                throw new InvalidOperationException("ExecuteAdminDbSqlScriptAsync cannot be used while a transaction is active.");
+
+            var scripts = ScriptSplitter(scriptContent).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            if (scripts.Count == 0) return 0;
+
             await using var conn = CreateAdminConnection();
             await conn.OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = sql;
-            cmd.CommandType = CommandType.Text;
-            ToDbParms(parameters, cmd);
-            return await cmd.ExecuteNonQueryAsync(ct);
+
+            int totalAffected = 0;
+            foreach (var sql in scripts)
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = sql;
+                cmd.CommandType = CommandType.Text;
+                ToDbParms(parameters, cmd);
+                totalAffected += await cmd.ExecuteNonQueryAsync(ct);
+            }
+            return totalAffected;
         }
 
         //See interface for documentation
-        public int ExecuteNonQueryAdminDbSynchronized(string sql, List<DbParmInfo>? parameters = null)
+        public int ExecuteAdminDbSqlScriptSynchronized(string scriptContent, List<DbParmInfo>? parameters = null)
         {
-            if (string.IsNullOrWhiteSpace(sql))
+            if (string.IsNullOrWhiteSpace(scriptContent))
                 return 0;
             if (this.CurrentTx != null)
-                throw new InvalidOperationException("ExecuteNonQueryAdminSynchronized cannot be used while a transaction is active.");
+                throw new InvalidOperationException("ExecuteAdminDbSqlScriptSynchronized cannot be used while a transaction is active.");
+
+            var scripts = ScriptSplitter(scriptContent).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            if (scripts.Count == 0) return 0;
+
             using var conn = CreateAdminConnection();
             conn.Open();
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = sql;
-            cmd.CommandType = CommandType.Text;
-            ToDbParms(parameters, cmd);
-            return cmd.ExecuteNonQuery();
+
+            int totalAffected = 0;
+            foreach (var sql in scripts)
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = sql;
+                cmd.CommandType = CommandType.Text;
+                ToDbParms(parameters, cmd);
+                totalAffected += cmd.ExecuteNonQuery();
+            }
+            return totalAffected;
         }
 
         #endregion

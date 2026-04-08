@@ -68,6 +68,7 @@ namespace BoostTest
         [TestMethod]
         public async Task Uow_MsSql_Test()
         {
+            //we use uow2 for concurrency test against uow
             var (container, uow, uow2, uowV) = await PrepareMsSqlContainer();
             await using (container)
             using (uowV)
@@ -145,33 +146,31 @@ namespace BoostTest
 
         /// <summary>
         ///  Spin up temporary SQL Server in Docker
+        ///  Note: we are sort fo cheeting on the usual connection string from appsettings.json
+        ///  This is done by overriding the connection string in an overrides dictionary
         /// </summary>
         /// <returns></returns>
         static async Task<(MsSqlContainer Container, UOWTestDb Uow, UOWTestDb Uow2, UOWTestView UowV)> PrepareMsSqlContainer()
         {
             const string dbName = "TestDb";
-            const string connNameCreate = "TestMsCreate";
             const string connName = "TestMs";
-            var sql = new MsSqlBuilder().WithImage("mcr.microsoft.com/mssql/server:2022-latest").WithPassword("MyPassword123!").Build();
-            await sql.StartAsync();
-            var adminCs = sql.GetConnectionString();
-            var dbCs = adminCs + $";Database={dbName}";
+
+            var msBuilder = new MsSqlBuilder().WithImage("mcr.microsoft.com/mssql/server:2022-latest").WithPassword("MyPassword123!").Build();
+            await msBuilder.StartAsync();
+            var newConnString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(msBuilder.GetConnectionString()) { InitialCatalog = dbName };
             var overrides = new Dictionary<string, string?>
             {
                 ["DefaultAppConnName"] = connName,
-                [$"DBConnections:{connNameCreate}:ConnectionString"] = adminCs,
-                [$"DBConnections:{connNameCreate}:Provider"] = "SqlServer",
-                [$"DBConnections:{connName}:ConnectionString"] = dbCs,
+                [$"DBConnections:{connName}:ConnectionString"] = newConnString.ToString(),
                 [$"DBConnections:{connName}:Provider"] = "SqlServer"
             };
             var cfg = BuildConfig(overrides);
-            var uowCreate = CreateUow(cfg, connNameCreate);
-            await uowCreate.ExecSqlScriptAsync(await ReadSql("Sql/MsSqlCreateDb.sql"));
             var uow = CreateUow(cfg, connName);
+            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("Sql/MsSqlCreateDb.sql"));
             var uow2 = CreateUow(cfg, connName);
             await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MsSql.sql")); //Script contains own transactions, therefore, cannot run in transaction here
             var uowV = CreateUowView(cfg, connName);
-            return (sql, uow, uow2, uowV);
+            return (msBuilder, uow, uow2, uowV);
         }
 
         /// <summary>
@@ -191,6 +190,8 @@ namespace BoostTest
             if (dbTestCfg.ConnectionString.IndexOf(dbName, StringComparison.OrdinalIgnoreCase) < 0)
                 throw new Exception($"Azure test DB connection string must contain database name '{dbName}'");
             var uow = CreateUow(cc, connName);
+            //NOTE: you may want to create the db manually and skip this call instead
+            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("Sql/AzureCreateDb.sql"));
             var uow2 = CreateUow(cc, connName);
             await uow.ExecSqlScriptAsync(await ReadSql("Sql/AzurePrepareDb.sql")); //Clean up previous runs
             await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MsSql.sql")); //Normal SQL-Server Migrations
@@ -200,41 +201,36 @@ namespace BoostTest
 
         /// <summary>
         ///  Spin up temporary MySql Server in Docker
+        ///  Note: we are sort fo cheeting on the usual connection string from appsettings.json
+        ///  This is done by overriding the connection string in an overrides dictionary
         /// </summary>
         /// <returns></returns>
         static async Task<(MySqlContainer Container, UOWTestDb Uow, UOWTestDb Uow2, UOWTestView UowView)> PrepareMySqlContainer()
         {
             const string dbName = "TestDb";
-            const string connNameCreate = "TestMyCreate";
             const string connName = "TestMy";
-            var my = new MySqlBuilder()
+            var myBuilder = new MySqlBuilder()
                 .WithImage("mysql:8.0")
                 .WithUsername("root")
                 .WithPassword("root")
                 .WithCommand("--default-authentication-plugin=mysql_native_password")
                 .Build();
-            await my.StartAsync();
-            var adminCs = my.GetConnectionString();
-            var adminBuilder = new MySqlConnector.MySqlConnectionStringBuilder(adminCs) { Database = dbName };
-            var dbCs = adminBuilder.ToString();
+            await myBuilder.StartAsync();
+            var newConnString = myBuilder.GetConnectionString();
+            var connBuilder = new MySqlConnector.MySqlConnectionStringBuilder(newConnString) { Database = dbName };
             var overrides = new Dictionary<string, string?>
             {
                 ["DefaultAppConnName"] = connName,
-                // create/admin
-                [$"DBConnections:{connNameCreate}:ConnectionString"] = adminCs,
-                [$"DBConnections:{connNameCreate}:Provider"] = "MySql",
-                // normal/app
-                [$"DBConnections:{connName}:ConnectionString"] = dbCs,
+                [$"DBConnections:{connName}:ConnectionString"] = connBuilder.ToString(),
                 [$"DBConnections:{connName}:Provider"] = "MySql"
             };
             var cfg = BuildConfig(overrides);
-            var uowCreate = CreateUow(cfg, connNameCreate);
-            await uowCreate.ExecSqlScriptAsync(await ReadSql("Sql/MySqlCreateDb.mysql"));
             var uow = CreateUow(cfg, connName);
+            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("Sql/MySqlCreateDb.mysql"));
             var uow2 = CreateUow(cfg, connName);
             await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MySql.mysql")); //Mysql does not handle any ddl in transactions
             var uowV = CreateUowView(cfg, connName);
-            return (my, uow, uow2, uowV);
+            return (myBuilder, uow, uow2, uowV);
         }
 
         static async Task<string> ReadSql(string fileName)
@@ -252,30 +248,27 @@ namespace BoostTest
         static async Task<(PostgreSqlContainer Container, UOWTestDb Uow, UOWTestDb Uow2, UOWTestView UowView)> PreparePgSqlContainer()
         {
             const string dbName = "TestDb";
-            const string connNameCreate = "TestPgCreate";
             const string connName = "TestPg";
-            var pg = new PostgreSqlBuilder()
+            var pgBuilder = new PostgreSqlBuilder()
                 .WithImage("postgres:16.3")
                 .WithUsername("postgres")
                 .WithPassword("postgres")
                 .WithDatabase("postgres")
                 .Build();
-            await pg.StartAsync();
-            var adminCs = pg.GetConnectionString();
-            var adminBuilder = new Npgsql.NpgsqlConnectionStringBuilder(adminCs) { Database = dbName };
-            var dbCs = adminBuilder.ToString(); var overrides = new Dictionary<string, string?>
+            await pgBuilder.StartAsync();
+            var newConnString = pgBuilder.GetConnectionString();
+            var newConnBuilder = new Npgsql.NpgsqlConnectionStringBuilder(newConnString) { Database = dbName };
+            var overrides = new Dictionary<string, string?>
             {
                 ["DefaultAppConnName"] = connName,
                 // create/admin (postgres)
-                [$"DBConnections:{connNameCreate}:ConnectionString"] = adminCs,
-                [$"DBConnections:{connNameCreate}:Provider"] = "PostgreSql",
-                [$"DBConnections:{connName}:ConnectionString"] = dbCs,
+                [$"DBConnections:{connName}:ConnectionString"] = newConnBuilder.ToString(),
                 [$"DBConnections:{connName}:Provider"] = "PostgreSql"
             };
             var cfg = BuildConfig(overrides);
-            var uowCreate = CreateUow(cfg, connNameCreate);
-            await uowCreate.ExecSqlScriptAsync(await ReadSql("Sql/PgSqlCreateDb.pgsql"));
             var uowMigrate = CreateUow(cfg, connName);
+            await uowMigrate.ExecuteAdminDbSqlScriptAsync(await ReadSql("Sql/PgSqlCreateDb.pgsql"));
+            Npgsql.NpgsqlConnection.ClearAllPools();
             await uowMigrate.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_PgSql.pgsql")); // Note: The migration script itself contains transactions, so we do not run in transaction here
             // Force Npgsql to refresh type mappings ("citext", etc.) for this database
             var dbConn = (Npgsql.NpgsqlConnection)uowMigrate.GetDbContext().Database.GetDbConnection();
@@ -286,7 +279,7 @@ namespace BoostTest
             var uow = CreateUow(cfg, connName);
             var uow2 = CreateUow(cfg, connName);
             var uowV = CreateUowView(cfg, connName);
-            return (pg, uow, uow2, uowV);
+            return (pgBuilder, uow, uow2, uowV);
         }
 
         /// <summary>
