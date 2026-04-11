@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageType>Template</PackageType>
+    <PackageId>EfCore.Boost.Template.Simple</PackageId>
+    <Title>EfCore.Boost Simple Template</Title>
+    <Authors>Junie</Authors>
+    <Description>Simple multi-project dotnet new template for EfCore.Boost with Model and Migrate projects.</Description>
+    <PackageTags>dotnet-new;templates;EFCore;Boost</PackageTags>
+    <TargetFramework>net8.0</TargetFramework>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <!-- Prevent the SDK from trying to compile the template source files -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>$(NoWarn);NU5110;NU5111;NU5128</NoWarn>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Template source files for IDE visibility and packing -->
+    <Content Include="**\*" Exclude="**\bin\**;**\obj\**;**\.vs\**;Boost.Simple.Template.csproj;artifacts\**" Pack="true" />
+  </ItemGroup>
+
+</Project>

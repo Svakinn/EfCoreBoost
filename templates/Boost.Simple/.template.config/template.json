@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "EfCore.Boost",
+  "classifications": [ "Common", "Console", "Database" ],
+  "name": "EfCore.Boost Simple Template",
+  "identity": "EfCore.Boost.Template.Simple",
+  "shortName": "boostsimple",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "BoostX",
+  "preferNameDirectory": true,
+  "symbols": {
+    "Context": {
+      "type": "parameter",
+      "datatype": "string",
+      "replaces": "BoostCTX",
+      "description": "The name of the DbContext class."
+    },
+    "Schema": {
+      "type": "parameter",
+      "datatype": "string",
+      "replaces": "BoostSchemaX",
+      "defaultValue": "core",
+      "description": "The database schema name."
+    },
+    "derivedContextName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "identity"
+    },
+    "initialContextInput": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "Context",
+        "fallbackVariableName": "derivedContextName"
+      }
+    },
+    "normalizedContextName": {
+      "type": "generated",
+      "generator": "regex",
+      "parameters": {
+        "source": "initialContextInput",
+        "steps": [
+          {
+            "regex": "(?i)(Context|CTX)$",
+            "replacement": ""
+          }
+        ]
+      }
+    },
+    "BoostCTX": {
+      "type": "generated",
+      "generator": "regex",
+      "parameters": {
+        "source": "normalizedContextName",
+        "steps": [
+          {
+            "regex": "$",
+            "replacement": "Context"
+          }
+        ]
+      },
+      "replaces": "BoostCTX",
+      "fileRename": "BoostCTX"
+    },
+    "BoostSchemaX": {
+      "type": "generated",
+      "generator": "regex",
+      "parameters": {
+        "source": "Schema",
+        "steps": [
+          {
+            "regex": "^.*$",
+            "replacement": "$0"
+          }
+        ]
+      },
+      "replaces": "BoostSchemaX"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            "**/.vs/**",
+            "*.Template.csproj"
+          ]
+        }
+      ]
+    }
+  ]
+}

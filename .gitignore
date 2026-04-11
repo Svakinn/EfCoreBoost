@@ -8,3 +8,9 @@ artifacts/
 TestResults/
 coverage/
 .vscode/ipch/
+
+# Custom template test folders
+test_gen/
+test-gen/
+temp-test/
+**/_test_gen_**/
