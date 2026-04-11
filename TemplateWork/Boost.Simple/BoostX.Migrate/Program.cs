@@ -1,6 +1,4 @@
 ﻿using BoostX.Model;
-using EfCore.Boost;
-using EfCore.Boost.CFG;
 using EfCore.Boost.DbRepo;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -132,57 +130,48 @@ namespace BoostX.Migrate
         /// <param name="connName">Name of the connection to check.</param>
         private static async Task HandleCheck(IConfiguration configuration, string connName)
         {
-            var dbCfg = DbConnectionCfg.Get(configuration, connName);
-            if (dbCfg != null && ConnectionHelper.IsCreateConnectionString(dbCfg.ConnectionString, dbCfg.Provider))
-            {
-                Console.WriteLine("Target is a creation database (e.g. master/postgres). Skipping migration check.");
-                return;
-            }
-            await using var db = SecureContextFactory.CreateDbContext<BoostXDbContext>(configuration, connName);
+            using var uow = new BoostXUow(configuration, connName);
+            const string testSql = "SELECT 'Hello' AS Value";
+            bool normalConnWorks = false;
             try
             {
-                Console.WriteLine("Connecting to database...");
-                await db.Database.OpenConnectionAsync();
-                await db.Database.CloseConnectionAsync();
+                Console.WriteLine($"Connecting to database using '{connName}'...");
+                await uow.ExecuteNonQueryAsync(testSql);
+                normalConnWorks = true;
+                Console.WriteLine("Connection to target database successful.");
             }
             catch (Exception ex)
             {
-                var msg = ex.Message.ToLowerInvariant();
-                if (msg.Contains("login failed") || msg.Contains("authentication failed") ||
-                    msg.Contains("password authentication failed") || msg.Contains("access denied for user"))
+                Console.WriteLine($"Target database connection failed: {ex.Message}");
+                Console.WriteLine("Attempting to connect to admin/master database...");
+                try
                 {
-                    Console.WriteLine("Error: Authentication failed. Please check your username and password.");
+                    // Try to run a simple script on the admin database (e.g. postgres or master)
+                    await uow.ExecuteAdminDbSqlScriptAsync(testSql);
+                    Console.WriteLine("Connection to admin database successful. The target database may not exist.");
                 }
-                else if (msg.Contains("network-related") || msg.Contains("server was not found") ||
-                         msg.Contains("could not open a connection") || msg.Contains("failed to connect") ||
-                         msg.Contains("unknown host"))
+                catch (Exception adminEx)
                 {
-                    Console.WriteLine(
-                        "Error: Database server not reachable. Check your network connection and server address.");
+                    Console.WriteLine($"Admin database connection also failed: {adminEx.Message}");
+                    var msg = adminEx.Message.ToLowerInvariant();
+                    if (msg.Contains("login failed") || msg.Contains("authentication failed") || msg.Contains("password authentication failed") ||
+                        msg.Contains("access denied for user"))
+                        Console.WriteLine("Error: Authentication failed. Please check your admin credentials.");
+                    else if (msg.Contains("network-related") || msg.Contains("server was not found") || msg.Contains("could not open a connection") ||
+                             msg.Contains("failed to connect") || msg.Contains("unknown host"))
+                        Console.WriteLine("Error: Database server not reachable. Check your network connection and server address.");
+                    else
+                        Console.WriteLine($"Error: A connection problem occurred: {adminEx.Message}");
+                    return;
                 }
-                else if (msg.Contains("does not exist") || msg.Contains("database") && msg.Contains("unknown") ||
-                         msg.Contains("database") && msg.Contains("not found"))
-                {
-                    Console.WriteLine("Error: The specified database does not exist on the server.");
-                }
-                else if (msg.Contains("timeout") || msg.Contains("timed out"))
-                {
-                    Console.WriteLine("Error: Connection timed out. The server might be busy or unreachable.");
-                }
-                else
-                {
-                    Console.WriteLine($"Error: A connection problem occurred: {ex.Message}");
-                }
-                return;
             }
-
-            if (dbCfg != null && ConnectionHelper.IsCreateConnectionString(dbCfg.ConnectionString, dbCfg.Provider))
+            if (!normalConnWorks)
             {
-                Console.WriteLine("Target is a creation database (e.g. master/postgres). Skipping migration check.");
+                Console.WriteLine("Database check complete. Target database needs to be created.");
                 return;
             }
             Console.WriteLine("Checking for pending migrations...");
-            var pendingMigrations = await db.Database.GetPendingMigrationsAsync();
+            var pendingMigrations = await uow.GetDbContext().Database.GetPendingMigrationsAsync();
             int count = 0;
             foreach (var migration in pendingMigrations)
             {
@@ -224,13 +213,11 @@ namespace BoostX.Migrate
         /// <param name="connName">Name of the target connection (used to find the corresponding 'Create' connection).</param>
         private static async Task HandleCreateDb(IConfiguration configuration, string connName)
         {
-            string createConnName = ConnectionHelper.GetCreateConnectionName(configuration, connName);
-            Console.WriteLine($"Using create connection: {createConnName}");
-            using var uowCreate = new BoostXUow(configuration, createConnName);
-            var sqlFile = GetSqlScriptPath(uowCreate.DbType, true);
+            using var uow = new BoostXUow(configuration, connName);
+            var sqlFile = GetSqlScriptPath(uow.DbType, true);
             Console.WriteLine($"Executing creation script: {sqlFile}");
             var sql = await File.ReadAllTextAsync(sqlFile);
-            await uowCreate.ExecSqlScriptAsync(sql);
+            await uow.ExecuteAdminDbSqlScriptAsync(sql);  //New admin connection, i.e., to Master/Postgres
             Console.WriteLine("Database created successfully.");
         }
 
