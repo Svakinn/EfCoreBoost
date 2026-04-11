@@ -89,7 +89,9 @@
             "**/bin/**",
             "**/obj/**",
             "**/.vs/**",
-            "*.Template.csproj"
+            "*.Template.csproj",
+            "LICENSE.txt",
+            "PackageREADME.md"
           ]
         }
       ]

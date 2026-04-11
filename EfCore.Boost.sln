@@ -27,6 +27,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TemplateWork", "TemplateWork", "{D38C00DC-1DDE-4671-8157-EF0B273BD2C3}"
 	ProjectSection(SolutionItems) = preProject
 		TemplateWork\readme.md = TemplateWork\readme.md
+		templates\Boost.Simple.Maintainer.md = templates\Boost.Simple.Maintainer.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{3B5032E0-67C7-4EC4-847C-06912AD94914}"
@@ -42,7 +43,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Boost.Simple", "Boost.Simpl
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Boost.Simple", "Boost.Simple", "{9648E154-3913-4766-A0E3-564F9AB658B4}"
 	ProjectSection(SolutionItems) = preProject
-		TemplateWork\Boost.Simple\readme.md = TemplateWork\Boost.Simple\readme.md
+		LICENSE.txt = LICENSE.txt
+		PackageREADME.md = PackageREADME.md
+		Usage.md = Usage.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boost.Simple.Template", "templates\Boost.Simple\Boost.Simple.Template.csproj", "{D70FA745-1BAE-4FAB-8062-A09203A67C90}"

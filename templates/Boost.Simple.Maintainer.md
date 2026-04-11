@@ -15,7 +15,9 @@ The `EfCore.Boost.Template.Simple` provides a quick-start project structure with
   - `BoostX.Model\`: The model project source.
   - `BoostX.Migrate\`: The migration utility source.
   - `Boost.Simple.Template.csproj`: The SDK-style packaging project for the NuGet package.
-  - `readme.md`: The end-user README that will be included in the generated project.
+  - `Usage.md`: The end-user documentation that will be included in the generated project.
+  - `PackageREADME.md`: The README specifically for the NuGet package.
+  - `LICENSE.txt`: The MIT license for the package.
 
 ## Placeholder Tokens
 
