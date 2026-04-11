@@ -4,6 +4,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.31903.59
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5A660B01-4444-463C-9E7D-E1A4D4A934E2}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		LICENSE = LICENSE
+		README.md = README.md
+		SoupBig.png = SoupBig.png
+		SoupSm.png = SoupSm.png
+	EndProjectSection
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EfCoreBoost", "EfCoreBoost", "{972B339B-045E-9564-1EA0-3E903DF3E49A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoostAnalyzer", "src\BoostAnalyzer\BoostAnalyzer.csproj", "{F5529392-65AD-4D7E-97DE-12BEA510182B}"
@@ -43,8 +52,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Boost.Simple", "Boost.Simpl
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Boost.Simple", "Boost.Simple", "{9648E154-3913-4766-A0E3-564F9AB658B4}"
 	ProjectSection(SolutionItems) = preProject
-		LICENSE.txt = LICENSE.txt
-		PackageREADME.md = PackageREADME.md
 		Usage.md = Usage.md
 	EndProjectSection
 EndProject

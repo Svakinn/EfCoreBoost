@@ -28,6 +28,9 @@ Real enterprise systems hit problems plain DbContext usage does not solve elegan
 | Exposing OData queries safely | Built-in **OData support** |
 | Need to insert/delete a *lot* of data | **Bulk capabilities** |
 | Need to run on different DB engines without rewriting everything | **Portable Model Building Conventions** |
+| Need to insert/delete a *lot* of data | **Bulk capabilities** |
+
+EfCore.Boost also provides ready-to-use project templates to accelerate adoption of these patterns.
 
 ---
 
@@ -182,36 +185,121 @@ Database-specific behavior is handled once, centrally, instead of leaking into y
 
 ## 🚀 Quick Start
 
-### Install
+### Start with a Template (Recommended)
+
+The easiest way to get started with EfCore.Boost is to use the project template:
+
+```bash
+dotnet new install EfCore.Boost.Template.Simple
+dotnet new boostsimple -n YourProjectName
+```
+or
+```bash
+dotnet new boostsimple -n YourProjectName --Schema YourSchemaName --Context YourDbContextName
+```
+if you want to customize the default shema name or your db context name.
+
+This generates a ready-to-use solution with:
+- A **Model project** containing your DbContext, entities, and Unit of Work
+- A **Migrate project** for managing migrations, and seed data
+- Pre-configured cross-database conventions and deployment scripts
+
+
+## Manual Install
+If you prefer not to start from a template, you can integrate **EfCore.Boost** into an existing project.
+
+The typical flow is:
+
+1. Install the package
+2. Define your `DbContext` (database model)
+3. Apply EfCore.Boost conventions
+4. Define a Unit of Work (UOW) to expose selected data access
+5. Use the UOW from your application code
+
+---
+### 1. Install the package
+
 ```bash
 dotnet add package EfCore.Boost
 ```
+---
 
-### Define a Unit of Work
+### 2. Define your DbContext
+
+Your `DbContext` describes the full database model. EfCore.Boost builds on top of it and applies cross-database conventions.
+
 ```csharp
-public partial class UOWLogs(IConfiguration cfg) : UowFactory<DbLogs>(cfg, "Logs")
+public class AppDbContext : DbContext
 {
-    public IAsyncRepo<LoginLog> LoginLogs => new EfRepo<LoginLog>(Ctx!, DbType);
-    public IAsyncRepo<SessionLog> SessionLogs => new EfRepo<SessionLog>(Ctx!, DbType);
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Order> Orders => Set<Order>();
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyEfBoostConventions(this, "core");
+        OnModelData(modelBuilder);
+    }
+    partial void OnModelData(ModelBuilder modelBuilder);
 }
 ```
 
-### Query with tracking
+- The schema `"core"` is your default database schema
+- EfCore.Boost normalizes naming and provider-specific behavior
+---
+
+### 3. Define a Unit of Work
+
+The **Unit of Work (UOW)** is the application-facing boundary.
+
+It decides:
+- which tables are exposed
+- which views or routines are available
+- how transactions are handled
+
 ```csharp
-var recent = await uow.LoginLogs.QueryTracked().OrderByDescending(x => x.CreatedUtc).Take(20).ToListAsync();
-recent[0].Message = "Updated";
+public partial class AppUow(IConfiguration cfg) : UowFactory<AppDbContext>(cfg, "Default")
+{
+    public IAsyncRepo<Customer> Customers => new EfRepo<Customer>(Ctx!, DbType);
+    public IAsyncRepo<Order> Orders => new EfRepo<Order>(Ctx!, DbType);
+}
+```
+
+> The UOW exposes only what your application needs — not the entire DbContext.
+
+---
+
+### 4. Use the UOW in application code
+
+Instead of accessing `DbContext` directly, application code uses the UOW and its repositories.
+
+#### Query with tracking
+```csharp
+var customers = await uow.Customers.QueryTracked().OrderBy(x => x.Name).ToListAsync();
+customers[0].Name = "Updated";
 await uow.SaveChangesAsync();
 ```
 
-### Query without tracking
+#### Query without tracking
 ```csharp
-var sessions = await uow.SessionLogs.QueryUnTracked().Where(x => x.UserId == userId).ToListAsync();
+var orders = await uow.Orders.QueryUnTracked().Where(x => x.CustomerId == customerId).ToListAsync();
 ```
 
-### Run a routine
+#### Run a routine
 ```csharp
-var items = await uow.RunRoutineQuery<MyViewResult>("cms", "GetCurrentMenuItems", [new("@SessionId", sessionId)]).ToListAsync();
+var result = await uow.RunRoutineQuery<OrderSummary>(
+    "sales",
+    "GetOrderSummary",
+    [new("@CustomerId", customerId)]
+).ToListAsync();
 ```
+
+---
+
+### Summary
+
+- `DbContext` defines the full database model
+- `DbUow` exposes a controlled working surface
+- Repositories and routines are accessed through the UOW
+- Application code stays clean and provider-agnostic
 
 ---
 
@@ -301,6 +389,7 @@ Model construction becomes more direct as well. Intent is expressed on the model
 - [OData.md](./src/EfCoreBoost/DbRepo/OData/OData.md) – OData helpers  
 - [Configs.md](./src/EfCoreBoost/CFG/Configs.md) – Connection configuration
 - [Testing](./tests/BoostTest/Readme.md) – Testing & examples including [test containers](./tests/BoostTest/TestContainers.md), [the Azure test](./tests/BoostTest/TestAzure.md), the [test database](./tests/BoostTest/TheTestDb.md) and the [smoke test](./tests/BoostTest/SmokeTest.md).
+-  🧱 [Project-Template](./templates/Boost.Simple/Usage.md) - About using the project template.
  
 ---
 
@@ -311,6 +400,7 @@ MIT.
 
 ## 🧭 Status
 Actively developed.  
-Project and solution templates coming soon.  
+Project and solution templates available (see Quick Start).  
+More templates and variations are coming soon.
 Documentation and examples expanding continuously.  
-Oracle provider support under consideration.  
+Oracle provider support is under consideration.  

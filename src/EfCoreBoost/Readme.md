@@ -114,6 +114,28 @@ The model remains portable.
 dotnet add package EfCore.Boost
 ```
 
+## 🚀 Quick Start
+
+### Start with a Template (Recommended)
+
+The easiest way to get started with EfCore.Boost is to use the project template:
+
+```bash
+dotnet new install EfCore.Boost.Template.Simple
+dotnet new boostsimple -n YourProjectName
+```
+or
+```bash
+dotnet new boostsimple -n YourProjectName --Schema YourSchemaName --Context YourDbContextName
+```
+if you want to customize the default shema name or your db context name.
+
+This generates a ready-to-use solution with:
+- A **Model project** containing your DbContext, entities, and Unit of Work
+- A **Migrate project** for managing migrations, and seed data
+- Pre-configured cross-database conventions and deployment scripts
+
+
 ------------------------------------------------------------------------
 
 ## Documentation & Source
