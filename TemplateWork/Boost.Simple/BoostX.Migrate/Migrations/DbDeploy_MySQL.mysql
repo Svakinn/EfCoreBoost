@@ -16,23 +16,23 @@ START TRANSACTION;
 
 ALTER DATABASE CHARACTER SET utf8mb4;
 
-CREATE TABLE `core_IpInfo` (
+CREATE TABLE `BoostScemaX_IpInfo` (
     `Id` bigint NOT NULL AUTO_INCREMENT,
     `IpNo` varchar(50) CHARACTER SET utf8mb4 NOT NULL,
     `HostName` varchar(512) CHARACTER SET utf8mb4 NULL,
     `Processed` bit(1) NOT NULL,
     `LastChangedUtc` datetime(6) NOT NULL,
-    CONSTRAINT `PK_core_IpInfo` PRIMARY KEY (`Id`)
+    CONSTRAINT `PK_BoostScemaX_IpInfo` PRIMARY KEY (`Id`)
 ) CHARACTER SET=utf8mb4 COMMENT='Received IP numbers with reverse lookup data';
 
-INSERT INTO `core_IpInfo` (`Id`, `HostName`, `IpNo`, `LastChangedUtc`, `Processed`)
+INSERT INTO `BoostScemaX_IpInfo` (`Id`, `HostName`, `IpNo`, `LastChangedUtc`, `Processed`)
 VALUES (-1, 'Localhost', '127.0.0.1', TIMESTAMP '1970-01-01 00:00:00', TRUE);
 
-CREATE UNIQUE INDEX `IpNoIdx` ON `core_IpInfo` (`IpNo`);
+CREATE UNIQUE INDEX `IpNoIdx` ON `BoostScemaX_IpInfo` (`IpNo`);
 
-CREATE INDEX `IX_core_IpInfo_LastChangedUtc` ON `core_IpInfo` (`LastChangedUtc` DESC);
+CREATE INDEX `IX_BoostScemaX_IpInfo_LastChangedUtc` ON `BoostScemaXIpInfo` (`LastChangedUtc` DESC);
 
-CREATE INDEX `IX_core_IpInfo_Processed` ON `core_IpInfo` (`Processed`);
+CREATE INDEX `IX_BoostScemaX_IpInfo_Processed` ON `BoostScemaX_IpInfo` (`Processed`);
 
 INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
 VALUES ('20260406181213_InitBoostXDbContext', '8.0.24');
@@ -47,37 +47,37 @@ GO
 /*** BEGIN MySQL.mysql ***/
 
 DELIMITER $$
-CREATE PROCEDURE core_GetIpId(IN p_IpNo VARCHAR(50))
+CREATE PROCEDURE BoostScemaX_GetIpId(IN p_IpNo VARCHAR(50))
 BEGIN
   DECLARE FoundId   BIGINT   DEFAULT NULL;
   DECLARE processed BOOLEAN  DEFAULT FALSE;
   DECLARE lch       DATETIME DEFAULT NULL;
   DECLARE CONTINUE HANDLER FOR NOT FOUND
   SET FoundId = NULL;
-  SELECT Id, Processed, LastChangedUtc INTO FoundId, processed, lch FROM core_IpInfo WHERE core_IpInfo.IpNo = p_IpNo LIMIT 1;
+  SELECT Id, Processed, LastChangedUtc INTO FoundId, processed, lch FROM BoostScemaX_IpInfo WHERE BoostScemaX_IpInfo.IpNo = p_IpNo LIMIT 1;
   IF FoundId IS NULL THEN
-    INSERT INTO core_IpInfo (IpNo, LastChangedUtc, Processed) VALUES (p_IpNo, UTC_TIMESTAMP(), FALSE);
+    INSERT INTO BoostScemaX_IpInfo (IpNo, LastChangedUtc, Processed) VALUES (p_IpNo, UTC_TIMESTAMP(), FALSE);
     SET FoundId = LAST_INSERT_ID();
   ELSEIF processed = TRUE AND lch + INTERVAL 180 DAY > UTC_TIMESTAMP() THEN
     -- Recheck hostname after 6 months
-    UPDATE core_IpInfo SET Processed = FALSE WHERE Id = FoundId;
+    UPDATE BoostScemaX_IpInfo SET Processed = FALSE WHERE Id = FoundId;
   END IF;
   SELECT FoundId AS IpId;
 END$$
 DELIMITER ;
 
-CREATE OR REPLACE VIEW core_IpInfoView AS
+CREATE OR REPLACE VIEW BoostScemaX_IpInfoView AS
   SELECT i.Id, i.IpNo, i.HostName
-  FROM core_IpInfo i;
+  FROM BoostScemaX_IpInfo i;
 
 DELIMITER $$
-CREATE PROCEDURE core_GetIpViewByIpId(IN p_IpId BIGINT)
+CREATE PROCEDURE BoostScemaX_GetIpViewByIpId(IN p_IpId BIGINT)
 BEGIN
   SELECT
     v.Id,
     v.IpNo,
     v.HostName
-  FROM core_IpInfo AS v
+  FROM BoostScemaX_IpInfo AS v
   WHERE v.Id = p_IpId;
 END$$
 DELIMITER ;

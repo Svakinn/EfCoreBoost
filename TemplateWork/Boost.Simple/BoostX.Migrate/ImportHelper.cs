@@ -7,16 +7,14 @@ namespace BoostX.Migrate;
 /// Provides generic helper methods for importing data from CSV files into a repository.
 /// </summary>
 /// <typeparam name="T">The entity type being imported.</typeparam>
-public class ImportHelper<T>(IRepo<T> repo, string csvFilePath, int bulkSize = 1000, bool includeIdentities = false)
-    where T : class, new()
+public class ImportHelper<T>(IRepo<T> repo, string csvFilePath, int bulkSize = 1000, bool includeIdentities = false) where T : class, new()
 {
     /// <summary>
     /// Gets the absolute path for a CSV file located in the 'CSV' directory.
     /// </summary>
     /// <param name="fileName">The name of the CSV file.</param>
     /// <returns>The full path to the CSV file.</returns>
-    public static string GetCsvPath(string fileName) =>
-        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CSV", fileName);
+    public static string GetCsvPath(string fileName) => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CSV", fileName);
 
     /// <summary>
     /// Static helper to perform a full import of a CSV file for a given repository.
@@ -35,7 +33,6 @@ public class ImportHelper<T>(IRepo<T> repo, string csvFilePath, int bulkSize = 1
             Console.WriteLine($"Warning: CSV file not found: {csvPath}. Skipping import for {entityName}.");
             return;
         }
-
         var helper = new ImportHelper<T>(repo, csvPath, bulkSize, includeIdentities);
         Console.WriteLine($"Importing {entityName}s from {fileName}...");
         await helper.ImportAsync();

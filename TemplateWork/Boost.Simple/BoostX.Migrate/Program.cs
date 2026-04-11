@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 namespace BoostX.Migrate
 {
     /// <summary>
-    /// Entry point for the BoostX Database Migration Utility.
+    /// Entry point for the BoostCTX Database Migration Utility.
     /// This utility handles database creation, schema migration, status checks, and data import.
     /// </summary>
     internal static class Program

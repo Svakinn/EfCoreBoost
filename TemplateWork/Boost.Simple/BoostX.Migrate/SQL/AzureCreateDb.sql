@@ -1,6 +1,6 @@
 ﻿/* This is an example on how you could run script to create the test db on azure named TestDb with master user named svasure-tester */
 /* It is NOT run by the test, you need to have this DB up and running before running the tests  */
-DECLARE @AzureUserName sysname = N'Core';  -- AAD app or user display name
+DECLARE @AzureUserName sysname = N'BoostXUsr';  -- AAD app or user display name
 DECLARE @DbName        sysname = N'BoostXDb';
 
 DECLARE @PreferredCollation           sysname = N'Latin1_General_100_CI_AS_SC_UTF8'; -- UTF-8, good across Europe & US

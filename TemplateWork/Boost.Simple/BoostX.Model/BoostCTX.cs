@@ -10,12 +10,12 @@ namespace BoostX.Model;
 /// The primary database context for the BoostX application.
 /// Defines the data model and configures EF Core conventions.
 /// </summary>
-public partial class BoostXDbContext(DbContextOptions<BoostXDbContext> options) : DbContext(options)
+public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(options)
 {
     /// <summary>
     /// The default database schema name used by this context.
     /// </summary>
-    public const string DefaultSchemaName = "core";
+    public const string DefaultSchemaName = "BoostScemaX";
 
     #region dbsets
     /// <summary>

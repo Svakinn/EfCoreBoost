@@ -2,7 +2,7 @@ using EfCore.Boost.DbRepo;
 using EfCore.Boost.UOW;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using static BoostX.Model.BoostXDbContext;
+using static BoostX.Model.BoostCTX;
 
 namespace BoostX.Model;
 
@@ -10,7 +10,7 @@ namespace BoostX.Model;
 /// Unit of Work for the BoostX application, providing access to repositories and routines.
 /// Inherits from UowFactory to handle DbContext creation and database type detection.
 /// </summary>
-public class BoostXUow(IConfiguration cfg, string cfgName) : UowFactory<BoostXDbContext>(cfg, cfgName)
+public class BoostXUow(IConfiguration cfg, string cfgName) : UowFactory<BoostCTX>(cfg, cfgName)
 {
     #region dbsets
 
@@ -36,7 +36,7 @@ public class BoostXUow(IConfiguration cfg, string cfgName) : UowFactory<BoostXDb
     /// <returns>The ID of the IP record, or null if not found.</returns>
     public async Task<long?> GetIpId(string ipNo)
     {
-        return await this.RunRoutineLongAsync(BoostXDbContext.DefaultSchemaName, "GetIpId", [new DbParmInfo("@IpNo", ipNo)]);
+        return await this.RunRoutineLongAsync(BoostCTX.DefaultSchemaName, "GetIpId", [new DbParmInfo("@IpNo", ipNo)]);
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ public class BoostXUow(IConfiguration cfg, string cfgName) : UowFactory<BoostXDb
     /// <returns>The IpInfoView if found; otherwise, null.</returns>
     public async Task<IpInfoView?> GetIpInfoViewByIdAsync(long ipId)
     {
-        return await SetUpRoutineQuery<IpInfoView>(BoostXDbContext.DefaultSchemaName, "GetIpViewByIpId", [new DbParmInfo("@IpId", ipId)]).FirstOrDefaultAsync();
+        return await SetUpRoutineQuery<IpInfoView>(BoostCTX.DefaultSchemaName, "GetIpViewByIpId", [new DbParmInfo("@IpId", ipId)]).FirstOrDefaultAsync();
     }
     #endregion
 }

@@ -15,35 +15,26 @@ public static class ImportService
     public static async Task ExecuteAsync(BoostXUow uow)
     {
         Console.WriteLine("--- Starting Import ---");
-
         await uow.RunInTransactionAsync(async (ct) =>
         {
             Console.WriteLine("Importing core data...");
-
             // Manual check for IpInfo (programmer decides how to check existence)
             var fileName = "IpInfo.csv";
-            var csvPath = ImportHelper<BoostXDbContext.IpInfo>.GetCsvPath(fileName);
+            var csvPath = ImportHelper<BoostCTX.IpInfo>.GetCsvPath(fileName);
             if (File.Exists(csvPath))
             {
-                var helper = new ImportHelper<BoostXDbContext.IpInfo>(uow.IpInfos, csvPath);
+                var helper = new ImportHelper<BoostCTX.IpInfo>(uow.IpInfos, csvPath);
                 var firstRow = await helper.ReadFirstRowAsync();
                 // Since we import with identities, we can use the ID to check if import was already done.
                 // Otherwise, some other unique condition would have been needed.
                 if (firstRow != null && await uow.IpInfos.RowByIdUnTrackedAsync(firstRow.Id) != null)
-                {
                     Console.WriteLine($"IpInfo data already exists (found ID {firstRow.Id}). Skipping import.");
-                }
                 else
-                {
-                    await ImportHelper<BoostXDbContext.IpInfo>.ImportAsync(uow.IpInfos, fileName, 1000, true);
-                }
+                    await ImportHelper<BoostCTX.IpInfo>.ImportAsync(uow.IpInfos, fileName, 1000, true);
             }
             else
-            {
                 Console.WriteLine($"Warning: CSV file not found: {csvPath}. Skipping import for IpInfo.");
-            }
         });
-
         Console.WriteLine("--- Import Finished ---");
     }
 }

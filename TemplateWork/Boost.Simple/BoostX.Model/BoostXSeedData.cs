@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoostX.Model;
 
-public partial class BoostXDbContext
+public partial class BoostCTX
 {
     /// <summary>
     /// Configures seed data for the database model.

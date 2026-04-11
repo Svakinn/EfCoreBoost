@@ -19,10 +19,10 @@ GO
 BEGIN TRANSACTION;
 GO
 
-IF SCHEMA_ID(N'core') IS NULL EXEC(N'CREATE SCHEMA [core];');
+IF SCHEMA_ID(N'BoostScemaX') IS NULL EXEC(N'CREATE SCHEMA [BoostScemaX];');
 GO
 
-CREATE TABLE [core].[IpInfo] (
+CREATE TABLE [BoostScemaX].[IpInfo] (
     [Id] bigint NOT NULL IDENTITY,
     [IpNo] nvarchar(50) NOT NULL,
     [HostName] nvarchar(512) NULL,
@@ -32,24 +32,24 @@ CREATE TABLE [core].[IpInfo] (
 );
 DECLARE @description AS sql_variant;
 SET @description = N'Received IP numbers with reverse lookup data';
-EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'core', 'TABLE', N'IpInfo';
+EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'BoostScemaX', 'TABLE', N'IpInfo';
 GO
 
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'HostName', N'IpNo', N'LastChangedUtc', N'Processed') AND [object_id] = OBJECT_ID(N'[core].[IpInfo]'))
-    SET IDENTITY_INSERT [core].[IpInfo] ON;
-INSERT INTO [core].[IpInfo] ([Id], [HostName], [IpNo], [LastChangedUtc], [Processed])
+IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'HostName', N'IpNo', N'LastChangedUtc', N'Processed') AND [object_id] = OBJECT_ID(N'[BoostScemaX].[IpInfo]'))
+    SET IDENTITY_INSERT [BoostScemaX].[IpInfo] ON;
+INSERT INTO [BoostScemaX].[IpInfo] ([Id], [HostName], [IpNo], [LastChangedUtc], [Processed])
 VALUES (CAST(-1 AS bigint), N'Localhost', N'127.0.0.1', '1970-01-01T00:00:00.0000000+00:00', CAST(1 AS bit));
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'HostName', N'IpNo', N'LastChangedUtc', N'Processed') AND [object_id] = OBJECT_ID(N'[core].[IpInfo]'))
-    SET IDENTITY_INSERT [core].[IpInfo] OFF;
+IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'HostName', N'IpNo', N'LastChangedUtc', N'Processed') AND [object_id] = OBJECT_ID(N'[BoostScemaX].[IpInfo]'))
+    SET IDENTITY_INSERT [BoostScemaX].[IpInfo] OFF;
 GO
 
-CREATE UNIQUE INDEX [IpNoIdx] ON [core].[IpInfo] ([IpNo]);
+CREATE UNIQUE INDEX [IpNoIdx] ON [BoostScemaX].[IpInfo] ([IpNo]);
 GO
 
-CREATE INDEX [IX_IpInfo_LastChangedUtc] ON [core].[IpInfo] ([LastChangedUtc] DESC);
+CREATE INDEX [IX_IpInfo_LastChangedUtc] ON [BoostScemaX].[IpInfo] ([LastChangedUtc] DESC);
 GO
 
-CREATE INDEX [IX_IpInfo_Processed] ON [core].[IpInfo] ([Processed]);
+CREATE INDEX [IX_IpInfo_Processed] ON [BoostScemaX].[IpInfo] ([Processed]);
 GO
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
@@ -70,35 +70,35 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-Create OR ALTER PROCEDURE [core].[GetIpId](@IpNo nvarchar(50)) AS
+Create OR ALTER PROCEDURE [BoostScemaX].[GetIpId](@IpNo nvarchar(50)) AS
 BEGIN
   SET NOCOUNT ON;
   declare @FoundId BIGINT, @processed bit, @lCh DateTime;
   set @FoundId = null;
-  SELECT @FoundId = i.Id, @processed = Processed, @lCh = LastChangedUtc from core.IpInfo i where i.IpNo = @IpNo;
+  SELECT @FoundId = i.Id, @processed = Processed, @lCh = LastChangedUtc from [BoostScemaX].[IpInfo] i where i.IpNo = @IpNo;
   if (@FoundId is null) begin
-	    insert into core.IpInfo (IpNo,LastChangedUtc,Processed) values (@IpNo,SYSUTCDATETIME(),0);
+	    insert into [BoostScemaX].[IpInfo] (IpNo,LastChangedUtc,Processed) values (@IpNo,SYSUTCDATETIME(),0);
 		set @FoundId = SCOPE_IDENTITY();
   end
 	-- Recheck hostname after 6 months
   else if (@processed = 1 and @lCh + 180 > SYSUTCDATETIME()) begin
-    update core.IpInfo set Processed = 0 where Id = @FoundId;
+    update BoostScemaX.IpInfo set Processed = 0 where Id = @FoundId;
   end
   SELECT @FoundId AS IpId;
 END
 GO
-CREATE OR ALTER VIEW [core].[IpInfoView] AS
+CREATE OR ALTER VIEW [BoostScemaX].[IpInfoView] AS
 SELECT i.Id, i.IpNo, i.HostName
-FROM [core].[IpInfo] i
+FROM [BoostScemaX].[IpInfo] i
 GO
-CREATE OR ALTER PROCEDURE [core].[GetIpViewByIpId] @IpId BIGINT AS
+CREATE OR ALTER PROCEDURE [BoostScemaX].[GetIpViewByIpId] @IpId BIGINT AS
 BEGIN
   SET NOCOUNT ON;
   SELECT
     v.Id,
     v.IpNo,
     v.HostName
-  FROM [core].[IpInfo] AS v
+  FROM [BoostScemaX].[IpInfo] AS v
   WHERE v.Id = @IpId;
 END
 GO

@@ -3,7 +3,7 @@
 /* recreating objecs each time the test is run.                                                 */ 
 /* This bit is responsible from dropping the objects.                                           */
 /* It must be performed under connection to testb, not as master, thus being seporated script.  */
-DECLARE @AzureUserName sysname = N'Core';
+DECLARE @AzureUserName sysname = N'BoostXUsr';
 DECLARE @DbName        sysname = N'BoostXDb';
 
 -- Task 1 make sure user exists and is linked to the db:

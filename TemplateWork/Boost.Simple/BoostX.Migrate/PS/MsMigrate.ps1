@@ -4,7 +4,7 @@ EFCore.Boost helper that creates EF Core migrations for the MsSQL DbContext.
 Go to the PS folder in terminal and run the script (i.e. .\MsMigrate.ps1)
 .DESCRIPTION
 The end product/purpose of the migratons is to create SQL-scripts for database initializations for all 3 database flavors, MsSQL, MySql and Postgres.
-For our BoostXdb to work identically for all 3 databases we need speciffic migrations, SQL-code and Database objects for each flavor.
+For our BoostX-db to work identically for all 3 databases we need speciffic migrations, SQL-code and Database objects for each flavor.
 Thus different Init and Snapshot code for each flavor.
 This needs to be handled by castrating *.cs code for other flavors when building and creatinf for this one.
 It is implemented by removing current flavor migration before rebuilding and by changing the file ending for the other flavors so they are not compiled.
@@ -44,11 +44,11 @@ $helperPath = Join-Path $PSScriptRoot "helpers.ps1"
 Set-MigrationProvider -ProjectDir $ProjectDir -Provider "MsSQL"
 
 $migrations = @(
-    @{ Name = "InitBoostXDbContext"; Context = "BoostXDbContext"; OutDir = "Migrations/MsSQL/SnapBoostXDbContext"; OutFile = "Migrations/MsSQL/InitBoostXDbContext.sql" }
+    @{ Name = "InitBoostCTX"; Context = "BoostCTX"; OutDir = "Migrations/MsSQL/SnapBoostCTX"; OutFile = "Migrations/MsSQL/InitBoostCTX.sql" }
 )
 
 $filesInOrder = @(
-    "Migrations/MsSQL/InitBoostXDbContext.sql",
+    "Migrations/MsSQL/InitBoostCTX.sql",
     "SQL/MsSQL.sql"
 )
 

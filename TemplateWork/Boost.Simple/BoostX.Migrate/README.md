@@ -1,6 +1,6 @@
 # BoostX Database Migration Utility
 
-The `BoostX.Migrate` utility is a specialized tool with a dual purpose in the development and deployment lifecycle of applications using the BoostX framework.
+The `BoostX.Migrate` utility is a specialized tool with a dual purpose in the development and deployment lifecycle of applications using the BoostCTX database context.
 
 ## Core Purpose
 
