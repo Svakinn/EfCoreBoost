@@ -58,10 +58,10 @@ This is the MySQL prepare method.
 We more or less build our own connection string to the test container and run our migrations on it via SQL scripts:
 
 ```csharp
-        static async Task<(MySqlContainer Container, UOWTestDb Uow, UOWTestDb Uow2, UOWTestView UowView)> PrepareMySqlContainer()
+        static async Task<(MySqlContainer Container, BoostXUow Uow)> PrepareMySqlContainer()
         {
-            const string dbName = "TestDb";
-            const string connName = "TestMy";
+            const string dbName = "BoostX";
+            const string connName = "BoostXMy";
             var myBuilder = new MySqlBuilder()
                 .WithImage("mysql:8.0")
                 .WithUsername("root")
@@ -79,11 +79,9 @@ We more or less build our own connection string to the test container and run ou
             };
             var cfg = BuildConfig(overrides);
             var uow = CreateUow(cfg, connName);
-            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("Sql/MySqlCreateDb.mysql"));
-            var uow2 = CreateUow(cfg, connName);
-            await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MySql.mysql")); //Mysql does not handle any ddl in transactions
-            var uowV = CreateUowView(cfg, connName);
-            return (myBuilder, uow, uow2, uowV);
+            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("../BoostX.Migrate/SQL/MySqlCreateDb.mysql"));
+            await uow.ExecSqlScriptAsync(await ReadSql("../BoostX.Migrate/Migrate/DbDeploy_MySql.mysql"));
+            return (myBuilder, uow);
         }
 ```
 
@@ -99,3 +97,4 @@ Test for all providers follow the same pattern:
 - create database via admin connection
 - apply migrations
 - return a ready UOW
+
