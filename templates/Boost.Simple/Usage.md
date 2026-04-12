@@ -64,3 +64,19 @@ Consumer applications should reference the **Model** project only.
 - Add a project reference to `BoostX.Model`
 
 Make sure to configure the required **EfCore.Boost connection string** in your application’s `appsettings.json`, using the same connection name expected by the model configuration.
+
+## Using the Template in IDEs
+
+This template generates a multi-project solution (Model + Migrate).
+
+### Rider / Visual Studio
+
+- Use **New Solution / New Project** to create a project from the template
+- The template will not appear under **Add → New Project** inside an existing solution
+
+### Alternative (CLI)
+
+You can always create the project using:
+
+```bash
+dotnet new boostsimple -n YourProjectName
