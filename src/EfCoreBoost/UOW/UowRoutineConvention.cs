@@ -36,7 +36,7 @@ namespace EfCore.Boost.UOW
 
         internal static RoutineCall BuildPostgres(string schema, string routine, RoutineKind kind, IReadOnlyList<DbParmInfo> parms)
         {
-            var name = $"{schema}.\"{routine}\"";
+            var name = $"\"{schema}\".\"{routine}\"";
             var args = string.Join(", ", parms.Select(p => NormalizeParamName(p.Name)));
 
             return kind switch

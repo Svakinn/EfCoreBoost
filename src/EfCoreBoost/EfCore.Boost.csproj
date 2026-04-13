@@ -8,7 +8,7 @@
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <Authors>Sveinn S. Erlendsson</Authors>
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
@@ -17,9 +17,7 @@
         EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core, plus utilities for routines, bulk operations, and OData suport.
         Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.    </Description>
     <PackageReleaseNotes>
-Added support for executing multi-statement SQL scripts on admin database via ExecuteAdminDbSqlScriptAsync.
-Important bugfix regarding the RowKey-lookup functions i.e. RowByKeyTrackedAsync.
-Bugfixes regarding MySQL-guid handling and Postgres bulk-insert.
+Small bugfix, Routine call for postgres fixed.  Now handles correctly schema names icluding upper case name.
     </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;efboost;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-famework;dotnet;ef-core-migrations</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
