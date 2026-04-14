@@ -26,57 +26,31 @@
     <PackageReference Include="Testcontainers.MySql" Version="4.6.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.6.0" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Update="TestDb\AzureCreateDb.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TestDb\AzurePrepareDb.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TestDb\Migrations\DbDeploy_MsSql.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TestDb\Migrations\DbDeploy_MySql.mysql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TestDb\Migrations\DbDeploy_PgSql.pgsql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TestDb\MsSql.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TestDb\MsSqlCreateDb.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TestDb\MySql.mysql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TestDb\MySqlCreateDb.mysql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TestDb\PgSql.pgsql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TestDb\PgSqlCreateDb.pgsql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="AppSettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
     <ItemGroup>
-        <!-- Deploy scripts from /Migrations -->
-        <Content Include="..\..\..\tests\TestDb.Migrate\Migrations\DbDeploy_MsSql.sql;
-                    ..\..\..\tests\TestDb.Migrate\Migrations\DbDeploy_MySql.mysql;
-                    ..\..\..\tests\TestDb.Migrate\Migrations\DbDeploy_PgSql.pgsql">
-            <Link>Migrate\%(Filename)%(Extension)</Link>
+        <None Update="AppSettings.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="..\BoostX.Migrate\CSV\**\*.*">
+            <Link>CSV\%(RecursiveDir)%(Filename)%(Extension)</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-
-        <!-- Top-level SQL files from /SQL -->
-        <Content Include="..\..\..\tests\TestDb.Migrate\SQL\*.*">
-            <Link>Sql\%(Filename)%(Extension)</Link>
+        <Content Include="..\BoostX.Migrate\SQL\**\*.*">
+            <Link>SQL\%(RecursiveDir)%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <!-- Selected migration deploy scripts only -->
+        <Content Include="..\BoostX.Migrate\Migrations\DbDeploy_MsSQL.sql">
+            <Link>Migrations\DbDeploy_MsSQL.sql</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\BoostX.Migrate\Migrations\DbDeploy_MySQL.mysql">
+            <Link>Migrations\DbDeploy_MySQL.mysql</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\BoostX.Migrate\Migrations\DbDeploy_PgSQL.pgsql">
+            <Link>Migrations\DbDeploy_PgSQL.pgsql</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>

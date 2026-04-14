@@ -168,7 +168,7 @@ namespace BoostTest
             var uow = CreateUow(cfg, connName);
             await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("Sql/MsSqlCreateDb.sql"));
             var uow2 = CreateUow(cfg, connName);
-            await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MsSql.sql")); //Script contains own transactions, therefore, cannot run in transaction here
+            await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_MsSql.sql")); //Script contains own transactions, therefore, cannot run in transaction here
             var uowV = CreateUowView(cfg, connName);
             return (msBuilder, uow, uow2, uowV);
         }
@@ -194,7 +194,7 @@ namespace BoostTest
             await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("Sql/AzureCreateDb.sql"));
             var uow2 = CreateUow(cc, connName);
             await uow.ExecSqlScriptAsync(await ReadSql("Sql/AzurePrepareDb.sql")); //Clean up previous runs
-            await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MsSql.sql")); //Normal SQL-Server Migrations
+            await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_MsSql.sql")); //Normal SQL-Server Migrations
             var uowV = CreateUowView(cc, connName);
             return (uow, uow2, uowV);
         }
@@ -228,7 +228,7 @@ namespace BoostTest
             var uow = CreateUow(cfg, connName);
             await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("Sql/MySqlCreateDb.mysql"));
             var uow2 = CreateUow(cfg, connName);
-            await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MySql.mysql")); //Mysql does not handle any ddl in transactions
+            await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_MySql.mysql")); //Mysql does not handle any ddl in transactions
             var uowV = CreateUowView(cfg, connName);
             return (myBuilder, uow, uow2, uowV);
         }
@@ -269,7 +269,7 @@ namespace BoostTest
             var uowMigrate = CreateUow(cfg, connName);
             await uowMigrate.ExecuteAdminDbSqlScriptAsync(await ReadSql("Sql/PgSqlCreateDb.pgsql"));
             Npgsql.NpgsqlConnection.ClearAllPools();
-            await uowMigrate.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_PgSql.pgsql")); // Note: The migration script itself contains transactions, so we do not run in transaction here
+            await uowMigrate.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_PgSql.pgsql")); // Note: The migration script itself contains transactions, so we do not run in transaction here
             // Force Npgsql to refresh type mappings ("citext", etc.) for this database
             var dbConn = (Npgsql.NpgsqlConnection)uowMigrate.GetDbContext().Database.GetDbConnection();
             if (dbConn.State != ConnectionState.Open)

@@ -22,6 +22,7 @@ public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(op
     /// Gets or sets the DbSet for IpInfo entities.
     /// </summary>
     public DbSet<IpInfo> IpInfos { get; set; }
+    public DbSet<IpInfoView> IpInfoViews { get; set; }
     #endregion
 
     #region onMOdelCreating

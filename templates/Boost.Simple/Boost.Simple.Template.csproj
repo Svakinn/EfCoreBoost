@@ -7,7 +7,12 @@
       <Description>
           Minimal EfCore.Boost multi-project template with Model and Migrate projects, designed to provide a clean, production-oriented starting point. Includes a simple IpInfo entity, one view, and two routines to demonstrate core patterns without unnecessary complexity.
       </Description>
-      <PackageTags>dotnet-new;templates;EFCore;Boost</PackageTags>
+      <PackageTags>
+          dotnet-new;template;efcore;entity-framework;database;orm;
+          unit-of-work;repository-pattern;clean-architecture;
+          sqlserver;postgresql;mysql;cross-database;
+          backend;data-access;boilerplate
+      </PackageTags>
       <PackageLicenseFile>LICENSE</PackageLicenseFile>
       <PackageReadmeFile>PackageREADME.md</PackageReadmeFile>
       <PackageIcon>icon.png</PackageIcon>  
@@ -19,14 +24,14 @@
     <!-- Prevent the SDK from trying to compile the template source files -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <NoWarn>$(NoWarn);NU5110;NU5111;NU5128</NoWarn>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
   </PropertyGroup>
   <ItemGroup>
       <None Include="LICENSE" Pack="true" PackagePath="" />
       <None Include="PackageREADME.md" Pack="true" PackagePath="" />
       <None Include="icon.png" Pack="true" PackagePath="\" />
     <!-- Template source files for IDE visibility and packing -->
-    <Content Include="**\*" Exclude="**\bin\**;**\obj\**;**\.vs\**;Boost.Simple.Template.csproj;artifacts\**;LICENSE;PackageREADME.md" Pack="true" />
+    <Content Include="**\*" Exclude="**\bin\**;**\obj\**;**\.vs\**;Boost.Simple.Template.csproj;artifacts\**;LICENSE;PackageREADME.md;icon.png" Pack="true" />
     <None Update="icon.png">
       <Pack>true</Pack>
       <PackagePath>\</PackagePath>

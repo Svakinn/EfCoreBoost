@@ -121,7 +121,6 @@ foreach ($file in $existingFiles) {
 
     @(
         ""
-        "GO"
         "/*** END $name ***/"
         ""
     ) | Add-Content -Path $deployPath

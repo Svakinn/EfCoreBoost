@@ -19,7 +19,7 @@ BEGIN
         RETURNING "Id" INTO found_id;
     ELSIF processed AND lch + INTERVAL '180 days' > NOW() AT TIME ZONE 'UTC' THEN
         -- Recheck hostname after 6 months
-        UPDATE "BoostSchemaX"."IpInfo" SET processed = false WHERE "Id" = found_id;
+        UPDATE "BoostSchemaX"."IpInfo" SET "Processed" = false WHERE "Id" = found_id;
     END IF;
     RETURN found_id;
 END;
@@ -27,7 +27,7 @@ $$;
 
 CREATE VIEW "BoostSchemaX"."IpInfoView" AS
   SELECT i."Id", i."IpNo", i."HostName"
-  FROM "BoostSchemaX"."IpInfo";
+  FROM "BoostSchemaX"."IpInfo" i;
   
  CREATE OR REPLACE FUNCTION "BoostSchemaX"."GetIpViewByIpId"(ipid BIGINT)
  RETURNS SETOF "BoostSchemaX"."IpInfoView" 

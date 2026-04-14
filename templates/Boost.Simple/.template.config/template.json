@@ -1,7 +1,7 @@
 {
   "$schema": "http://json.schemastore.org/template",
   "author": "EfCore.Boost",
-  "classifications": [ "Common", "Console", "Database" ],
+  "classifications": [ "Database", "EF Core", "Backend", "Console" ],
   "name": "EfCore.Boost Simple Template",
   "identity": "EfCore.Boost.Template.Simple",
   "shortName": "boostsimple",

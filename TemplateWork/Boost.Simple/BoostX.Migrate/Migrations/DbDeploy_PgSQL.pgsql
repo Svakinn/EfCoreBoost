@@ -1,10 +1,10 @@
-/*
+﻿/*
     Database deploy script (PgSQL)
-    Generated: 2026-04-06 18:12:49
+    Generated: 2026-04-13 22:50:48
     ConnName: BoostXPg
 */
 
-/*** BEGIN InitBoostXDbContext.pgsql ***/
+/*** BEGIN InitBoostCTX.pgsql ***/
 
 CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
     "MigrationId" character varying(150) NOT NULL,
@@ -51,13 +51,12 @@ SELECT setval(
     false);
 
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260406181246_InitBoostXDbContext', '8.0.24');
+VALUES ('20260413225045_InitBoostCTX', '8.0.24');
 
 COMMIT;
 
 
-GO
-/*** END InitBoostXDbContext.pgsql ***/
+/*** END InitBoostCTX.pgsql ***/
 
 
 /*** BEGIN PgSQL.pgsql ***/
@@ -83,7 +82,7 @@ BEGIN
         RETURNING "Id" INTO found_id;
     ELSIF processed AND lch + INTERVAL '180 days' > NOW() AT TIME ZONE 'UTC' THEN
         -- Recheck hostname after 6 months
-        UPDATE "BoostSchemaX"."IpInfo" SET processed = false WHERE "Id" = found_id;
+        UPDATE "BoostSchemaX"."IpInfo" SET "Processed" = false WHERE "Id" = found_id;
     END IF;
     RETURN found_id;
 END;
@@ -91,7 +90,7 @@ $$;
 
 CREATE VIEW "BoostSchemaX"."IpInfoView" AS
   SELECT i."Id", i."IpNo", i."HostName"
-  FROM "BoostSchemaX"."IpInfo";
+  FROM "BoostSchemaX"."IpInfo" i;
   
  CREATE OR REPLACE FUNCTION "BoostSchemaX"."GetIpViewByIpId"(ipid BIGINT)
  RETURNS SETOF "BoostSchemaX"."IpInfoView" 
@@ -108,6 +107,5 @@ CREATE VIEW "BoostSchemaX"."IpInfoView" AS
  END;
  $$;
 
-GO
 /*** END PgSQL.pgsql ***/
 

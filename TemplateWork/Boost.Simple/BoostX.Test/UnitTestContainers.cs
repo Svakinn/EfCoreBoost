@@ -95,6 +95,32 @@ namespace BoostX.Test
             }
         }
 
+        static async Task ImportAsync(BoostXUow uow)
+        {
+            Console.WriteLine("--- Starting Import ---");
+            await uow.RunInTransactionAsync(async (ct) =>
+            {
+                Console.WriteLine("Importing core data...");
+                // Manual check for IpInfo (programmer decides how to check existence)
+                var fileName = "IpInfo.csv";
+                var csvPath = ImportHelper<BoostCTX.IpInfo>.GetCsvPath(fileName);
+                if (File.Exists(csvPath))
+                {
+                    var helper = new ImportHelper<BoostCTX.IpInfo>(uow.IpInfos, csvPath);
+                    var firstRow = await helper.ReadFirstRowAsync();
+                    // Since we import with identities, we can use the ID to check if import was already done.
+                    // Otherwise, some other unique condition would have been needed.
+                    if (firstRow != null && await uow.IpInfos.RowByIdUnTrackedAsync(firstRow.Id) != null)
+                        Console.WriteLine($"IpInfo data already exists (found ID {firstRow.Id}). Skipping import.");
+                    else
+                        await ImportHelper<BoostCTX.IpInfo>.ImportAsync(uow.IpInfos, fileName, 1000, true);
+                }
+                else
+                    Console.WriteLine($"Warning: CSV file not found: {csvPath}. Skipping import for IpInfo.");
+            });
+            Console.WriteLine("--- Import Finished ---");
+        }
+
         /// <summary>
         ///  Spin up temporary SQL Server in Docker
         ///  Note: we are sort of cheating on the usual connection string from appsettings.json
@@ -116,8 +142,9 @@ namespace BoostX.Test
             };
             var cfg = BuildConfig(overrides);
             var uow = CreateUow(cfg, connName);
-            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("../BoostX.Migrate/SQL/MsSqlCreateDb.sql"));
-            await uow.ExecSqlScriptAsync(await ReadSql("../BoostX.Migrate/Migrate/DbDeploy_MsSql.sql"));
+
+            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SQL/MsSqlCreateDb.sql")));
+            await uow.ExecSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Migrations/DbDeploy_MsSql.sql")));
             return (msBuilder, uow);
         }
 
@@ -142,8 +169,8 @@ namespace BoostX.Test
             // So this is perhaps not the way to do repeated tests.
             // You could run this once and then comment out the scripting, before further tests on Azure.
             // Perhaps daily testing should skip Azure all together.
-            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("../BoostX.Migrate/SQL/AzureCreateDb.sql"));
-            await uow.ExecSqlScriptAsync(await ReadSql("../BoostX.Migrate/Migrate/DbDeploy_MsSql.sql"));
+            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SQL/AzureCreateDb.sql")));
+            await uow.ExecSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Migrations/DbDeploy_MsSql.sql")));
             return (uow);
         }
 
@@ -174,8 +201,8 @@ namespace BoostX.Test
             };
             var cfg = BuildConfig(overrides);
             var uow = CreateUow(cfg, connName);
-            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("../BoostX.Migrate/SQL/MySqlCreateDb.mysql"));
-            await uow.ExecSqlScriptAsync(await ReadSql("../BoostX.Migrate/Migrate/DbDeploy_MySql.mysql"));
+            await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SQL/MySqlCreateDb.mysql")));
+            await uow.ExecSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Migrations/DbDeploy_MySql.mysql")));
             return (myBuilder, uow);
         }
 
@@ -213,9 +240,9 @@ namespace BoostX.Test
             };
             var cfg = BuildConfig(overrides);
             var uowMigrate = CreateUow(cfg, connName);
-            await uowMigrate.ExecuteAdminDbSqlScriptAsync(await ReadSql("../BoostX.Migrate/SQL/PgSqlCreateDb.pgsql"));
+            await uowMigrate.ExecuteAdminDbSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SQL/PgSqlCreateDb.pgsql")));
             Npgsql.NpgsqlConnection.ClearAllPools();
-            await uowMigrate.ExecSqlScriptAsync(await ReadSql("../BoostX.Migrate/Migrate/DbDeploy_PgSql.pgsql")); // Note: The migration script itself contains transactions, so we do not run in transaction here
+            await uowMigrate.ExecSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Migrations/DbDeploy_PgSql.pgsql")));
             // Force Npgsql to refresh type mappings ("citext", etc.) for this database
             var dbConn = (Npgsql.NpgsqlConnection)uowMigrate.GetDbContext().Database.GetDbConnection();
             if (dbConn.State != ConnectionState.Open)
