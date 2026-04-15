@@ -1,0 +1,38 @@
+DELIMITER $$
+CREATE PROCEDURE BoostSchemaX_GetIpId(IN IpNo VARCHAR(50))
+BEGIN
+  DECLARE FoundId   BIGINT   DEFAULT NULL;
+  DECLARE processed BOOLEAN  DEFAULT FALSE;
+  DECLARE lch       DATETIME DEFAULT NULL;
+  DECLARE CONTINUE HANDLER FOR NOT FOUND
+  SET FoundId = NULL;
+  SELECT Id, Processed, LastChangedUtc INTO FoundId, processed, lch FROM BoostSchemaX_IpInfo WHERE BoostSchemaX_IpInfo.IpNo = IpNo LIMIT 1;
+  IF FoundId IS NULL THEN
+    INSERT INTO BoostSchemaX_IpInfo (IpNo, LastChangedUtc, Processed) VALUES (IpNo, UTC_TIMESTAMP(), FALSE);
+    SET FoundId = LAST_INSERT_ID();
+  ELSEIF processed = TRUE AND DATE_ADD(lch, INTERVAL 180 DAY) > UTC_TIMESTAMP() THEN
+    -- Recheck hostname after 6 months
+    UPDATE BoostSchemaX_IpInfo SET Processed = FALSE WHERE Id = FoundId;
+  END IF;
+  SELECT FoundId AS IpId;
+END$$
+DELIMITER ;
+
+CREATE OR REPLACE VIEW BoostSchemaX_IpInfoView AS
+  SELECT i.Id, i.IpNo, i.HostName
+  FROM BoostSchemaX_IpInfo i;
+
+DELIMITER $$
+CREATE PROCEDURE BoostSchemaX_GetIpViewByIpId(IN IpId BIGINT)
+BEGIN
+  SELECT
+    v.Id,
+    v.IpNo,
+    v.HostName
+  FROM BoostSchemaX_IpInfoView AS v
+  WHERE v.Id = IpId;
+END$$
+DELIMITER ;
+
+
+

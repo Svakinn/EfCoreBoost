@@ -2,12 +2,12 @@
   "$schema": "http://json.schemastore.org/template",
   "author": "Sveinn S. Erlendsson",
   "classifications": [ "Database", "EF Core", "Backend", "Console" ],
-  "name": "EfCore.Boost Simple Template",
-  "identity": "EfCore.Boost.Template.Simple",
-  "shortName": "boostsimple",
+  "name": "EfCore.Boost Simple Solution Template",
+  "identity": "EfCore.Boost.Template.Simple.Solution",
+  "shortName": "boostsimplesolution",
   "tags": {
     "language": "C#",
-    "type": "project"
+    "type": "solution"
   },
   "sourceName": "BoostX",
   "preferNameDirectory": true,
@@ -90,8 +90,10 @@
             "**/obj/**",
             "**/.vs/**",
             "*.Template.csproj",
-            "LICENSE.txt",
-            "PackageREADME.md"
+            "EfCore.Boost.Template.Simple.Solution.csproj",
+            "LICENSE",
+            "PackageREADME.md",
+            "icon.png"
           ]
         }
       ]
