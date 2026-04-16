@@ -16,6 +16,10 @@
       <PackageLicenseFile>LICENSE</PackageLicenseFile>
       <PackageReadmeFile>PackageREADME.md</PackageReadmeFile>
       <PackageIcon>icon.png</PackageIcon>  
+    <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost/tree/main/templates/Boost.Simple</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>Initial release of the EfCore.Boost Simple template.</PackageReleaseNotes>
     <TargetFramework>net8.0</TargetFramework>
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
@@ -32,9 +36,5 @@
       <None Include="icon.png" Pack="true" PackagePath="\" />
     <!-- Template source files for IDE visibility and packing -->
     <Content Include="**\*" Exclude="**\bin\**;**\obj\**;**\.vs\**;Boost.Simple.Template.csproj;artifacts\**;LICENSE;PackageREADME.md;icon.png" Pack="true" />
-    <None Update="icon.png">
-      <Pack>true</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
   </ItemGroup>
 </Project>
