@@ -118,22 +118,27 @@ dotnet add package EfCore.Boost
 
 ### Start with a Template (Recommended)
 
-The easiest way to get started with EfCore.Boost is to use the project template:
+The easiest way to get started with EfCore.Boost is to use the solution template:
 
 ```bash
-dotnet new install EfCore.Boost.Template.Simple
-dotnet new boostsimple -n YourProjectName
+dotnet new install EfCore.Boost.Template.Simple.Solution
+dotnet new boostsimplesolution -n YourProjectName
 ```
 or
 ```bash
-dotnet new boostsimple -n YourProjectName --Schema YourSchemaName --Context YourDbContextName
+dotnet new boostsimplesolution -n YourProjectName --Schema YourSchemaName --Context YourDbContextName
 ```
-if you want to customize the default shema name or your db context name.
+if you want to customize the default schema name or your db context name.
 
 This generates a ready-to-use solution with:
 - A **Model project** containing your DbContext, entities, and Unit of Work
 - A **Migrate project** for managing migrations, and seed data
+- A **Test project** pre-configured for integration testing with TestContainers
 - Pre-configured cross-database conventions and deployment scripts
+
+> **💡 Existing Solutions:** You can easily copy the generated projects (Model, Migrate, Test) from the new solution into your existing solution. Just update the project references and namespace names as needed.
+
+*Note: For a more minimal starting point, a single project template is also available: `dotnet new boostsimple -n YourProjectName` (requires `EfCore.Boost.Template.Simple`).*
 
 
 ------------------------------------------------------------------------

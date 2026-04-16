@@ -57,6 +57,12 @@ dotnet pack .\templates\Boost.Simple\Boost.Simple.Template.csproj -o .\artifacts
 
 The resulting package `EfCore.Boost.Template.Simple.1.0.0.nupkg` will be located in the `artifacts` directory.
 
+For the solution template, we pack like this:
+
+```powershell
+dotnet pack .\templates\Boost.Simple.Solution\EfCore.Boost.Template.Simple.Solution.csproj -o .\artifacts
+```
+
 ## Testing the Template
 
 1.  Install the template locally.
