@@ -1,6 +1,6 @@
 ﻿/*
     Database deploy script (PgSQL)
-    Generated: 2026-03-22 11:38:29
+    Generated: 2026-04-17 00:02:50
     ConnName: TestPg
 */
 
@@ -53,16 +53,16 @@ CREATE TABLE my."MyTableRef" (
 );
 
 INSERT INTO my."MyTable" ("Id", "Balance", "Code", "Created", "Discount", "Heading", "LastChanged", "LastChangedBy", "RowID", "RowVersion", "Status")
-VALUES (-2, 200.0, 'Mn', TIMESTAMPTZ '2026-03-22T11:38:26.457385+00:00', 0.0, 'Mando', TIMESTAMPTZ '2026-03-22T11:38:26.457385+00:00', 'Stefan', '78c3d2ed-77b8-4669-9afe-8260b25de03f', 0, 2);
+VALUES (-2, 200.0, 'Mn', TIMESTAMPTZ '2026-04-17T00:02:47.764848+00:00', 0.0, 'Mando', TIMESTAMPTZ '2026-04-17T00:02:47.764848+00:00', 'Stefan', '618f21e1-0c31-4e03-895f-d783becc6355', 0, 2);
 INSERT INTO my."MyTable" ("Id", "Balance", "Code", "Created", "Discount", "Heading", "LastChanged", "LastChangedBy", "RowID", "RowVersion", "Status")
-VALUES (-1, 350.0, 'BD', TIMESTAMPTZ '2026-03-22T11:38:26.457383+00:00', 5.0, 'Baldo', TIMESTAMPTZ '2026-03-22T11:38:26.457383+00:00', 'Baldr', 'a59ad86d-a231-484d-8d77-a60997ab6ecb', 0, 1);
+VALUES (-1, 350.0, 'BD', TIMESTAMPTZ '2026-04-17T00:02:47.764846+00:00', 5.0, 'Baldo', TIMESTAMPTZ '2026-04-17T00:02:47.764846+00:00', 'Baldr', '518c42ff-2575-44cb-9340-e800436510cc', 0, 1);
 
 INSERT INTO my."MyTableRef" ("Id", "Amount", "Created", "LastChanged", "LastChangedBy", "MyInfo", "ParentId", "RowVersion")
-VALUES (-3, 200.0, TIMESTAMPTZ '2026-03-22T11:38:26.457393+00:00', TIMESTAMPTZ '2026-03-22T11:38:26.457393+00:00', 'Stefan', 'OtherData', -2, 0);
+VALUES (-3, 200.0, TIMESTAMPTZ '2026-04-17T00:02:47.764856+00:00', TIMESTAMPTZ '2026-04-17T00:02:47.764856+00:00', 'Stefan', 'OtherData', -2, 0);
 INSERT INTO my."MyTableRef" ("Id", "Amount", "Created", "LastChanged", "LastChangedBy", "MyInfo", "ParentId", "RowVersion")
-VALUES (-2, 50.0, TIMESTAMPTZ '2026-03-22T11:38:26.457393+00:00', TIMESTAMPTZ '2026-03-22T11:38:26.457393+00:00', 'Baldr', 'BiggerData', -1, 0);
+VALUES (-2, 50.0, TIMESTAMPTZ '2026-04-17T00:02:47.764855+00:00', TIMESTAMPTZ '2026-04-17T00:02:47.764855+00:00', 'Baldr', 'BiggerData', -1, 0);
 INSERT INTO my."MyTableRef" ("Id", "Amount", "Created", "LastChanged", "LastChangedBy", "MyInfo", "ParentId", "RowVersion")
-VALUES (-1, 300.0, TIMESTAMPTZ '2026-03-22T11:38:26.457392+00:00', TIMESTAMPTZ '2026-03-22T11:38:26.457392+00:00', 'Baldr', 'BigData', -1, 0);
+VALUES (-1, 300.0, TIMESTAMPTZ '2026-04-17T00:02:47.764855+00:00', TIMESTAMPTZ '2026-04-17T00:02:47.764855+00:00', 'Baldr', 'BigData', -1, 0);
 
 CREATE INDEX "IX_MyTable_LastChanged" ON my."MyTable" ("LastChanged");
 
@@ -86,7 +86,7 @@ SELECT setval(
     false);
 
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260322113826_InitDbTest', '8.0.24');
+VALUES ('20260417000247_InitDbTest', '8.0.26');
 
 COMMIT;
 

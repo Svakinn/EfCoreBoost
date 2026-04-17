@@ -17,7 +17,7 @@ namespace TestDb.Migrate.Migrations.MsSQL.MgDbTest
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.24")
+                .HasAnnotation("ProductVersion", "8.0.26")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -85,12 +85,12 @@ namespace TestDb.Migrate.Migrations.MsSQL.MgDbTest
                             Id = -1L,
                             Balance = 350m,
                             Code = "BD",
-                            Created = new DateTimeOffset(new DateTime(2026, 3, 22, 11, 26, 52, 38, DateTimeKind.Unspecified).AddTicks(3166), new TimeSpan(0, 0, 0, 0, 0)),
+                            Created = new DateTimeOffset(new DateTime(2026, 4, 17, 0, 2, 20, 619, DateTimeKind.Unspecified).AddTicks(4265), new TimeSpan(0, 0, 0, 0, 0)),
                             Discount = 5m,
                             Heading = "Baldo",
-                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 22, 11, 26, 52, 38, DateTimeKind.Unspecified).AddTicks(3164), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 4, 17, 0, 2, 20, 619, DateTimeKind.Unspecified).AddTicks(4263), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Baldr",
-                            RowID = new Guid("ec7d459d-3ec0-4e01-97d0-09b01f2a8744"),
+                            RowID = new Guid("ad431cdb-18aa-48b8-b0a2-39c8f568da31"),
                             RowVersion = 0L,
                             Status = 1
                         },
@@ -99,12 +99,12 @@ namespace TestDb.Migrate.Migrations.MsSQL.MgDbTest
                             Id = -2L,
                             Balance = 200m,
                             Code = "Mn",
-                            Created = new DateTimeOffset(new DateTime(2026, 3, 22, 11, 26, 52, 38, DateTimeKind.Unspecified).AddTicks(3189), new TimeSpan(0, 0, 0, 0, 0)),
+                            Created = new DateTimeOffset(new DateTime(2026, 4, 17, 0, 2, 20, 619, DateTimeKind.Unspecified).AddTicks(4307), new TimeSpan(0, 0, 0, 0, 0)),
                             Discount = 0m,
                             Heading = "Mando",
-                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 22, 11, 26, 52, 38, DateTimeKind.Unspecified).AddTicks(3189), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 4, 17, 0, 2, 20, 619, DateTimeKind.Unspecified).AddTicks(4306), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Stefan",
-                            RowID = new Guid("57adce98-b7d6-478a-a6da-3c9fd854b2e4"),
+                            RowID = new Guid("8b3000ff-09a8-4a50-8b1a-195216bae63d"),
                             RowVersion = 0L,
                             Status = 2
                         });
@@ -157,8 +157,8 @@ namespace TestDb.Migrate.Migrations.MsSQL.MgDbTest
                         {
                             Id = -1L,
                             Amount = 300m,
-                            Created = new DateTimeOffset(new DateTime(2026, 3, 22, 11, 26, 52, 38, DateTimeKind.Unspecified).AddTicks(3266), new TimeSpan(0, 0, 0, 0, 0)),
-                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 22, 11, 26, 52, 38, DateTimeKind.Unspecified).AddTicks(3267), new TimeSpan(0, 0, 0, 0, 0)),
+                            Created = new DateTimeOffset(new DateTime(2026, 4, 17, 0, 2, 20, 619, DateTimeKind.Unspecified).AddTicks(4406), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 4, 17, 0, 2, 20, 619, DateTimeKind.Unspecified).AddTicks(4407), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Baldr",
                             MyInfo = "BigData",
                             ParentId = -1L,
@@ -168,8 +168,8 @@ namespace TestDb.Migrate.Migrations.MsSQL.MgDbTest
                         {
                             Id = -2L,
                             Amount = 50m,
-                            Created = new DateTimeOffset(new DateTime(2026, 3, 22, 11, 26, 52, 38, DateTimeKind.Unspecified).AddTicks(3271), new TimeSpan(0, 0, 0, 0, 0)),
-                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 22, 11, 26, 52, 38, DateTimeKind.Unspecified).AddTicks(3272), new TimeSpan(0, 0, 0, 0, 0)),
+                            Created = new DateTimeOffset(new DateTime(2026, 4, 17, 0, 2, 20, 619, DateTimeKind.Unspecified).AddTicks(4410), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 4, 17, 0, 2, 20, 619, DateTimeKind.Unspecified).AddTicks(4411), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Baldr",
                             MyInfo = "BiggerData",
                             ParentId = -1L,
@@ -179,8 +179,8 @@ namespace TestDb.Migrate.Migrations.MsSQL.MgDbTest
                         {
                             Id = -3L,
                             Amount = 200m,
-                            Created = new DateTimeOffset(new DateTime(2026, 3, 22, 11, 26, 52, 38, DateTimeKind.Unspecified).AddTicks(3273), new TimeSpan(0, 0, 0, 0, 0)),
-                            LastChanged = new DateTimeOffset(new DateTime(2026, 3, 22, 11, 26, 52, 38, DateTimeKind.Unspecified).AddTicks(3273), new TimeSpan(0, 0, 0, 0, 0)),
+                            Created = new DateTimeOffset(new DateTime(2026, 4, 17, 0, 2, 20, 619, DateTimeKind.Unspecified).AddTicks(4412), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastChanged = new DateTimeOffset(new DateTime(2026, 4, 17, 0, 2, 20, 619, DateTimeKind.Unspecified).AddTicks(4412), new TimeSpan(0, 0, 0, 0, 0)),
                             LastChangedBy = "Stefan",
                             MyInfo = "OtherData",
                             ParentId = -2L,

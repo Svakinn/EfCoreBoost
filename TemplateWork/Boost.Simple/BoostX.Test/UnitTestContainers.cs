@@ -131,7 +131,7 @@ namespace BoostX.Test
         {
             const string dbName = "BoostXDb";
             const string connName = "BoostXMs";
-            var msBuilder = new MsSqlBuilder().WithImage("mcr.microsoft.com/mssql/server:2022-latest").WithPassword("MyPassword123!").Build();
+            var msBuilder = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").WithPassword("MyPassword123!").Build();
             await msBuilder.StartAsync();
             var newConnString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(msBuilder.GetConnectionString()) { InitialCatalog = dbName };
             var overrides = new Dictionary<string, string?>
@@ -186,8 +186,7 @@ namespace BoostX.Test
         {
             const string dbName = "BoostXDb";
             const string connName = "BoostXMy";
-            var myBuilder = new MySqlBuilder()
-                .WithImage("mysql:8.0")
+            var myBuilder = new MySqlBuilder("mysql:8.0")
                 .WithUsername("root")
                 .WithPassword("root")
                 .WithCommand("--default-authentication-plugin=mysql_native_password")
@@ -225,8 +224,7 @@ namespace BoostX.Test
         {
             const string dbName = "BoostXDb";
             const string connName = "BoostXPg";
-            var pgBuilder = new PostgreSqlBuilder()
-                .WithImage("postgres:16.3")
+            var pgBuilder = new PostgreSqlBuilder("postgres:16.3")
                 .WithUsername("postgres")
                 .WithPassword("postgres")
                 .WithDatabase("postgres")

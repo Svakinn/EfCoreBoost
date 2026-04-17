@@ -155,7 +155,7 @@ namespace BoostTest
             const string dbName = "TestDb";
             const string connName = "TestMs";
 
-            var msBuilder = new MsSqlBuilder().WithImage("mcr.microsoft.com/mssql/server:2022-latest").WithPassword("MyPassword123!").Build();
+            var msBuilder = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").WithPassword("MyPassword123!").Build();
             await msBuilder.StartAsync();
             var newConnString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(msBuilder.GetConnectionString()) { InitialCatalog = dbName };
             var overrides = new Dictionary<string, string?>
@@ -209,10 +209,8 @@ namespace BoostTest
         {
             const string dbName = "TestDb";
             const string connName = "TestMy";
-            var myBuilder = new MySqlBuilder()
-                .WithImage("mysql:8.0")
-                .WithUsername("root")
-                .WithPassword("root")
+            var myBuilder = new MySqlBuilder("mysql:8.0")
+                .WithUsername("root").WithPassword("root")
                 .WithCommand("--default-authentication-plugin=mysql_native_password")
                 .Build();
             await myBuilder.StartAsync();
@@ -249,11 +247,8 @@ namespace BoostTest
         {
             const string dbName = "TestDb";
             const string connName = "TestPg";
-            var pgBuilder = new PostgreSqlBuilder()
-                .WithImage("postgres:16.3")
-                .WithUsername("postgres")
-                .WithPassword("postgres")
-                .WithDatabase("postgres")
+            var pgBuilder = new PostgreSqlBuilder("postgres:16.3")
+                .WithUsername("postgres").WithPassword("postgres").WithDatabase("postgres")
                 .Build();
             await pgBuilder.StartAsync();
             var newConnString = pgBuilder.GetConnectionString();

@@ -11,7 +11,7 @@
           dotnet-new;template;efcore;entity-framework;database;orm;
           unit-of-work;repository-pattern;clean-architecture;
           sqlserver;postgresql;mysql;cross-database;
-          backend;data-access;boilerplate
+          backend;data-access;boilerplate;EntityFrameworkCore
       </PackageTags>
       <PackageLicenseFile>LICENSE</PackageLicenseFile>
       <PackageReadmeFile>PackageREADME.md</PackageReadmeFile>
