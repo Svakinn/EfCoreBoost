@@ -104,7 +104,7 @@ public class DbTestContextFactory : IDesignTimeDbContextFactory<DbTest>
 > Design-time DbContext factories are used by EF tooling only.
 > Runtime behavior is controlled via Units of Work.
 
-See [this documentation](../Model/EfMigrationsCMD.md) on how to build migrations for multiple providers.
+See [this documentation](./EfMigrationsCMD.md) on how to build migrations for multiple providers.
 
 ### Why the connection name is omitted
 

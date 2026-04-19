@@ -355,7 +355,7 @@ This provides another layer of safety when needed.
 
 ## EfCore.Boost OData Examples (from BoostTest Smoke Test)
 This document adds **concrete, copy-pasteable** OData examples based on the Boost test project’s `DbTest` model (`MyTable`, `MyTableRef`) and the smoke test code path.  
-See the this model here: [TestDb.cs](../../../../tests/BoostTest/TestDb/TestDb.cs).
+See the this model here: [TestDb.cs](.//tests/TestDb.cs).
 
 Relevant test model:
 

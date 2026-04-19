@@ -11,7 +11,7 @@ Instead of working directly with raw Entity Framework DbContexts, EfBoost introd
   - what parts of the database are available
   - what is readable or writable
   - what must stay protected
-- Actual table / entity access happens through **Repository classes** (see: [DbRepo.md](../DbRepo/DbRepo.md))
+- Actual table / entity access happens through **Repository classes** (see: [DbRepo.md](./DbRepo.md))
 - Specialized and high‑performance database logic flows through **Routines** (see: [DbUowRoutines.md](./DbUowRoutines.md))
 
 This gives clarity, safety, better architecture boundaries, and powerful features beyond normal EF.
@@ -269,7 +269,7 @@ And importantly:
 
 A separate document dives deeper into repo powers:
 
-📄 [DbRepo.md](./DbRepo/DbRepo.md) **– Repository Capabilities, OData & Bulk Operations**
+📄 [DbRepo.md](./DbRepo.md) **– Repository Capabilities, OData & Bulk Operations**
 
 The philosophy is:
 
@@ -318,7 +318,7 @@ UOWs bind to named database configuration entries:
 ```
 
 Centralized. Secure. Consistent.   
-See: [Configs.md](../CFG/Configs.md)
+See: [Configs.md](./Configs.md)
 
 ---
 
@@ -378,7 +378,7 @@ EfBoost also includes helpers related to model building and migrations, supporti
 - Structure consistency  
 - Improved developer workflow  
 
-However, that belongs to a dedicated topic:📄 [ModelBuilding.md](../Model/ModelBuilding.md)
+However, that belongs to a dedicated topic:📄 [ModelBuilding.md](./ModelBuilding.md)
 
 ---
 

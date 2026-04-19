@@ -130,7 +130,7 @@ public class LogContext
 These attributes are part of EfBoost modeling conventions.  
 They define index rules, identity behavior, and structured string semantics across supported providers.
 
-See: [ModelBuilding.md](../../Model/ModelBuilding.md) for details.
+See: [ModelBuilding.md](.//ModelBuilding.md) for details.
 
 ---
 

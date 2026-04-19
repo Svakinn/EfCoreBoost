@@ -338,7 +338,7 @@ From that plan, you explicitly decide how the request is handled:
 This approach separates what is allowed (via ODataPolicy) from how the query is executed, making advanced OData usage explicit, predictable, and safe.
 
 See more details about OData handling  in  
-[`Odata.md`](./OData/OData.md).
+[`Odata.md`](./OData.md).
 
 ---
 
@@ -386,7 +386,7 @@ And yes, in practice:
 
 Full details, behavior guarantees, tuning guidance and caveats:
 
-📄 [`BulkInserts.md`](./BulkInsert/BulkInserts.md) 
+📄 [`BulkInserts.md`](./BulkInserts.md) 
 
 ---
 

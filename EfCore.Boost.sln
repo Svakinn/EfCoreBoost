@@ -63,6 +63,35 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Boost.Simple.Solution", "Bo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfCore.Boost.Template.Simple.Solution", "templates\Boost.Simple.Solution\EfCore.Boost.Template.Simple.Solution.csproj", "{4C0DE1EE-6F00-4BFA-A7A2-BB672D0F291A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{A18E53C9-514A-4C0D-AECE-A8C2F786D024}"
+	ProjectSection(SolutionItems) = preProject
+		docs\uow-factory-pattern.md = docs\uow-factory-pattern.md
+		docs\readme.md = docs\readme.md
+		docs\BulkInserts.md = docs\BulkInserts.md
+		docs\Configs.md = docs\Configs.md
+		docs\DbRepo.md = docs\DbRepo.md
+		docs\DbUow.md = docs\DbUow.md
+		docs\DbUowRoutines.md = docs\DbUowRoutines.md
+		docs\EfMigrationsCMD.md = docs\EfMigrationsCMD.md
+		docs\GettingStarted.md = docs\GettingStarted.md
+		docs\ModelBuilding.md = docs\ModelBuilding.md
+		docs\OData.md = docs\OData.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{830F8B07-EB6E-4661-83B4-1F5E5676D5E8}"
+	ProjectSection(SolutionItems) = preProject
+		docs\tests\Readme.md = docs\tests\Readme.md
+		docs\tests\SmokeTest.md = docs\tests\SmokeTest.md
+		docs\tests\TestAzure.md = docs\tests\TestAzure.md
+		docs\tests\TestContainers.md = docs\tests\TestContainers.md
+		docs\tests\TheTestDb.md = docs\tests\TheTestDb.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{0C1D36E7-DDA0-4FC2-BD6D-E4B391148071}"
+	ProjectSection(SolutionItems) = preProject
+		docs\templates\UseTheTemplate.md = docs\templates\UseTheTemplate.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -239,5 +268,7 @@ Global
 		{7E371BEE-47CF-44F0-B80F-D803F0D3F309} = {9648E154-3913-4766-A0E3-564F9AB658B4}
 		{241F6359-9CBC-4230-A8AC-621EE2188156} = {3B5032E0-67C7-4EC4-847C-06912AD94914}
 		{4C0DE1EE-6F00-4BFA-A7A2-BB672D0F291A} = {241F6359-9CBC-4230-A8AC-621EE2188156}
+		{830F8B07-EB6E-4661-83B4-1F5E5676D5E8} = {A18E53C9-514A-4C0D-AECE-A8C2F786D024}
+		{0C1D36E7-DDA0-4FC2-BD6D-E4B391148071} = {A18E53C9-514A-4C0D-AECE-A8C2F786D024}
 	EndGlobalSection
 EndGlobal

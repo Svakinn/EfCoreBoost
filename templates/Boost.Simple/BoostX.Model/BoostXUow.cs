@@ -10,7 +10,7 @@ namespace BoostX.Model;
 /// Unit of Work for the BoostX application, providing access to repositories and routines.
 /// Inherits from UowFactory to handle DbContext creation and database type detection.
 /// </summary>
-public class BoostXUow(IConfiguration cfg, string cfgName) : UowFactory<BoostCTX>(cfg, cfgName)
+public class BoostXUow(IConfiguration cfg, string connectionName) : UowFactory<BoostCTX>(cfg, connectionName)
 {
     #region dbsets
 
@@ -40,7 +40,7 @@ public class BoostXUow(IConfiguration cfg, string cfgName) : UowFactory<BoostCTX
     }
 
     /// <summary>
-    /// Calls the 'GetIpViewByIpId' stored procedure/function to retrieve an IpInfoView by its ID.
+    /// Calls the 'GetIpViewByIpId', routine (stored procedure/function) to retrieve an IpInfoView by its ID.
     /// </summary>
     /// <param name="ipId">The ID of the IP record.</param>
     /// <returns>The IpInfoView if found; otherwise, null.</returns>
@@ -49,4 +49,5 @@ public class BoostXUow(IConfiguration cfg, string cfgName) : UowFactory<BoostCTX
         return await SetUpRoutineQuery<IpInfoView>(BoostCTX.DefaultSchemaName, "GetIpViewByIpId", [new DbParmInfo("@IpId", ipId)]).FirstOrDefaultAsync();
     }
     #endregion
+
 }

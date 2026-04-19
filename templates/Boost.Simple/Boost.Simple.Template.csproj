@@ -37,4 +37,7 @@
     <!-- Template source files for IDE visibility and packing -->
     <Content Include="**\*" Exclude="**\bin\**;**\obj\**;**\.vs\**;Boost.Simple.Template.csproj;artifacts\**;LICENSE;PackageREADME.md;icon.png" Pack="true" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="BoostX.Model\BoostXUowFactory.cs" />
+  </ItemGroup>
 </Project>

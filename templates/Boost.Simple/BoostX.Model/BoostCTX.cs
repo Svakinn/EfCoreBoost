@@ -4,8 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoostX.Model;
 
-
-
 /// <summary>
 /// The primary database context for the BoostX application.
 /// Defines the data model and configures EF Core conventions.

@@ -49,7 +49,7 @@ A UOW is the controlled gateway:
 Your app **does not talk to DbContext**.  
 It talks to your UOW.  
 That makes everything saner.  
-[See more details here](./src/EfCoreBoost/UOW/DbUow.md).
+[See more details here](./docs/DbUow.md).
 
 ---
 
@@ -63,7 +63,7 @@ Repositories provide pleasant clarity:
 - Bulk operations  
 
 Perfect for tables and views.  
-[See more details here](./src/EfCoreBoost/DbRepo/DbRepo.md).
+[See more details here](./docs/DbRepo.md).
 
 ---
 
@@ -75,7 +75,7 @@ EfBoost treats database intelligence as a first-class citizen:
 - Cross-database safe patterns  
 - Same C# call pattern regardless of provider  
 
-[See more details here](./src/EfCoreBoost/UOW/DbUowRoutines.md).
+[See more details here](./docs/DbUowRoutines.md).
 
 ---
 
@@ -168,7 +168,7 @@ If it was built with EfBoost conventions, the conversation changes:
 
 EfBoost makes **start here, grow there** realistic instead of terrifying.
 
-A detailed guide lives in [ModelBuilding.md](./src/EfCoreBoost/Model/ModelBuilding.md) explaining:
+A detailed guide lives in [ModelBuilding.md](./docs/ModelBuilding.md) explaining:
 
 - How conventions work  
 - What attributes do  
@@ -290,15 +290,66 @@ var orders = await uow.Orders.QueryUnTracked().Where(x => x.CustomerId == custom
 
 #### Run a routine
 ```csharp
-var result = await uow.RunRoutineQuery<OrderSummary>(
-    "sales",
-    "GetOrderSummary",
-    [new("@CustomerId", customerId)]
-).ToListAsync();
+var result = await uow.RunRoutineQuery<OrderSummary>( "sales", "GetOrderSummary", [new("@CustomerId", customerId)]).ToListAsync();
 ```
 
 ---
+### 5. 🧠 Creating and Using a Unit of Work
 
+EfCore.Boost supports two ways of working with a Unit of Work (UoW), depending on your application type.
+
+---
+
+#### a. Direct Usage (Console / Migration)
+
+In console tools or migration projects, create the UoW directly:
+
+```csharp
+using var uow = new MyUow(configuration, connectionName);
+```
+
+This is appropriate when:
+
+- you control the lifetime explicitly
+- you are outside dependency injection
+- simplicity is preferred
+
+---
+
+#### b. Application Usage (DI with Factory)
+
+Register the factory:
+
+```csharp
+builder.Services.AddSingleton<IMyUowFactory, MyUowFactory>();
+```
+
+Use it in services:
+
+```csharp
+public class MyService(IMyUowFactory factory)
+{
+    public async Task DoWork()
+    {
+        using var uow = factory.Create();
+        var data = await uow.IpInfos.Query().ToListAsync();
+    }
+}
+```
+
+The factory itself is lightweight and does **not** create a DbContext until `Create()` is called.
+
+---
+
+#### Why this pattern?
+
+- avoids injecting `DbContext` directly
+- allows safe use of singleton services
+- ensures UoW is only created when needed
+
+📚 See [here](./docs/uow-factory-pattern.md) for full details.
+
+---
 ### Summary
 
 - `DbContext` defines the full database model
@@ -337,7 +388,7 @@ You can still access *DbContext* by other means if needed, but there should be n
 
 ### Does this replace migrations?
 No. EF migrations still apply normally. EfBoost adds helpers but does not take ownership of migrations.  
-See [this document](./src/EfCoreBoost/Model/EfMigrationsCMD.md) on how to apply migrations to multiple providers for the same model.
+See [this document](./docs/EfMigrationsCMD.md) on how to apply migrations to multiple providers for the same model.
 
 ---
 
@@ -385,16 +436,7 @@ Model construction becomes more direct as well. Intent is expressed on the model
 ---
 
 ## 📚 Further Reading
-- [DbRepo.md](./src/EfCoreBoost/DbRepo/DbRepo.md) – Repositories, OData, raw SQL, bulk  
-- [DbUOW.md](./src/EfCoreBoost/UOW/DbUow.md)  – Lifecycle, provider awareness, transaction control  
-- [DbUowRoutines.md](./src/EfCoreBoost/UOW/DbUowRoutines.md)  – Portable routine strategies (Stored Procedures/Functions)  
-- [ModelBuilding.md](./src/EfCoreBoost/Model/ModelBuilding.md) – conventions, attributes, portability  
-- [EfMIgrationsCMD.md](./src/EfCoreBoost/Model/EfMigrationsCMD.md) – migrations for multiple providers  
-- [BulkInserts.md](./src/EfCoreBoost/DbRepo/BulkInsert/BulkInserts.md) – bulk inserts  
-- [OData.md](./src/EfCoreBoost/DbRepo/OData/OData.md) – OData helpers  
-- [Configs.md](./src/EfCoreBoost/CFG/Configs.md) – Connection configuration
-- [Testing](./tests/BoostTest/Readme.md) – Testing & examples including [test containers](./tests/BoostTest/TestContainers.md), [the Azure test](./tests/BoostTest/TestAzure.md), the [test database](./tests/BoostTest/TheTestDb.md) and the [smoke test](./tests/BoostTest/SmokeTest.md).
--  🧱 [Project-Template](./templates/Boost.Simple/Usage.md) - About using the project template.
+ [Detaild documentation](./docs/readme.md) is found under the document folder (docs).
  
 ---
 
@@ -405,7 +447,7 @@ MIT.
 
 ## 🧭 Status
 Actively developed.  
-Project and solution templates available (see Quick Start).  
+Project and solution templates are available (see Quick Start).  
 More templates and variations are coming soon.
 Documentation and examples expanding continuously.  
 Oracle provider support is under consideration.  
