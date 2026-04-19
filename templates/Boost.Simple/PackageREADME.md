@@ -4,10 +4,9 @@ This is a project template for **EfCore.Boost**, providing a clean, production-o
 
 EfCore.Boost extends EF Core with a structured Unit of Work and Repository pattern, multi-database support (SQL Server, PostgreSQL, MySQL), and conventions that promote consistent, maintainable, and vendor-neutral data access.
 
-The template generates two related projects (**BoostX.Model** and **BoostX.Migrate**) that are intended to be added to an existing solution or used as a starting point for a new one.  
-Because this is a multi-project template (not a solution template), it is not directly selectable from IDE project creation dialogs (Rider / Visual Studio).
+The template generates two related projects (**BoostX.Model** and **BoostX.Migrate**) that are intended to be added to an existing solution.
 
-Instead, the template must be instantiated via the .NET CLI:
+To get a full-blown solution with all the features, use the `EfCore.Boost.Template.Simple.Solution` template instead.
 
 ```powershell
 dotnet new boostsimple -n YourProjectName
