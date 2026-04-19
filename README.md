@@ -203,12 +203,9 @@ This generates a ready-to-use solution with:
 - A **Model project** containing your DbContext, entities, and Unit of Work
 - A **Migrate project** for managing migrations, and seed data
 - A **Test project** pre-configured for integration testing with TestContainers
-- Pre-configured cross-database conventions and deployment scripts
+- A **Web-Api project** demonstrating dependency injection with the UoW-Factory and OData interface
 
 > **💡 Existing Solutions:** You can easily copy the generated projects (Model, Migrate, Test) from the new solution into your existing solution. Just update the project references and namespace names as needed.
-
-*Note: For a more minimal starting point, a single project template is also available: `dotnet new boostsimple -n YourProjectName` (requires `EfCore.Boost.Template.Simple`).*
-
 
 ## Manual Integration
 If you prefer not to start from a template, you can integrate **EfCore.Boost** into an existing project.
