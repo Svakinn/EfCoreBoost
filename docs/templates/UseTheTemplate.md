@@ -1,4 +1,7 @@
 # EfCore.Boost.Template.Simple.Solution
+ToDO: fix text to general purpose (convert from the purpose of being within a template documenting current project)
+Also explain both current templates.
+
 
 This is a **solution template** for **EfCore.Boost**, providing a complete, production-oriented starting point for database-backed applications using Entity Framework Core.
 
