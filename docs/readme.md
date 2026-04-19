@@ -11,7 +11,8 @@ Start here, then follow links into focused documents.
 
 Setup from template, model extension, migrations, and deployment workflow.
 
-→ [Getting Started Guide](./GettingStarted.md)
+→ [Getting Started Guide](./GettingStarted.md)  
+→ [Manual Installation & Integration](./manual.md)
 
 ---
 

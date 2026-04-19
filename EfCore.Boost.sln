@@ -76,6 +76,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{A18E53C9-5
 		docs\GettingStarted.md = docs\GettingStarted.md
 		docs\ModelBuilding.md = docs\ModelBuilding.md
 		docs\OData.md = docs\OData.md
+		docs\manual.md = docs\manual.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{830F8B07-EB6E-4661-83B4-1F5E5676D5E8}"
