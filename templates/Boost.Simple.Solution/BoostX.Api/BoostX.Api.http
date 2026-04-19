@@ -1,0 +1,13 @@
+@BoostX.Api_HostAddress = http://localhost:5247
+
+### Get Random IP
+GET {{BoostX.Api_HostAddress}}/ipinfo/random
+Accept: application/json
+
+### Ensure Current IP
+GET {{BoostX.Api_HostAddress}}/ipinfo/ensure
+Accept: application/json
+
+### List IPs
+GET {{BoostX.Api_HostAddress}}/ipinfo/list
+Accept: application/json

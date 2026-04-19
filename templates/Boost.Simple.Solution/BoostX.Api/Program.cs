@@ -8,15 +8,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IUowBoostXFactory, UowBoostXFactory>();
 builder.Services.AddScoped<IpLogic>();
 builder.Services.AddHostedService<IpBackgroundWorker>();
-
 // Enable IP Forwarding
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
-
 builder.Services.AddControllers();
+
 var app = builder.Build();
+
 app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseAuthorization();
