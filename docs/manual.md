@@ -31,14 +31,14 @@ public class Customer
     public string Name { get; set; } = string.Empty;
 }
 ```
-You don't need to change every attribute except if you have a string without a length specification and the data needs to be searchable.
-Then you select `[StrCode]`, `[StrMed]`, `[StrLong]`, or `[StrFull]` to indicate the string length, or just like above where we use the `[Name]` attribute.
+You don't need to change every attribute except if you have a string without a length specification, and the data needs to be searchable.
+Then you select `[StrCode]`, `[StrMed]`, or  `[StrLong]` to indicate the string length, or just like above where we use the `[Name]` attribute.
 
 
 ### Benefits of Attributes vs. Fluent API
 - **Readability**: The schema intent is visible directly on the entity.
 - **Portability**: EfCore.Boost attributes are translated into provider-specific SQL (e.g., `NVARCHAR` for SQL Server, `TEXT` for PostgreSQL) automatically.
-- **Consistency**: EfCore.Boost changes several EF Core defaults to "standardize" behavior. For example, it configures **cascading deletes** to be turned off by default, which helps avoid unintended data loss when defining foreign relations.
+- **Consistency**: EfCore.Boost changes several EF Core defaults to "standardize" behavior. For example, it configures **cascading deletes** to be turned off by default, which helps avoid circular reference problems when defining foreign relations.
 
 ---
 
