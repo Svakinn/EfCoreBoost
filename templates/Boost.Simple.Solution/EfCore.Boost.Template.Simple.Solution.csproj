@@ -5,7 +5,7 @@
     <Title>EfCore.Boost Simple Solution Template</Title>
     <Authors>Sveinn S. Erlendsson</Authors>
       <Description>
-          Minimal EfCore.Boost multi-project solution template with Model, Migrate, and Test projects, designed to provide a clean, production-oriented starting point. Includes a solution file and 3 projects.
+          Minimal EfCore.Boost multi-project solution template with Model, Migrate, Api, and Test projects, designed to provide a clean, production-oriented starting point. Includes a solution file and 4 projects.
       </Description>
       <PackageTags>
           dotnet-new;template;efcore;entity-framework;database;orm;

@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoostX.Model", "BoostX.Mode
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoostX.Test", "BoostX.Test\BoostX.Test.csproj", "{266DDEB5-741F-4DC7-9436-3501ACD25B78}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoostX.Api", "BoostX.Api\BoostX.Api.csproj", "{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,20 @@ Global
 		{266DDEB5-741F-4DC7-9436-3501ACD25B78}.Release|x64.Build.0 = Release|Any CPU
 		{266DDEB5-741F-4DC7-9436-3501ACD25B78}.Release|x86.ActiveCfg = Release|Any CPU
 		{266DDEB5-741F-4DC7-9436-3501ACD25B78}.Release|x86.Build.0 = Release|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Debug|x64.Build.0 = Debug|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Debug|x86.Build.0 = Debug|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Release|x64.ActiveCfg = Release|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Release|x64.Build.0 = Release|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Release|x86.ActiveCfg = Release|Any CPU
+		{B8A8A1E7-7C6D-4D9A-9D8B-1E8E8E8E8E8E}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

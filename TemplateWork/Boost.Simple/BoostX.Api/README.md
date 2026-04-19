@@ -54,4 +54,26 @@ public sealed class IpLogic(IUowBoostXFactory uowBoostXFactory)
 
 - **IpInfoController**: Provides endpoints for retrieving and ensuring IP records.
 - **IpBackgroundWorker**: A background service that demonstrates using the `IUowBoostXFactory` to process records on a timer (every 5 minutes).
-- **OData Support**: Demonstrates how easily OData filtered queries can be integrated with the UOW repositories.
+- **OData Support**: Demonstrates how effortlessly powerful data querying can be. The OData standard is quite effective for serving data, allowing clients to perform complex filtering, sorting, and paging without any extra backend development. With **EfCore.Boost**, you get the full power of OData expressions translated directly to efficient SQL, without the overhead of setting up a formal OData service. This "best-of-both-worlds" approach keeps your API lightweight while providing maximum flexibility to consumers.
+
+### Why OData?
+
+- **Dynamic Querying**: Clients can request exactly the data they need (e.g., `?filter=Processed eq false&orderby=LastChangedUtc desc&top=10`).
+- **Reduced Backend Work**: No need to write custom filters for every field or combination of fields.
+- **Performance**: Expressions are translated to IQueryable and executed on the database level, ensuring only the necessary records are fetched.
+- **Flexibility**: Perfect for powering data-heavy frontends and grids that require advanced searching and sorting.
+
+### OData Query Example
+
+In `IpLogic.cs`, the `ListIps` method shows how to apply OData query options directly to a repository query with just one line of code:
+
+```csharp
+public async Task<QueryResult<BoostCTX.IpInfoView>> ListIps(ODataQueryOptions<BoostCTX.IpInfoView> options, CancellationToken ct)
+{
+    // Base query: you can still enforce security or business rules here
+    var baseQuery = UoW.IpInfoViews.QueryUnTracked().Where(tt => tt.Id > 0);
+
+    // One-liner to apply client-side filtering, sorting, and paging
+    return await UoW.IpInfoViews.FilterODataAsync(baseQuery, options, null, false, ct);
+}
+```

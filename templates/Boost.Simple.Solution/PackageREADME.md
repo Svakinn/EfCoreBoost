@@ -4,7 +4,7 @@ This is a **solution template** for **EfCore.Boost**, providing a complete, prod
 
 EfCore.Boost extends EF Core with a structured Unit of Work and Repository pattern, multi-database support (SQL Server, PostgreSQL, MySQL), and conventions that promote consistent, maintainable, and vendor-neutral data access.
 
-Unlike basic project templates, this is a **solution template**, meaning it generates a full `.sln` file containing three projects: **BoostX.Model**, **BoostX.Migrate**, and **BoostX.Test**. This makes it an excellent choice for starting a new application from scratch, as it sets up the entire architecture following our recommended database-first or model-first approach.
+Unlike basic project templates, this is a **solution template**, meaning it generates a full `.sln` file containing four projects: **BoostX.Model**, **BoostX.Migrate**, **BoostX.Api**, and **BoostX.Test**. This makes it an excellent choice for starting a new application from scratch, as it sets up the entire architecture following our recommended database-first or model-first approach.
 
 ## IDE Integration
 
@@ -18,6 +18,7 @@ You can also use it to create a fresh solution, configure your database, and the
 
 - **BoostX.Model**: Contains the `DbContext`, entity models, and Unit of Work logic.
 - **BoostX.Migrate**: A console utility for database schema management, multi-provider migrations (SQL Server, PostgreSQL, MySQL), and seed data management.
+- **BoostX.Api**: A demonstration ASP.NET Core Web API project showcasing the Unit of Work pattern, OData-style querying, and background processing using **EfCore.Boost**.
 - **BoostX.Test**: A comprehensive test project using **Testcontainers** to run integration tests against real database instances (PostgreSQL, SQL Server, MySQL).
 - Pre-configured patterns for schema names, normalized `DbContext` naming, and SQL deployment script generation.
 
