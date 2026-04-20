@@ -182,6 +182,27 @@ EfBoost absorbs provider differences so your application logic remains clean and
 Database-specific behavior is handled once, centrally, instead of leaking into your codebase.
 
 ---
+## Package Versions / Target Frameworks
+
+EfCore.Boost is released in parallel package lines for different .NET / EF Core generations:
+
+| Package Version | Target Framework | EF Core Version | Notes |
+|-----------------|------------------|-----------------|-------|
+| 8.x             | .NET 8           | EF Core 8       | Stable package line for .NET 8 projects |
+| 9.x             | .NET 9           | EF Core 9       | Package line for .NET 9 projects |
+
+Choose the package version that matches your target framework and EF Core version.
+
+Example:
+
+```bash
+dotnet add package EfCore.Boost --version 8.0.0
+```
+or
+```bash
+dotnet add package EfCore.Boost --version 9.0.0
+```
+---
 
 ## 🚀 Quick Start
 
@@ -190,14 +211,16 @@ Database-specific behavior is handled once, centrally, instead of leaking into y
 The easiest way to get started with EfCore.Boost is to use the solution template:
 
 ```bash
-dotnet new install EfCore.Boost.Template.Simple.Solution
+dotnet new install EfCore.Boost.Template.Simple.Solution@8.0.0
 dotnet new boostsimplesolution -n YourProjectName
 ```
-or
+for .net 8 projects, or
 ```bash
+dotnet new install EfCore.Boost.Template.Simple.Solution@9.0.0
 dotnet new boostsimplesolution -n YourProjectName --Schema YourSchemaName --Context YourDbContextName
 ```
-if you want to customize the default schema name or your db context name.
+For .net9 or .net10 projects.  
+Specify **--Schema** or **--Context** f you want to customize the default schema name or your db context name.
 
 This generates a ready-to-use solution with:
 - A **Model project** containing your DbContext, entities, and Unit of Work
@@ -295,7 +318,6 @@ Model construction becomes more direct as well. Intent is expressed on the model
  [Detaild documentation](./docs/readme.md) is found under the document folder (docs).
  
 ---
-
 ## 🏷 License
 MIT.
 
@@ -304,6 +326,7 @@ MIT.
 ## 🧭 Status
 Actively developed.  
 Project and solution templates are available (see Quick Start).  
-More templates and variations are coming soon.
+More templates and variations are coming soon.  
+Limited package for .NET 10 (Without MySQL support) being prepared..  
 Documentation and examples expanding continuously.  
 Oracle provider support is under consideration.  
