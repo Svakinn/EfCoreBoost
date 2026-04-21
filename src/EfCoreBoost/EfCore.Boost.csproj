@@ -1,24 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>8.0.0</Version>
+    <Version>10.0.0-preview.1</Version>
     <Authors>Sveinn S. Erlendsson</Authors>
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Description>
-        EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core, plus utilities for routines, bulk operations, and OData suport.
-        Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.    </Description>
-    <PackageReleaseNotes>
-Reconfiguring version numbers. Now start with 8 for .NET8 build, EntityFrameworkCore and provider libs.
-    </PackageReleaseNotes>
+      <Description>
+          Preview release targeting .NET 10.
+
+          MySQL/MariaDB is currently not supported in this version due to missing EF Core provider support.
+          If you require MySQL, please use version 9.x.
+
+          EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core,
+          with utilities for routines, bulk operations, and OData support.
+
+          Designed for consistent cross-database behavior across SQL Server/Azure and PostgreSQL,
+          using conventions and explicit safety boundaries.
+      </Description>
+      <PackageReleaseNotes>
+          Preview release for .NET 10.
+
+          - MySQL/MariaDB support is temporarily unavailable due to lack of EF Core provider support.
+          - SQL Server and PostgreSQL are fully supported.
+          - MySQL support will be reintroduced once the Pomelo provider is updated for .NET 10.
+
+          Use version 9.x if MySQL support is required.
+      </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-framework;dotnet;ef-core-migrations;EntityFrameworkCore</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
 	  <PackageIcon>icon.png</PackageIcon>
@@ -37,17 +52,16 @@ Reconfiguring version numbers. Now start with 8 for .NET8 build, EntityFramework
 	  <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.26" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.26" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.26" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
     <PackageReference Include="Microsoft.OData.Core" Version="8.4.3" />
     <PackageReference Include="Microsoft.OData.Edm" Version="8.4.3" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.6" />
+
   </ItemGroup>
   <Target Name="BuildDesignProject" BeforeTargets="Pack">
   <MSBuild Projects="..\EfCore.Boost.Design\EfCore.Boost.Design.csproj"
@@ -55,13 +69,13 @@ Reconfiguring version numbers. Now start with 8 for .NET8 build, EntityFramework
            Properties="Configuration=$(Configuration)" />
 </Target>
   <ItemGroup>
-  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.dll"
+  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net10.0\EfCore.Boost.Design.dll"
         Pack="true"
-        PackagePath="lib\net8.0\" />
-  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.xml"
+        PackagePath="lib\net10.0\" />
+  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net10.0\EfCore.Boost.Design.xml"
         Pack="true"
-        PackagePath="lib\net8.0\"
-        Condition="Exists('..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.xml')" />
+        PackagePath="lib\net10.0\"
+        Condition="Exists('..\EfCore.Boost.Design\bin\$(Configuration)\net10.0\EfCore.Boost.Design.xml')" />
 </ItemGroup>
   <ItemGroup>
 	  <ProjectReference Include="..\BoostAnalyzer\BoostAnalyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all"  />

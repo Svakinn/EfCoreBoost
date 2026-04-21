@@ -84,6 +84,7 @@ namespace BoostX.Test
             }
         }
 
+ /*
         [TestMethod]
         public async Task Uow_MySql_Test()
         {
@@ -94,6 +95,7 @@ namespace BoostX.Test
                 await BasicSmokeAsync(uow);
             }
         }
+*/
 
         static async Task ImportAsync(BoostXUow uow)
         {
@@ -175,7 +177,7 @@ namespace BoostX.Test
             await ImportAsync(uow); //Import data from CSV files
             return (uow);
         }
-
+/*
         /// <summary>
         ///  Spin up temporary MySql Server in Docker
         ///  Note: we are sort of cheating on the usual connection string from appsettings.json
@@ -207,7 +209,7 @@ namespace BoostX.Test
             await ImportAsync(uow); //Import data from CSV files
             return (myBuilder, uow);
         }
-
+*/
         static async Task<string> ReadSql(string fileName)
         {
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;

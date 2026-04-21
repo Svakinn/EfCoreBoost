@@ -601,7 +601,7 @@ namespace EfCore.Boost.UOW
             {
                 "sqlserver" => new SqlConnection(connStr),
                 "postgresql" => new Npgsql.NpgsqlConnection(connStr),
-                "mysql" => new MySqlConnector.MySqlConnection(connStr),
+                //"mysql" => new MySqlConnector.MySqlConnection(connStr),
                 _ => throw new NotSupportedException($"Admin connection not supported for provider '{prov}'.")
             };
         }

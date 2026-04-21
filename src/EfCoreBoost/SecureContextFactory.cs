@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 // Optional but sometimes helps with tooling
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+//using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace EfCore.Boost
 {
@@ -165,6 +165,8 @@ namespace EfCore.Boost
                     });
                     break;
                 case "mysql": //version 8.0 is bare minimum for Pomelo, lesser versions require different migration output
+                    throw new Exception($"MySQL is not supported by Pomelo for .NET10. Use EFCore.Boost version 9.x until then");
+                    /*
                     optionsBuilder.UseMySql(
                         connectionString,
                         ServerVersion.Create(8, 0, 13, ServerType.MySql),  //8.0.13+ supports UUID()
@@ -174,6 +176,7 @@ namespace EfCore.Boost
                                 mySql.MigrationsAssembly(migrationAssembly);
                         });
                     break;
+                    */
                 default:
                     throw new Exception($"Unknown or unsupported provider: {prov}");
             }
@@ -269,13 +272,16 @@ namespace EfCore.Boost
                     };
                     return csb.ConnectionString;
                 case "mysql":
+                    throw new Exception($"MySQL is not supported by Pomelo for .NET10. Use EFCore.Boost version 9.x until then");
                     // MySQL is more slippery here.
                     // Often use the same server / user credentials, optionally clear DB name
                     // or switch to a configured admin database if you later support that.
+                    /*
                     var my = new MySqlConnector.MySqlConnectionStringBuilder(connectionString);
                     if (!string.IsNullOrWhiteSpace(my.Database))
                         my.Database = string.Empty;
                     return my.ConnectionString;
+                    */
                 default:
                     throw new Exception($"Unknown or unsupported provider: {prov}");
             }

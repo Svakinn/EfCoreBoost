@@ -28,7 +28,6 @@ Real enterprise systems hit problems plain DbContext usage does not solve elegan
 | Exposing OData queries safely | Built-in **OData support** |
 | Need to insert/delete a *lot* of data | **Bulk capabilities** |
 | Need to run on different DB engines without rewriting everything | **Portable Model Building Conventions** |
-| Need to insert/delete a *lot* of data | **Bulk capabilities** |
 
 EfCore.Boost also provides ready-to-use project templates to accelerate adoption of these patterns.
 

@@ -118,6 +118,7 @@ namespace BoostTest
             }
         }
 
+        /*
         [TestMethod]
         public async Task Uow_MySql_Test()
         {
@@ -143,6 +144,7 @@ namespace BoostTest
                 await BasicSmokeSynchronous(uow, uow2, uowV);
             }
         }
+        */
 
         /// <summary>
         ///  Spin up temporary SQL Server in Docker
@@ -199,6 +201,7 @@ namespace BoostTest
             return (uow, uow2, uowV);
         }
 
+        /*
         /// <summary>
         ///  Spin up temporary MySql Server in Docker
         ///  Note: we are sort fo cheeting on the usual connection string from appsettings.json
@@ -230,6 +233,7 @@ namespace BoostTest
             var uowV = CreateUowView(cfg, connName);
             return (myBuilder, uow, uow2, uowV);
         }
+        */
 
         static async Task<string> ReadSql(string fileName)
         {
