@@ -41,10 +41,10 @@ EfBoost introduces a **structured data access architecture**:
 ### ✔ Unit of Work
 A UOW is the controlled gateway:
 
-- Defines what is accessible  
-- Manages lifecycle and transactions  
-- Is aware of provider differences  
-- Exposes repositories + routines safely  
+- Defines what is accessible
+- Manages lifecycle and transactions
+- Is aware of provider differences
+- Exposes repositories + routines safely
 
 Your app **does not talk to DbContext**.  
 It talks to your UOW.  
@@ -56,11 +56,11 @@ That makes everything saner.
 ### ✔ Repository Layer
 Repositories provide pleasant clarity:
 
-- Tracked vs no-tracking access  
-- OData shaping support  
-- Provider-safe metadata  
-- Raw helpers  
-- Bulk operations  
+- Tracked vs no-tracking access
+- OData shaping support
+- Provider-safe metadata
+- Raw helpers
+- Bulk operations
 
 Perfect for tables and views.  
 [See more details here](./docs/DbRepo.md).
@@ -70,10 +70,10 @@ Perfect for tables and views.
 ### ✔ Routines (Procedures / Functions)
 EfBoost treats database intelligence as a first-class citizen:
 
-- Scalar routines  
-- Tabular routines mapped to EF models  
-- Cross-database safe patterns  
-- Same C# call pattern regardless of provider  
+- Scalar routines
+- Tabular routines mapped to EF models
+- Cross-database safe patterns
+- Same C# call pattern regardless of provider
 
 [See more details here](./docs/DbUowRoutines.md).
 
@@ -91,9 +91,9 @@ A `DbUow` or `DbReadUow` provides controlled and focused access to the `DbContex
 
 Each UOW:
 
-- Exposes only the repositories it defines  
-- Controls tracking behavior  
-- Controls saving and transaction boundaries  
+- Exposes only the repositories it defines
+- Controls tracking behavior
+- Controls saving and transaction boundaries
 - Handles communication with different database providers
 
 The business logic interacts with repositories via `IQuery<T>` and save operations, never with the soup directly.  
@@ -106,7 +106,7 @@ It also does not need to care whether the heat beneath the pot comes from SQL Se
 
 ---
 
-## 🌍 Model Building & Cross-Platform Conventions  
+## 🌍 Model Building & Cross-Platform Conventions
 
 EfBoost solves, **once and uniformly**, the practical differences between database engines.
 
@@ -137,17 +137,17 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 From there:
 
-- Object names are mapped uniformly  
-- Provider-specific quoting and casing are handled automatically  
-- Routines are invoked consistently across databases  
+- Object names are mapped uniformly
+- Provider-specific quoting and casing are handled automatically
+- Routines are invoked consistently across databases
 - On **save**, EfBoost corrects common provider quirks such as:
-  - invalid or overflowing string lengths
-  - date and timestamp inconsistencies
+    - invalid or overflowing string lengths
+    - date and timestamp inconsistencies
 
 Your model expresses **intent**.  
 EfBoost applies **provider-correct behavior**.
 
-The result is a model that stays **portable, predictable, and stable** as databases change. 
+The result is a model that stays **portable, predictable, and stable** as databases change.
 
 ---
 
@@ -161,19 +161,19 @@ If your EF model was built “raw by hand”, you are potentially stuck.
 
 If it was built with EfBoost conventions, the conversation changes:
 
-- ✔ “We can migrate”  
-- ✔ “We don’t have to rewrite schema mapping”  
-- ✔ “We can keep our UOW & Repos”  
-- ✔ “We don’t have to redesign core data architecture”  
+- ✔ “We can migrate”
+- ✔ “We don’t have to rewrite schema mapping”
+- ✔ “We can keep our UOW & Repos”
+- ✔ “We don’t have to redesign core data architecture”
 
 EfBoost makes **start here, grow there** realistic instead of terrifying.
 
 A detailed guide lives in [ModelBuilding.md](./docs/ModelBuilding.md) explaining:
 
-- How conventions work  
-- What attributes do  
-- Provider trade-offs  
-- Practical guidance & strategy  
+- How conventions work
+- What attributes do
+- Provider trade-offs
+- Practical guidance & strategy
 
 **Your C# code stays unaware of database quirks.**
 
@@ -186,11 +186,11 @@ Database-specific behavior is handled once, centrally, instead of leaking into y
 
 EfCore.Boost is released in parallel package lines for different .NET / EF Core generations:
 
-| Package Version | Target Framework | EF Core Version | Notes |
-|-----------------|------------------|-----------------|-------|
-| 8.x             | .NET 8           | EF Core 8       | Stable package line for .NET 8 projects |
-| 9.x             | .NET 9           | EF Core 9       | Package line for .NET 9 projects |
-
+| Package Version | Target Framework | EF Core Version | Notes                                                                      |
+|-----------------|------------------|-----------------|----------------------------------------------------------------------------|
+| 8.x             | .NET 8           | EF Core 8       | Stable package line for .NET 8 projects                                    |
+| 9.x             | .NET 9           | EF Core 9       | Package line for .NET 9 projects                                           |
+| 10.x            | .NET 10          | EF Core 10      | Package line for .NET 10 projects, **pre-release**. **No MySql support !** |
 Choose the package version that matches your target framework and EF Core version.
 
 Example:
@@ -259,7 +259,7 @@ No. Single-provider systems benefit from structure, safe OData usage, bulk perfo
 EfCore.Boost shapes and configures the DbContext and uses it internally, but it is not exposed through the Unit of Work.  
 All normal data access should go through:
 - **DbUow** for read-write operations
-- **DbReadUow** for read-only operations  
+- **DbReadUow** for read-only operations
 
 You can still access *DbContext* by other means if needed, but there should be no practical reason to do so.
 
@@ -296,13 +296,13 @@ EfBoost is intended to help you build and use your database in a portable way, n
 
 EfCore.Boost is for systems that require things like:
 
-- structured database access  
-- predictable cross-provider behavior  
-- safe and capable OData  
-- serious bulk ingestion performance  
-- first-class support for views and routines  
-- transactional discipline  
-- long-term maintainability  
+- structured database access
+- predictable cross-provider behavior
+- safe and capable OData
+- serious bulk ingestion performance
+- first-class support for views and routines
+- transactional discipline
+- long-term maintainability
 
 EF Core remains the ORM.  
 EfCore.Boost helps turn it into a **robust, scalable, and well-structured data layer**.  
@@ -315,7 +315,7 @@ Model construction becomes more direct as well. Intent is expressed on the model
 ---
 
 ## 📚 Further Reading
- [Detaild documentation](./docs/readme.md) is found under the document folder (docs).
+[Detaild documentation](./docs/readme.md) is found under the document folder (docs).
  
 ---
 ## 🏷 License
@@ -327,6 +327,5 @@ MIT.
 Actively developed.  
 Project and solution templates are available (see Quick Start).  
 More templates and variations are coming soon.  
-Limited package for .NET 10 (Without MySQL support) being prepared..  
 Documentation and examples expanding continuously.  
 Oracle provider support is under consideration.  

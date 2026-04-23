@@ -67,22 +67,12 @@ OData, when applied correctly, offers performance comparable to well-tuned custo
 
 ---
 
-## OData Is Best for Querying (Not CRUD)
+## OData: Powerful Querying and CRUD
+While OData supports full CRUD (Create, Read, Update, Delete) operations, many enterprise systems choose to leverage OData primarily for its exceptionally powerful querying and data-shaping capabilities.
 
-While OData defines full CRUD semantics, real-world enterprise systems rarely benefit from using OData as the write API. Challenges include:
+Using OData for querying provides a flexible, standardized way to expose data without needing to build specialized endpoints for every possible filter or sort combination. Whether you choose to implement the full CRUD surface or focus solely on high-performance querying, OData integrates naturally with EfCore.Boost.
 
-- unclear business rule enforcement
-- computed or read-only field conflicts
-- lifecycle validation
-- versioning and audit concerns
-- consumer misuse risks
-
-EfBoost’s design stance is intentionally clear:
-
-OData is ideal for querying and data shaping.
-Normal application APIs remain ideal for writes and workflows.
-
-EfBoost enables rich read capabilities while leaving update logic to structured, intentional service contracts.
+EfBoost enables rich read capabilities while leaving the choice of write-logic implementation (whether via OData or standard REST/CQRS patterns) to the developer.
 
 ---
 
@@ -94,6 +84,89 @@ EfCore.Boost supports OData in two layers:
 - a **full control path** when you need explicit control over behavior and output
 
 Both paths use the same underlying mechanisms.
+
+---
+
+## Exposing OData: Controllers and Metadata
+To expose an OData service, you must first define an Entity Data Model (EDM). EfCore.Boost provides the `EdmBuilder` utility to automate this process while maintaining strict control over what is exposed.
+
+### The EdmBuilder Entry Point (Recommended approach)
+
+`EdmBuilder` is the central point for generating OData models. The **primary and recommended** path is UOW-based generation, as it ensures your OData surface perfectly matches your exposed repositories.
+
+#### 1. Build from Unit of Work
+
+If your Unit of Work owns its `DbContext` (which is standard in EfBoost), you can build the model without providing the context separately:
+
+```csharp
+// Simplest entry point
+var edm = EdmBuilder.BuildEdmModelFromUow<YourUow>();
+```
+
+This strategy:
+- Scans the UOW for `EfRepo<T>`, `EfReadRepo<T>`, and their variants.
+- Uses the UOW's internal `DbContext` to resolve primary keys and filter out owned/keyless types.
+- Defines the OData entity sets based ONLY on what the UOW exposes.
+
+#### 2. Customizing the Model (Functions and Actions)
+
+If you need to add custom OData functions or actions, use the configuration callback. This allows you to extend the model during construction:
+
+```csharp
+var edm = EdmBuilder.BuildEdmModelFromUow<YourUow>(builder => 
+{
+    // Add a custom function
+    builder.EntityType<User>()
+           .Collection
+           .Function("GetActiveUsers")
+           .ReturnsCollectionFromEntitySet<User>("Users");
+
+    // Add a custom action
+    builder.EntityType<Order>()
+           .Action("Cancel")
+           .Parameter<string>("Reason");
+});
+```
+
+### Other Strategies
+
+1.  **`BuildEdmModelFromContext(DbContext)`**:
+    Exposes all eligible `DbSet<T>` properties found in the database context. Useful for rapid prototyping or internal-only tools.
+2.  **`BuildEdmModelFromTypes(params Type[] types)`**:
+    Allows manual selection of specific entity types.
+
+### Scoping via UOW-Driven EDM
+
+By default, we recommend using `BuildEdmModelFromUow`. A single `DbContext` might contain a large number of entity sets, but you may want to surface only a specific subset of them for a particular API or business context.
+
+Using the Unit of Work as the source for the EDM allows you to:
+- **Defined Surface Area**: The OData metadata reflects exactly the repositories defined in the UOW.
+- **Flexibility**: You can have multiple UOWs operating on the same `DbContext`, each surfacing a different part of the database.
+- **Clean Metadata**: Clients only see the entities intended for their specific use case.
+- **Context Resolution**: The builder uses the UOW's internal context to handle primary keys and EF metadata automatically.
+
+### Integration Example
+
+Here is how you typically configure OData in your application using `EdmBuilder`:
+
+```csharp
+// 1. Build the EDM model from your Unit of Work
+var edm = EdmBuilder.BuildEdmModelFromUow<YourUow>();
+
+// 2. Register OData services
+builder.Services
+    .AddControllers()
+    .AddOData(opt => opt
+        .Select()
+        .Filter()
+        .OrderBy()
+        .Expand()
+        .Count()
+        .SetMaxTop(null) // Or set a global default limit
+        .AddRouteComponents("odata", edm));
+```
+
+The resulting model automatically includes Entity Framework primary key mappings, skips owned types, and handles keyless entities appropriately to ensure OData validation and metadata remain correct.
 
 ---
 
