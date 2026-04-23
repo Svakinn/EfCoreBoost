@@ -185,11 +185,11 @@ Database-specific behavior is handled once, centrally, instead of leaking into y
 
 EfCore.Boost is released in parallel package lines for different .NET / EF Core generations:
 
-| Package Version | Target Framework | EF Core Version | Notes |
-|-----------------|------------------|-----------------|-------|
-| 8.x             | .NET 8           | EF Core 8       | Stable package line for .NET 8 projects |
-| 9.x             | .NET 9           | EF Core 9       | Package line for .NET 9 projects |
-
+| Package Version | Target Framework | EF Core Version | Notes                                                                      |
+|-----------------|------------------|-----------------|----------------------------------------------------------------------------|
+| 8.x             | .NET 8           | EF Core 8       | Stable package line for .NET 8 projects                                    |
+| 9.x             | .NET 9           | EF Core 9       | Package line for .NET 9 projects                                           |
+| 10.x            | .NET 10          | EF Core 10      | Package line for .NET 10 projects, **pre-release**. **No MySql support !** |
 Choose the package version that matches your target framework and EF Core version.
 
 Example:
@@ -326,6 +326,5 @@ MIT.
 Actively developed.  
 Project and solution templates are available (see Quick Start).  
 More templates and variations are coming soon.  
-Limited package for .NET 10 (Without MySQL support) being prepared..  
 Documentation and examples expanding continuously.  
 Oracle provider support is under consideration.  

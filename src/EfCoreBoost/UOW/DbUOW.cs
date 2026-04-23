@@ -17,11 +17,17 @@ namespace EfCore.Boost.UOW
 
     /// <summary>
     /// Unit-of-work over a single DbContext.
-    /// Not concurrency-safe: do not use the same UOW instance from multiple concurrent operations.
+    /// Not concurrency-safe: do not use the same UOW instance from multiple concurrent operations, as the underlying EF DbContext is not thread-safe.
     /// Create a new UOW per scope (request/job) and dispose of it when done.
     /// </summary>
     public interface IDbReadUow : IDisposable
     {
+        /// <summary>
+        /// Returns the underlying EF DbContext instance for advanced scenarios where you need direct access.
+        /// </summary>
+        /// <returns>The EF´s DBContext</returns>
+        DbContext GetDbContext();
+
         /// <summary>
         /// Returns the EDMX metadata XML representation of the model. Used by OData endpoints.
         /// </summary>
@@ -303,15 +309,6 @@ namespace EfCore.Boost.UOW
         void SaveChangesAndNewSynchronized();
 
 
-#pragma warning disable CS1587 // XML comment is not placed on a valid language element
-        /// <summary>
-        /// In case you would ever want to give access to the underlying DbContext for some reason, you can get it via this method.
-        /// Use with care, as direct access to the DbContext can lead to unintended side effects if not handled properly.
-        /// Returns the underlying EF DbContext instance for advanced scenarios where you need direct access.
-        /// </summary>
-        /// <returns>The EF´s DBContext</returns>
-        //DbContext GetDbContext();
-#pragma warning restore CS1587 // XML comment is not placed on a valid language element
 
         /// <summary>
         /// Enables or disables automatic change detection in the underlying DbContext.
@@ -455,7 +452,8 @@ namespace EfCore.Boost.UOW
     }
 
     /// <summary>
-    /// Base unit of a work class to be extended by inherited classes, doing the actual db work
+    /// Base unit of a work class to be extended by inherited classes, doing the actual db work.
+    /// Not concurrency-safe: do not use the same UOW instance from multiple concurrent operations, as the underlying EF DbContext is not thread-safe.
     /// </summary>
     public abstract class DbReadUow<TCtx> : IDbReadUow where TCtx : DbContext
     {
@@ -523,7 +521,7 @@ namespace EfCore.Boost.UOW
         //See interface for documentation
         public string Metadata()
         {
-            return EdmContextBuilder.BuildXmlModelFromContext(this.Ctx);
+            return EdmBuilder.BuildXmlModelFromUow(this);
         }
 
         ///See interface for documentation
@@ -532,7 +530,7 @@ namespace EfCore.Boost.UOW
             if (this._cachedEdmModel != null) return this._cachedEdmModel;
             lock (this._edmLock)
             {
-                this._cachedEdmModel ??= EdmContextBuilder.BuildEdmModelFromContext(Ctx);
+                this._cachedEdmModel ??= EdmBuilder.BuildEdmModelFromUow(this);
             }
             return this._cachedEdmModel;
         }

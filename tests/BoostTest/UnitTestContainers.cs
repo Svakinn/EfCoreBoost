@@ -18,6 +18,7 @@ using EfCore.Boost.CFG;
 using Testcontainers.MsSql;
 using Testcontainers.MySql;
 using Testcontainers.PostgreSql;
+using EfCore.Boost.EDM;
 using BoostTest.Helpers;
 using TestDb;
 
@@ -440,7 +441,37 @@ namespace BoostTest
             var shapedQuery4 = uow.MyTables.ApplyODataSelectExpand(plan4);
             var res4 = await uow.MyTables.MaterializeODataShapedAsync(plan4, shapedQuery4);
             Assert.IsNotEmpty(res4.Results, "Expected at least one result from $filter=Id eq -1 with expanded MyTableRefs, but none were returned.");
-        }
+            //
+            // Test UOW EDM generation
+            //
+            var xmlUow = EdmBuilder.BuildXmlModelFromUow(uow);
+            Assert.Contains("<EntitySet Name=\"MyTables\"", xmlUow, "XML model for UOW should contain EntitySet name MyTables");
+            Assert.Contains("<EntitySet Name=\"MyTableRefs\"", xmlUow, "XML model for UOW should contain EntitySet name MyTableRefs");
+            Assert.Contains("<EntityType Name=\"MyTable\"", xmlUow, "XML model for UOW should contain EntityType name MyTable");
+            Assert.Contains("<EntityType Name=\"MyTableRef\"", xmlUow, "XML model for UOW should contain EntityType name MyTableRef");
+
+            // Test generic UOW EDM generation (new simplified API)
+            var xmlUowGeneric = EdmBuilder.BuildXmlModelFromUow<UOWTestDb>();
+            Assert.Contains("<EntitySet Name=\"MyTables\"", xmlUowGeneric);
+
+            // Test custom EDM configuration (functions/actions)
+            var xmlCustom = EdmBuilder.BuildXmlModelFromUow(uow, builder => {
+                builder.EntityType<DbTest.MyTable>().Collection.Function("MyCustomFunction").Returns<string>();
+            });
+            Assert.Contains("<Function Name=\"MyCustomFunction\"", xmlCustom, "XML model should contain custom function");
+            //
+            // Test GetModel() and Metadata() from UOW
+            //
+            var xmlFromMetadata = uow.Metadata();
+            Assert.Contains("<EntitySet Name=\"MyTables\"", xmlFromMetadata, "Metadata() from UOW should contain MyTables");
+            Assert.Contains("<EntitySet Name=\"MyTableRefs\"", xmlFromMetadata, "Metadata() from UOW should contain MyTableRefs");
+            // In UOWTestDb, MyTableRefViews is commented out or missing, but let's check what's NOT there
+            Assert.IsFalse(xmlFromMetadata.Contains("<EntitySet Name=\"MyTableRefViews\""), "Metadata() from UOW should NOT contain MyTableRefViews as it's not exposed in UOWTestDb");
+            var modelFromGetModel = uow.GetModel();
+            Assert.IsNotNull(modelFromGetModel.EntityContainer.FindEntitySet("MyTables"), "GetModel() should contain MyTables");
+            Assert.IsNotNull(modelFromGetModel.EntityContainer.FindEntitySet("MyTableRefs"), "GetModel() should contain MyTableRefs");
+            Assert.IsNull(modelFromGetModel.EntityContainer.FindEntitySet("MyTableRefViews"), "GetModel() should NOT contain MyTableRefViews");
+       }
 
         /// <summary>
         /// Just a part of what we do for async, no need to repeat all tests
