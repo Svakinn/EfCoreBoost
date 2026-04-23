@@ -6,8 +6,10 @@ using static TestDb.DbTest;
 namespace TestDb
 {
     //DbTest
-    public sealed class UOWTestDb(IConfiguration cfg, string cfgName) : UowFactory<DbTest>(cfg, cfgName)
+    public sealed class UOWTestDb : UowFactory<DbTest>
     {
+        public UOWTestDb() : base(new ConfigurationBuilder().AddJsonFile("AppSettings.json", optional: true).Build(), "TestMs") { }
+        public UOWTestDb(IConfiguration cfg, string cfgName) : base(cfg, cfgName) { }
         #region tabular data
 
         public EfRepo<MyTable> MyTables => new(Ctx, DbType);

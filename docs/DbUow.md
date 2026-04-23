@@ -360,7 +360,7 @@ Code plays safely inside it.
 ## Thread Safety
 
 A UOW instance is **not concurrency-safe**. This is a direct consequence of EF Core’s `DbContext`,
-which does not support concurrent operations.
+which is not thread-safe and does not support concurrent operations.
 
 Do **not** use the same UOW instance from multiple parallel operations
 (e.g. `Task.WhenAll`, background tasks, or overlapping async calls).
