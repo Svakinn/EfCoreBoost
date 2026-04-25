@@ -328,6 +328,5 @@ MIT.
 Actively developed.  
 Project and solution templates are available (see Quick Start).  
 More templates and variations are coming soon.  
-Limited package for .NET 10 (Without MySQL support) being prepared..  
 Documentation and examples expanding continuously.  
 Oracle provider support is under consideration.  

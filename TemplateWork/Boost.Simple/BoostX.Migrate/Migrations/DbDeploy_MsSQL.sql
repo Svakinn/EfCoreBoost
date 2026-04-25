@@ -1,10 +1,10 @@
-/*
+﻿/*
     Database deploy script (MsSQL)
-    Generated: 2026-04-06 18:14:58
+    Generated: 2026-04-25 12:57:19
     ConnName: BoostXMs
 */
 
-/*** BEGIN InitBoostXDbContext.sql ***/
+/*** BEGIN InitBoostCTX.sql ***/
 
 IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
 BEGIN
@@ -53,7 +53,7 @@ CREATE INDEX [IX_IpInfo_Processed] ON [BoostSchemaX].[IpInfo] ([Processed]);
 GO
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20260406181455_InitBoostXDbContext', N'8.0.24');
+VALUES (N'20260425125716_InitBoostCTX', N'8.0.26');
 GO
 
 COMMIT;
@@ -61,7 +61,7 @@ GO
 
 
 GO
-/*** END InitBoostXDbContext.sql ***/
+/*** END InitBoostCTX.sql ***/
 
 
 /*** BEGIN MsSQL.sql ***/
@@ -82,7 +82,7 @@ BEGIN
   end
 	-- Recheck hostname after 6 months
   else if (@processed = 1 and @lCh + 180 > SYSUTCDATETIME()) begin
-    update BoostSchemaX.IpInfo set Processed = 0 where Id = @FoundId;
+    update [BoostSchemaX].[IpInfo] set Processed = 0 where Id = @FoundId;
   end
   SELECT @FoundId AS IpId;
 END

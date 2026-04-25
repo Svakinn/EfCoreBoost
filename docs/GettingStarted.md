@@ -66,12 +66,24 @@ The factory (or direct UoW creation) will use:
 
 ## 5) Generate Migrations
 
-From the `/Ps` folder, run the provider script:
+From the `/Ps` folder, run the provider script. There are two types of scripts:
+
+### A) Initial / Rebuild
+Use these for the first migration or when you want to start fresh. **Note: These wipe existing migrations for the provider.**
 
 ```bash
 ./PgMigrate.ps1   # PostgreSQL
 ./MsMigrate.ps1   # SQL Server
 ./MyMigrate.ps1   # MySQL
+```
+
+### B) Incremental (AddMigration)
+Use these to add a new migration on top of existing ones. These preserve history and allow merging manual SQL files (e.g., `SQL/MsSql-1.sql`).
+
+```bash
+./PgAddMigration.ps1
+./MsAddMigration.ps1
+./MyAddMigration.ps1
 ```
 
 This updates migrations based on your current model.

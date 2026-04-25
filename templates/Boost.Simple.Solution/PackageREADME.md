@@ -44,7 +44,7 @@ Example:
 dotnet new boostsimplesolution -n SalesApp --Schema sales --Context DbSalesContext
 ```
 
-For more details on usage, see the Migrate project´s `Readme.md` file in the generated solution.
+For more details on usage, see the `readme.md` file in the root folder of the generated solution.
 
 ## About EfCore.Boost
 

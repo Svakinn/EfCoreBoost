@@ -41,7 +41,7 @@ Example:
 dotnet new boostsimple -n SalesCtx --Schema sales --Context DbSalesContext
 ```
 
-For more details on usage, see the `Usage.md` file in the generated projects.
+For more details on usage, see the `readme.md` file in the root folder of the generated project.
 
 ## About EfCore.Boost
 

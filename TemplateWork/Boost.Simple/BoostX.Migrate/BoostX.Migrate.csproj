@@ -25,10 +25,11 @@
       <Folder Include="CSV\" />
       <Folder Include="Migrations\" />
       <Folder Include="Migrations\MsSQL\" />
+      <Folder Include="Migrations\MsSQL\SnapBoostCTX\" />
       <Folder Include="Migrations\MySQL\" />
+      <Folder Include="Migrations\MySQL\SnapBoostCTX\" />
       <Folder Include="Migrations\PgSQL\" />
-        <Folder Include="SQL\" />
-        <Folder Include="PS\" />
+      <Folder Include="Migrations\PgSQL\SnapBoostCTX\" />
     </ItemGroup>
 
     <ItemGroup>
@@ -69,6 +70,9 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
       <None Update="SQL\MySql.mysql">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="SQL\MsSql-1.sql">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
