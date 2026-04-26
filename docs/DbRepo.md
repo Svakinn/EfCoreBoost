@@ -188,13 +188,6 @@ and
 var user = await uow.Users.RowTrackedAsync(u => u.Email == email, ct);
 ```
 
-This intentionally mirrors the **two dominant EF Core usage patterns**:
-
-| EF Pattern | EfBoost Equivalent |
-|-----------|--------------------|
-`QueryTracked()` + `RowTrackedAsync()` | `RowUnTrackedAsync(...)` |
-`QueryUnTracked()` + `RowByKeyUnTrackedAsync()` | `RowByKeyTrackedAsync(...)` |
-
 So yes:
 ✔ These exist to support the familiar EF Core mental model,  
 but expressed with **clearer intent and safer defaults**.

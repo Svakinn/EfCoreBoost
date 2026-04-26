@@ -1,7 +1,7 @@
 ﻿# DbUOW.md  
-## Database Unit of Work (EfBoost / DbRepo)
+## Database Unit of Work (Uow)
 
-`DbUow<TContext>` is the foundational **Unit of Work** abstraction in EfBoost / DbRepo.  
+`DbUow<TContext>` is the foundational **Unit of Work** abstraction in EfCore.Boost.  
 It defines a controlled, structured, and powerful gateway between your .NET application and the database.
 
 Instead of working directly with raw Entity Framework DbContexts, EfBoost introduces a **layered, structured access model**:
@@ -382,7 +382,7 @@ However, that belongs to a dedicated topic:📄 [ModelBuilding.md](./ModelBuildi
 
 ---
 
-## 🎯 Summary
+## 📌 Summary
 
 `DbUow` is:
 

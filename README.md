@@ -34,7 +34,21 @@ EfCore.Boost addresses common friction points.  Each point describes a common is
 
 ---
 
-## When not to use EfCore.Boost
+## 🧩 What you get with EfCore.Boost
+
+EfCore.Boost makes EF Core easier to use in systems where the database is central.
+
+In practice, this means:
+
+- **the same application code works across SQL Server, PostgreSQL, and MySQL**
+- model definitions are simpler and easier to read, with less reliance on fluent configuration
+- migrations and data seeding follow a structured, ready-to-run workflow
+- bulk operations, routines, and OData are part of everyday data access
+- application code interacts with a controlled and predictable data layer
+
+---
+
+## 🚫 When not to use EfCore.Boost
 
 EfCore.Boost may be unnecessary if:
 
@@ -50,30 +64,33 @@ EfCore.Boost may be unnecessary if:
 EfBoost introduces a **structured data access architecture**:
 
 ### ✔ Unit of Work
-A UOW is the controlled gateway:
+A UOW is the controlled gateway. It builds on top of DbContext and acts as the application’s entry point to the data layer:
 
-- Defines what is accessible
-- Manages lifecycle and transactions
-- Is aware of provider differences
-- Exposes repositories + routines safely
+- defines what is accessible
+- controls lifecycle and transaction boundaries
+- applies provider-aware behavior
+- exposes repositories and routines in a structured way
 
-Your app **does not talk to DbContext**.  
-It talks to your UOW.  
-That makes everything saner.  
+DbContext represents the underlying database model.  
+The Unit of Work defines how it is accessed and extends it with additional capabilities.  
 [See more details here](./docs/DbUow.md).
 
 ---
 
 ### ✔ Repository Layer
-Repositories provide pleasant clarity:
+Repositories are built around the underlying DbSet for each entity or view, and provide a structured and extended way to interact with it.
 
-- Tracked vs no-tracking access
-- OData shaping support
-- Provider-safe metadata
-- Raw helpers
-- Bulk operations
+They combine familiar querying with additional capabilities:
 
-Perfect for tables and views.  
+- clear separation between tracked and no-tracking access
+- integrated OData query support
+- provider-aware metadata and conventions
+- helper methods for common data access patterns
+- built-in bulk operations
+
+In practice, they act as a structured and extended form of DbSet, making data access more consistent and easier to reason about.
+
+Repositories work naturally with both tables and views.  
 [See more details here](./docs/DbRepo.md).
 
 ---
@@ -90,7 +107,7 @@ EfBoost treats database intelligence as a first-class citizen:
 
 ---
 
-### Architectural view
+### 🏗️ Architectural view
 
 <img src="./SoupSm.png" width="500" height="333" />
 
@@ -193,7 +210,7 @@ EfBoost absorbs provider differences so your application logic remains clean and
 Database-specific behavior is handled once, centrally, instead of leaking into your codebase.
 
 ---
-## Package Versions / Target Frameworks
+## 🧾 Package Versions / Target Frameworks
 
 EfCore.Boost is released in parallel package lines for different .NET / EF Core generations:
 
@@ -250,7 +267,7 @@ A detailed guide on manual integration is available here:
 
 ---
 
-# FAQ
+# 💬 FAQ
 
 ### Do we still use EF Core?
 Yes. EfBoost sits above EF Core. EF remains your ORM.
@@ -304,7 +321,7 @@ EfBoost is intended to help you build and use your database in a portable way, n
 
 ---
 
-# Summary
+# 📌 Summary
 
 EfCore.Boost is for systems that require things like:
 
