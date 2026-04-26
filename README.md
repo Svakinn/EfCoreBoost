@@ -1,36 +1,47 @@
 # EfCore.Boost  <img src="./src/EfCoreBoost/icon.png" width="64" height="64" />
-A disciplined **Unit of Work + Repository + Routine + Model Building** layer for Entity Framework Core that makes database access **structured**, **portable**, and **powerful** across **SQL Server**, **PostgreSQL**, and **MySQL**.
+EfCore.Boost is a provider-aware **Unit of Work and repository-style layer** built on top of Entity Framework Core.
 
-EfCore.Boost is designed for systems that require any of the following:
+It makes database access more **structured**, **portable**, and **predictable** across SQL Server, PostgreSQL, and MySQL.  
+It extends EF Core with:
+- structured migration workflows across multiple database providers
+- utilities for bulk operations and routines
+- OData integration support
+- conventions that reduce boilerplate and enforce consistency
 
-- structured database access boundaries
-- predictable behavior across SQL Server, PostgreSQL, and MySQL
-- safe and powerful OData
-- high-performance bulk ingestion
-- first-class handling of views and routines
-- consistent transactional semantics
-- architecture that remains maintainable as systems grow
-
-EF Core remains the ORM.  
-EfBoost strengthens how EF is used in real applications.
+It does not replace EF Core — it standardizes how EF Core is used in real-world systems.
 
 ---
 
 ## 🎯 Why EfBoost Exists
+EF Core is a powerful ORM, but real-world systems often expose gaps in structure and consistency.
 
-Real enterprise systems hit problems plain DbContext usage does not solve elegantly:
+EfCore.Boost addresses common friction points:
 
-| Real-world Problem | EfBoost Contribution |
-|--------------------|---------------------|
-| Everyone touches DbContext directly → chaos | Strong **Unit of Work** boundary |
-| SQL Server here, PostgreSQL there… everything behaves differently | **Cross-provider conventions + helpers** |
-| Stored routines, views, hierarchies, structured metadata | First-class **Routine Execution Model** |
-| Exposing OData queries safely | Built-in **OData support** |
-| Need to insert/delete a *lot* of data | **Bulk capabilities** |
-| Need to run on different DB engines without rewriting everything | **Portable Model Building Conventions** |
-| Need to insert/delete a *lot* of data | **Bulk capabilities** |
+| #                         | Area                                       | Typical EF Core Challenge                                      | EfCore.Boost Approach                                                     |
+|---------------------------|--------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------|
+| [1](./docs/WhyBoost.md#link-1) | [Structure](./docs/WhyBoost.md#link-1)          | DbContext grows to handle too many responsibilities            | Clear Unit of Work boundaries and structured data access                   |
+| [2](./docs/WhyBoost.md#link-2)   | [Multi-Provider](./docs/WhyBoost.md#link-2)     | Behavior differs across SQL Server, PostgreSQL, and MySQL      | Provider-aware conventions and consistent mappings                         |
+| [3](./docs/WhyBoost.md#link-3)   | [Migrations](./docs/WhyBoost.md#link-3)         | Managing migrations across environments and providers is fragile | Controlled and streamlined migration workflows with script generation      |
+| [4](./docs/WhyBoost.md#link-4)   | [Bulk Operations](./docs/WhyBoost.md#link-4)    | High-volume inserts and updates require custom solutions       | Built-in patterns for efficient bulk handling                              |
+| [5](./docs/WhyBoost.md#link-5)   | [OData](./docs/WhyBoost.md#link-5)              | Query exposure can become unsafe or inconsistent               | Controlled and predictable OData integration                               |
+| [6](./docs/WhyBoost.md#link-6)   | [Database Features](./docs/WhyBoost.md#link-6)  | Views, routines, and raw SQL are awkward to integrate cleanly  | First-class support for database-native constructs                         |
+| [7](./docs/WhyBoost.md#link-7)   | [Transactions](./docs/WhyBoost.md#link-7)       | Cross-provider transaction behavior can vary                   | Consistent transactional patterns across providers                         |
+| [8](./docs/WhyBoost.md#link-8)   | [Maintainability](./docs/WhyBoost.md#link-8)    | Patterns drift over time across teams and projects             | Enforced conventions and predictable structure                             |
+| [9](./docs/WhyBoost.md#link-9)   | [Model Definition](./docs/WhyBoost.md#link-9)   | Fluent configuration becomes complex and fragmented            | Attribute-driven conventions simplify and clarify model definitions        |
+| [10](./docs/WhyBoost.md#link-10) | [DbContext Usage](./docs/WhyBoost.md#link-10)   | DbContext is often overexposed and used inconsistently         | Access is controlled through purpose-specific Unit of Work boundaries      |
+| [11](./docs/WhyBoost.md#link-11) | [Access Control](./docs/WhyBoost.md#link-11)    | DbSet access is unrestricted and widely exposed                | Multiple Unit of Work layers enable controlled read/write access patterns  |
+*Click on the numbers above for more details about each challenge.*
 
-EfCore.Boost also provides ready-to-use project templates to accelerate adoption of these patterns.
+---
+
+## When not to use EfCore.Boost
+
+EfCore.Boost may be unnecessary if:
+
+- your application is small and uses a single database
+- your data access needs are simple and unlikely to grow
+- you are comfortable managing EF Core behavior without additional structure
+- you do not require cross-provider support or advanced database features
 
 ---
 
