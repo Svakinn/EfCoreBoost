@@ -15,21 +15,20 @@ It does not replace EF Core — it standardizes how EF Core is used in real-worl
 ## 🎯 Why EfBoost Exists
 EF Core is a powerful ORM, but real-world systems often expose gaps in structure and consistency.
 
-EfCore.Boost addresses common friction points:
+EfCore.Boost addresses common friction points.  Each point describes a common issue encountered in EF Core projects and how EfCore.Boost addresses it.
 
 | #                         | Area                                       | Typical EF Core Challenge                                      | EfCore.Boost Approach                                                     |
 |---------------------------|--------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------|
-| [1](./docs/WhyBoost.md#link-1) | [Structure](./docs/WhyBoost.md#link-1)          | DbContext grows to handle too many responsibilities            | Clear Unit of Work boundaries and structured data access                   |
+| [1](./docs/WhyBoost.md#link-1) | [Structure](./docs/WhyBoost.md#link-1)          | DbContext is used everywhere, exposing the entire database         | Clear Unit of Work boundaries and structured data access                   |
 | [2](./docs/WhyBoost.md#link-2)   | [Multi-Provider](./docs/WhyBoost.md#link-2)     | Behavior differs across SQL Server, PostgreSQL, and MySQL      | Provider-aware conventions and consistent mappings                         |
 | [3](./docs/WhyBoost.md#link-3)   | [Migrations](./docs/WhyBoost.md#link-3)         | Managing migrations across environments and providers is fragile | Controlled and streamlined migration workflows with script generation      |
 | [4](./docs/WhyBoost.md#link-4)   | [Bulk Operations](./docs/WhyBoost.md#link-4)    | High-volume inserts and updates require custom solutions       | Built-in patterns for efficient bulk handling                              |
 | [5](./docs/WhyBoost.md#link-5)   | [OData](./docs/WhyBoost.md#link-5)              | Query exposure can become unsafe or inconsistent               | Controlled and predictable OData integration                               |
 | [6](./docs/WhyBoost.md#link-6)   | [Database Features](./docs/WhyBoost.md#link-6)  | Views, routines, and raw SQL are awkward to integrate cleanly  | First-class support for database-native constructs                         |
-| [7](./docs/WhyBoost.md#link-7)   | [Transactions](./docs/WhyBoost.md#link-7)       | Cross-provider transaction behavior can vary                   | Consistent transactional patterns across providers                         |
-| [8](./docs/WhyBoost.md#link-8)   | [Maintainability](./docs/WhyBoost.md#link-8)    | Patterns drift over time across teams and projects             | Enforced conventions and predictable structure                             |
+| [7](./docs/WhyBoost.md#link-7)   | [Transactions](./docs/WhyBoost.md#link-7)       | Transactions require manual handling and differ across providers                   | Consistent transactional patterns across providers                         |
+| [8](./docs/WhyBoost.md#link-8)   | [Maintainability](./docs/WhyBoost.md#link-8)    | Different parts of the system use different data access patterns             | Enforced conventions and predictable structure                             |
 | [9](./docs/WhyBoost.md#link-9)   | [Model Definition](./docs/WhyBoost.md#link-9)   | Fluent configuration becomes complex and fragmented            | Attribute-driven conventions simplify and clarify model definitions        |
-| [10](./docs/WhyBoost.md#link-10) | [DbContext Usage](./docs/WhyBoost.md#link-10)   | DbContext is often overexposed and used inconsistently         | Access is controlled through purpose-specific Unit of Work boundaries      |
-| [11](./docs/WhyBoost.md#link-11) | [Access Control](./docs/WhyBoost.md#link-11)    | DbSet access is unrestricted and widely exposed                | Multiple Unit of Work layers enable controlled read/write access patterns  |
+| [10](./docs/WhyBoost.md#link-10) | [Controlled Data Access](./docs/WhyBoost.md#link-10)   | DbContext is widely exposed and all DbSets are accessible from anywhere         | Access is restricted through purpose-specific Unit of Work boundaries      |
 
 *Click on the numbers above for more details about each challenge.*
 
@@ -41,7 +40,7 @@ EfCore.Boost may be unnecessary if:
 
 - your application is small and uses a single database
 - your data access needs are simple and unlikely to grow
-- you are comfortable managing EF Core behavior without additional structure
+- you are comfortable managing EF Core behavior without an additional structure
 - you do not require cross-provider support or advanced database features
 
 ---

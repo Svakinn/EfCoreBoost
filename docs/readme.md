@@ -7,6 +7,26 @@ Start here, then follow links into focused documents.
 
 ---
 
+## <img src="../src/EfCoreBoost/icon.png" width="32" height="32" /> Why EfCore.Boost?
+
+EfCore.Boost exists to resolve common challenges when working with EF Core in real-world projects.  
+It standardizes how you handle the following 10 key areas:
+
+1. **Structure** – clear boundaries instead of an exposed DbContext
+2. **Multi-Provider** – consistent behavior across SQL Server, PostgreSQL, and MySQL
+3. **Migrations** – streamlined, script-based deployment workflows
+4. **Bulk Operations** – high-performance inserts and updates
+5. **OData** – safe and controlled query exposure
+6. **Database Features** – first-class support for views and routines
+7. **Transactions** – consistent patterns across all providers
+8. **Maintainability** – enforced conventions and predictable structure
+9. **Model Definition** – simplified attribute-driven configuration
+10. **Controlled Access** – purpose-specific Unit of Work boundaries
+
+→ [Why EfCore.Boost? (Detailed Guide)](./WhyBoost.md)
+
+---
+
 ## 🚀 Getting Started
 
 Setup from template, model extension, migrations, and deployment workflow.
