@@ -30,6 +30,7 @@ EfCore.Boost addresses common friction points:
 | [9](./docs/WhyBoost.md#link-9)   | [Model Definition](./docs/WhyBoost.md#link-9)   | Fluent configuration becomes complex and fragmented            | Attribute-driven conventions simplify and clarify model definitions        |
 | [10](./docs/WhyBoost.md#link-10) | [DbContext Usage](./docs/WhyBoost.md#link-10)   | DbContext is often overexposed and used inconsistently         | Access is controlled through purpose-specific Unit of Work boundaries      |
 | [11](./docs/WhyBoost.md#link-11) | [Access Control](./docs/WhyBoost.md#link-11)    | DbSet access is unrestricted and widely exposed                | Multiple Unit of Work layers enable controlled read/write access patterns  |
+
 *Click on the numbers above for more details about each challenge.*
 
 ---
