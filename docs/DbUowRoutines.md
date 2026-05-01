@@ -1,24 +1,24 @@
 ﻿# Routine Design Guidelines for Cross-Platform Databases  
-*(SQL Server · PostgreSQL · MySQL · EfBoost / DbRepo)*
+*(SQL Server · PostgreSQL · MySQL · EfCore.Boost / DbRepo)*
 
-This document defines **portable design rules** for routines (Stored Procedures/Functions) used with **EfBoost / DbRepo**.
+This document defines **portable design rules** for routines (Stored Procedures/Functions) used with **EfCore.Boost / DbRepo**.
 
 The goals are:
 
 - One mental model for all providers (SQL Server, PostgreSQL, MySQL)
 - No provider-specific contortions in DbRepo
-- Clear mapping to EfBoost `RunRoutine*` helpers
+- Clear mapping to EfCore.Boost `RunRoutine*` helpers
 
-Output parameters exist per engine, but do **not** behave uniformly.  
+Output parameters exist per engine but do **not** behave uniformly.  
 EfCore.Boost cross-platform contract avoids them completely.  
-To be clear you can use OUT / INOUT / OUTPUT parameters in code intentended for a specific provider.  
-However if you do **your .net code is no longer portable across database engines**.
+To be clear, you can use OUT / INOUT / OUTPUT parameters in code intentended for a specific provider.  
+However, if you do, **your .net code is no longer portable across database engines**.
 
 ---
 
-## 1. Routine Categories and EfBoost Helpers
+## 1. Routine Categories and EfCore.Boost Helpers
 
-DbRepo / EfBoost exposes the following routine helpers in UoW:
+DbRepo / EfCore.Boost exposes the following routine helpers in UoW:
 
 ---
 
@@ -187,7 +187,7 @@ OUT / INOUT / OUTPUT parameters:
 
 ## 3. Naming Conventions and Schema Handling
 
-EfBoost / DbRepo uses a logical routine identity:
+EfCore.Boost / DbRepo uses a logical routine identity:
 
 Schema + Routine Name:
 
@@ -242,7 +242,7 @@ DbRepo resolves this automatically.
 
 ---
 
-## 4. Official EfBoost Doctrine
+## 4. Official EfCore.Boost Doctrine
 
 1 Tabular → SELECT → RunRoutineQuery or List helpers  
 2 Scalar → scalar SELECT / function return → RunRoutineScalar helpers  

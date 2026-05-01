@@ -3,7 +3,7 @@
 
 EfCore.Boost builds directly on Entity Framework Core’s model-building foundations. You still define entities, relationships, views, and read models using normal EF Core techniques.
 
-What EfBoost adds is:
+What EfCore.Boost adds is:
 
 - higher-level intent attributes or equivalent fluent API options  
 - uniform conventions across database engines  
@@ -17,9 +17,9 @@ The result is a model that behaves consistently across SQL Server, PostgreSQL, a
 
 ---
 
-# Applying EfBoost Conventions
+# Applying EfCore.Boost Conventions
 
-EfBoost conventions are enabled with a single call inside your DbContext:
+EfCore.Boost conventions are enabled with a single call inside your DbContext:
 
 ```csharp
 protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -40,13 +40,21 @@ This activates:
 - MySQL timezone handling
 - view key support
 
-EF continues to work normally — EfBoost simply aligns environments and removes ambiguity.
+EF continues to work normally — EfCore.Boost simply aligns environments and removes ambiguity.
 
 ---
 
 # Model Configuration
 
 EfCore.Boost supports model configuration through both custom attributes and a fluent API. Both approaches provide identical behavior and can be used interchangeably.
+
+### Discoverability and Persistence
+
+Unlike many fluent configurations that only exist during the model-building phase, EfCore.Boost fluent methods mark the EF Core model with the same metadata annotations as attribute-based configuration. This ensures that the model remains discoverable by other conventions, tooling, or application code regardless of how it was configured.
+
+1.  **Fluent methods do not add CLR attributes** (which is impossible at runtime).
+2.  **They apply equivalent EF Core annotations** to the property metadata.
+3.  **The resulting model is semantically equivalent** between attribute and fluent styles.
 
 ### Attributes vs Fluent API
 
@@ -66,7 +74,8 @@ To avoid naming collisions with common domain properties (like `Name` or `Email`
 | **Identity** | `[DbAutoUid] public long Id { get; set; }`                    | `builder.Property(x => x.Id).HasDbAutoUid();` |
 | **Short String** | `[StrShort] public string Name { get; set; }`                 | `builder.Property(x => x.Name).HasStrShort();` |
 | **Purpose: Name** | `[Name] public string FullName { get; set; }`                | `builder.Property(x => x.FullName).HasPurposeName();` |
-| **Money** | `[Money] public decimal Price { get; set; }`                  | `builder.Property(x => x.Price).HasMoney();` |
+| **Money** | `[Money] public decimal Price { get; set; }`                  | `builder.Property(x => x.Price).HasPurposeMoney();` |
+| **Qty** | `[Qty] public decimal Amount { get; set; }` | `builder.Property(x => x.Amount).HasPurposeQty();` |
 | **Concurrency** | `[AutoIncrementConcurrency] public int Version { get; set; }` | `builder.Property(x => x.Version).HasAutoIncrementConcurrency();` |
 | **No Cascade** | `[NoCascadeDelete]` on navigation                             | `builder.HasOne(...).WithMany(...).HasNoCascadeDelete();` |
 | **Schema** | `[DbSchema("sales")]` on class                                | `builder.Entity<T>().HasDbSchema("sales");` |
@@ -96,7 +105,6 @@ public class Customer
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     base.OnModelCreating(modelBuilder);
-    
     modelBuilder.Entity<Customer>(entity =>
     {
         entity.HasDbSchema("sales");
@@ -112,7 +120,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 # Naming & Schema Conventions
 
-EfBoost abstracts the differences between engines that support schemas and engines that do not.
+EfCore.Boost abstracts the differences between engines that support schemas and engines that do not.
 
 ## SQL Server & PostgreSQL
 Schemas behave normally:
@@ -123,7 +131,7 @@ dbo.Users
 ```
 
 ## MySQL
-Since MySQL lacks schema namespaces in the same form, EfBoost maps schema and table as:
+Since MySQL lacks schema namespaces in the same form, EfCore.Boost maps schema and table as:
 
 ```
 cms_Routes
@@ -132,7 +140,7 @@ core_Users
 
 This keeps naming meaningful while remaining portable.
 
-EfBoost ensures:
+EfCore.Boost ensures:
 
 - consistent logical grouping
 - readable migration SQL
@@ -144,7 +152,7 @@ EfBoost ensures:
 # Views and the ViewKey Attribute
 ## Views Are First-Class Citizens
 
-A view in EfBoost is a supported, intentional read model.
+A view in EfCore.Boost is a supported, intentional read model.
 
 ```csharp
 [ViewKey(nameof(Id))]
@@ -165,7 +173,7 @@ modelBuilder.Entity<CurrentMenuItemsV>(entity =>
 });
 ```
 
-EfBoost will:
+EfCore.Boost will:
 
 - treat it as a view, not a table
 - handle schema naming correctly
@@ -178,7 +186,7 @@ Views:
 - can act as OData sources
 - can share types with routine result sets
 
-EfBoost treats views as proper data access surfaces, not awkward EF hacks.
+EfCore.Boost treats views as proper data access surfaces, not awkward EF hacks.
 
 ---
 
@@ -186,7 +194,7 @@ EfBoost treats views as proper data access surfaces, not awkward EF hacks.
 
 ## Strategy
 
-EfBoost standardizes timestamp behavior across engines:
+EfCore.Boost standardizes timestamp behavior across engines:
 
 - Normalizes EF mappings so semantics match
 - Encourages UTC everywhere
@@ -197,23 +205,23 @@ EfBoost standardizes timestamp behavior across engines:
 Uses `datetime2`, works correctly with UTC.
 
 ## PostgreSQL
-EfBoost standardizes to:
+EfCore.Boost standardizes to:
 
 ```
 timestamp without time zone
 ```
 
-and expects client/application to store UTC explicitly.
+and expects the client /application to store UTC explicitly.
 
 This avoids confusing mixed interpretation of `timestamp with time zone` and ensures predictable comparison behavior.
 
 ## MySQL — Session Timezone Enforcement
 
-EfBoost does **not assume** MySQL runs in UTC.
+EfCore.Boost does **not assume** MySQL runs in UTC.
 
 Instead:
 
-> At the start of every MySQL database session, EfBoost explicitly sets the session timezone to UTC.
+> At the start of every MySQL database session, EfCore.Boost explicitly sets the session timezone to UTC.
 
 This guarantees:
 
@@ -224,7 +232,7 @@ This guarantees:
 
 ## Recommendation
 
-EfBoost strongly encourages:
+EfCore.Boost strongly encourages:
 
 - Store timestamps in UTC
 - Convert only at UI boundaries
@@ -236,7 +244,7 @@ This produces deterministic results everywhere.
 
 # String & Text Handling
 
-Cross–database string rules are not uniform. EfBoost smooths differences while preserving power.
+Cross–database string rules are not uniform. EfCore.Boost smooths differences while preserving power.
 
 ## Provider Baseline
 
@@ -256,26 +264,26 @@ PostgreSQL:
 
 ### Why citext?
 
-- case insensitive matching
+- case-insensitive matching
 - indexable
 - stable search semantics
 - reduces logic complexity
 
-EfBoost encourages **case-insensitive designs**, especially for:
+EfCore.Boost encourages **case-insensitive designs**, especially for:
 
 - indexed columns
 - searchable text
 - identifiers
 - user-facing strings
 
-EfBoost does not force case-insensitive collations on SQL Server or MySQL, but strongly recommends it.
+EfCore.Boost does not force case-insensitive collations on SQL Server or MySQL, but strongly recommends it.
 PostgreSQL achieves it indirectly through citext.
 
 ---
 
 # String Size Considerations
 
-EfBoost’s StrShort, StrMed, StrLong, etc. define intent. They are chosen to be:
+EfCore.Boost’s StrShort, StrMed, StrLong, etc. define intent. They are chosen to be:
 
 - portable across providers
 - safely indexable
@@ -287,11 +295,11 @@ A frequent fear is: “Does nvarchar length harm performance?”
 Reality:
 
 - SQL Server: size rarely matters unless massively abused
-- MySQL: performs correctly within EfBoost ranges
+- MySQL: performs correctly within EfCore.Boost ranges
 - PostgreSQL: handles text types efficiently
 
 Performance issues appear when giant text columns are indexed incorrectly or misused.
-EfBoost’s sizing avoids most traps.
+EfCore.Boost’s sizing avoids most traps.
 
 Anything beyond StrLong essentially behaves like free-text and normally should not be indexed.
 
@@ -306,7 +314,7 @@ So sizing provides:
 
 # Primary Keys & Identity Behavior
 
-EfBoost provides attributes that clarify identity intent.
+EfCore.Boost provides attributes that clarify identity intent.
 
 ```
 [DbAutoUid]
@@ -319,7 +327,7 @@ EfBoost provides attributes that clarify identity intent.
 
 Guid identities are equally supported and consistently mapped.
 
-EfBoost ensures identity behavior remains predictable during:
+EfCore.Boost ensures identity behavior remains predictable during:
 
 - migrations
 - bulk insert
@@ -342,7 +350,7 @@ Different databases rely on different mechanisms:
 
 Because these approaches differ in **column type, behavior, and EF configuration**, writing portable applications becomes difficult.
 
-EfBoost provides a **uniform cross-provider approach** to concurrency using a simple integer version column.
+EfCore.Boost provides a **uniform cross-provider approach** to concurrency using a simple integer version column.
 
 ---
 
@@ -373,10 +381,8 @@ public class Product
 {
     [DbAutoUid]
     public long Id { get; set; }
-
     [StrShort]
     public string Name { get; set; }
-
     [AutoIncrementConcurrency]
     public long Version { get; set; }
 }
@@ -404,7 +410,7 @@ than user edits, such as:
 
 In these scenarios concurrency exceptions are often undesirable.
 
-EfBoost therefore provides an alternative attribute.
+EfCore.Boost therefore provides an alternative attribute.
 
     [AutoIncrement]
 
@@ -421,10 +427,8 @@ public class Product
 {
     [DbAutoUid]
     public long Id { get; set; }
-
     [StrShort]
     public string Name { get; set; }
-
     [AutoIncrement]
     public long Version { get; set; }
 }
@@ -437,22 +441,18 @@ Typical pattern:
 
 ``` csharp
 // retrieve current server version
-var serverVersion = await uow.Products
-    .QueryUnTracked()
-    .Where(p => p.Id == rowId)
-    .Select(p => p.Version)
-    .FirstAsync();
+var serverVersion = await uow.Products.QueryUnTracked()
+    .Where(p => p.Id == rowId).Select(p => p.Version).FirstAsync();
 
 // manual concurrency validation
-if (serverVersion != incoming.Version)
-    throw new ConcurrencyConflictException();
+if (serverVersion != incoming.Version) throw new ConcurrencyConflictException();
 ```
 
 ------------------------------------------------------------------------
 
 ## Design Philosophy
 
-EfBoost separates **version tracking** from **conflict enforcement**.
+EfCore.Boost separates **version tracking** from **conflict enforcement**.
 
 | Attribute | Behavior |
 |---|---|
@@ -486,7 +486,7 @@ They often cause:
 - migration errors
 - operational risk
 
-EfBoost disables cascade deletes globally unless explicitly chosen.
+EfCore.Boost disables cascade deletes globally unless explicitly chosen.
 
 Policy:
 
@@ -504,7 +504,7 @@ Benefits:
 
 # Shared Read Models: Views & Routines
 
-EfBoost supports a unified view-model concept.
+EfCore.Boost supports a unified view-model concept.
 
 A model class may represent:
 
@@ -532,7 +532,7 @@ Application stays consistent, predictable, and easier to maintain.
 Model building defines the database logically.  
 Deployment builds it physically.
 
-EfBoost supports disciplined cross‑database migration strategies. These are documented separately in:
+EfCore.Boost supports disciplined cross‑database migration strategies. These are documented separately in:
 
 📄 [EfMigrationsCMD.md](./EfMigrationsCMD.md)
 
@@ -544,7 +544,7 @@ That document covers:
 - automation using PowerShell / command scripts
 
 ---
-# Examples of Applying EfBoost Attributes
+# Examples of Applying EfCore.Boost Attributes
 
 This section demonstrates typical attribute usage and how design intent becomes explicit in the model.
 
@@ -562,22 +562,15 @@ public class ErrorLog
 {
     [DbAutoUid]
     public long Id { get; set; }
-
     public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
-
     public long? SessionId { get; set; }
-
     public int Context { get; set; }
-
     [StrMed]
     public string? ErrorMsg { get; set; }
-
     [Text]
     public string? ErrorDetails { get; set; }
-
     [ForeignKey(nameof(Context))]
     public LogContext? LogContext { get; set; }
-
     public int Tenant { get; set; } = 1;
 }
 ```
@@ -586,9 +579,9 @@ public class ErrorLog
 
 - `[DbAutoUid]` ensures consistent identity handling across databases  
 - `[StrMed]` defines intent and keeps size/indexing portable  
-- `[Text]` communicates “large text, not for indexing”.   
-Note: This not strictly neccesary attribute since the end result is the same as if we skip this.   
-However it is a good documentation about our intention and that we did not simply forget to mark the string length. 
+- `[Text]` communicates “large text, not for indexing.”   
+Note: This is not a strictly necessary attribute since the result is the same as if we skip this.   
+However, it is good documentation about our intention and that we did not simply forget to mark the string length. 
 
 ---
 
@@ -600,17 +593,12 @@ public class LogContext
 {
     [DbAutoUid]
     public int Id { get; set; }
-
     public int Ctx { get; set; }
-
     [StrMed]
     public string Name { get; set; } = string.Empty;
-
     [Text]
     public string? Description { get; set; }
-
     public int LogTypeId { get; set; } = 1;
-
     public int Tenant { get; set; } = 1;
 }
 ```
@@ -624,7 +612,7 @@ Clear model intent:
 
 ## View Example with Composite ViewKey
 
-EfBoost treats views as first-class read models.  
+EfCore.Boost treats views as first-class read models.  
 `ViewKey` declares an EF identity for tracking and correctness.
 
 ```csharp
@@ -648,12 +636,11 @@ Key advantages:
 - Pure read model with clear semantics  
 - Works equally well whether backed by a real DB view or routine result  
 
-
 ---
 
 ## Custom Attributes
 
-EfBoost custom attributes fall into two clearly separated groups:
+EfCore.Boost custom attributes fall into two clearly separated groups:
 
 1. **Model & relationship attributes**  
    These influence how EF Core reasons about the model: schema placement, keys, identity strategy, and relationship behavior.  
@@ -717,7 +704,7 @@ Default (no attribute): EF Core default string mapping (`text` / provider equiva
 
 ### Semantic string attributes
 
-However, if you want **more expressive intent on your columns**, EfBoost
+However, if you want **more expressive intent on your columns**, EfCore.Boost
 also provides a set of **semantic string attributes**. These can be used
 instead of the raw `Str*` attributes. They communicate the **purpose of
 the data** rather than just the maximum length of the column.
@@ -730,33 +717,33 @@ string buckets:
 This keeps database schemas consistent while still allowing the model to
 clearly express *what the data represents*.
 
-| Attribute              | Maps to | Typical usage |
-|------------------------|---|---|
-| `CountryCode`          |`StrCode`|ISO country codes (`IS`, `US`, `DE`).|
-| `CurrencyCode`         |`StrCode`|ISO currency codes (`ISK`, `EUR`, `USD`).|
-| `LanguageCode`         |`StrCode`|ISO language codes (`en`, `is`).|
-| `CultureCode`          |`StrCode`|Culture identifiers such as locale codes (`en-GB`, `is-IS`).|
-| `MimeType`             |`StrShort`|MIME content type identifiers.|
-| `AddressPostalCode`    |`StrShort`|Postal or ZIP codes.|
-| `AddressStreetNumber`  |`StrShort`|Street number part of an address.|
-| `AddressBuildingUnit`  |`StrShort`|Apartment, suite, or building unit identifiers.|
-| `Phone`                |`StrShort`|Telephone numbers.|
-| `UserName`             |`StrShort`|Login or account user names.|
-| `Name`                 |`StrMed`|Names of people, entities, or objects.|
-| `Title`                |`StrMed`|Titles or headings.|
-| `ExternalRef`          |`StrMed`|Identifiers referencing external systems.|
-| `AddressStreetName`    |`StrMed`|Street names in addresses.|
-| `AddressCity`          |`StrMed`|City or town names.|
-| `AddressAdminArea`     |`StrMed`|Administrative region, state, or province.|
-| `AddressRecipientName` |`StrMed`|Recipient name used in address fields.|
-| `Email`                |`StrLong`|Email addresses.|
-| `Url`                  |`StrLong`|Web addresses or resource URLs.|
-| `FileName`             |`StrLong`|File names including extensions.|
-| `Html`                 |`Text`|Stored HTML markup content.|
-| `Markdown`             |`Text`|Markdown formatted content.|
-| `RichText`             |`Text`|Rich text editor output.|
-| `Json`                 |`Text`|JSON structured content.|
-| `Editor`               |`Text`|Editor JSON payloads such as TipTap content.|
+| Attribute              | Maps to | Typical usage | Fluent Style |
+|------------------------|---|---|---|
+| `CountryCode`          |`StrCode`|ISO country codes (`IS`, `US`, `DE`).|`.HasPurposeCountryCode()`|
+| `CurrencyCode`         |`StrCode`|ISO currency codes (`ISK`, `EUR`, `USD`).|`.HasPurposeCurrencyCode()`|
+| `LanguageCode`         |`StrCode`|ISO language codes (`en`, `is`).|`.HasPurposeLanguageCode()`|
+| `CultureCode`          |`StrCode`|Culture identifiers such as locale codes (`en-GB`, `is-IS`).|`.HasPurposeCultureCode()`|
+| `MimeType`             |`StrShort`|MIME content type identifiers.|`.HasPurposeMimeType()`|
+| `AddressPostalCode`    |`StrShort`|Postal or ZIP codes.|`.HasPurposeAddressPostalCode()`|
+| `AddressStreetNumber`  |`StrShort`|Street number part of an address.|`.HasPurposeAddressStreetNumber()`|
+| `AddressBuildingUnit`  |`StrShort`|Apartment, suite, or building unit identifiers.|`.HasPurposeAddressBuildingUnit()`|
+| `Phone`                |`StrShort`|Telephone numbers.|`.HasPurposePhoneNumber()`|
+| `UserName`             |`StrShort`|Login or account user names.|`.HasPurposeUserName()`|
+| `Name`                 |`StrMed`|Names of people, entities, or objects.|`.HasPurposeName()`|
+| `Title`                |`StrMed`|Titles or headings.|`.HasPurposeTitle()`|
+| `ExternalRef`          |`StrMed`|Identifiers referencing external systems.|`.HasPurposeExternalRef()`|
+| `AddressStreetName`    |`StrMed`|Street names in addresses.|`.HasPurposeAddressStreetName()`|
+| `AddressCity`          |`StrMed`|City or town names.|`.HasPurposeAddressCity()`|
+| `AddressAdminArea`     |`StrMed`|Administrative region, state, or province.|`.HasPurposeAddressAdminArea()`|
+| `AddressRecipientName` |`StrMed`|Recipient name used in address fields.|`.HasPurposeAddressRecipientName()`|
+| `Email`                |`StrLong`|Email addresses.|`.HasPurposeEmail()`|
+| `Url`                  |`StrLong`|Web addresses or resource URLs.|`.HasPurposeSiteUrl()`|
+| `FileName`             |`StrLong`|File names including extensions.|`.HasPurposeFileName()`|
+| `Html`                 |`Text`|Stored HTML markup content.|`.HasPurposeHtml()`|
+| `Markdown`             |`Text`|Markdown formatted content.|`.HasPurposeMarkdown()`|
+| `RichText`             |`Text`|Rich text editor output.|`.HasPurposeRichText()`|
+| `Json`                 |`Text`|JSON structured content.|`.HasPurposeJson()`|
+| `Editor`               |`Text`|Editor JSON payloads such as TipTap content.|`.HasPurposeEditor()`|
 
 #### Notes
 
@@ -770,17 +757,17 @@ clearly express *what the data represents*.
 These attributes express **numeric intent** rather than raw precision.  
 Boost enforces uniform precision and scale across providers for `decimal` only.
 
-| Attribute | Precision / Scale | Typical meaning |
-|---|---:|---|
-| `Percentage` | 18,8 | Percentages and ratios. |
-| `Qty` | 18,8 | Quantities. |
-| `Rate` | 18,8 | Rates and factors. |
-| `Price` | 19,4 | Prices. |
-| `Money` | 19,4 | Monetary values. |
-| `SortRank` | 38,19 | Ranking or scoring values. |
-| `Scientific` | 38,19 | High-precision scientific values. |
-| `Longitude` | 9,6 | Geocraphic longitude |
-| `Latitude` | 9,6 | Geocraphic latitude. |
+| Attribute | Precision / Scale | Typical meaning | Fluent Style |
+|---|---:|---|---|
+| `Percentage` | 18,8 | Percentages and ratios. | `.HasPurposePercentage()` |
+| `Qty` | 18,8 | Quantities. | `.HasPurposeQty()` |
+| `Rate` | 18,8 | Rates and factors. | `.HasPurposeRate()` |
+| `Price` | 19,4 | Prices. | `.HasPurposePrice()` |
+| `Money` | 19,4 | Monetary values. | `.HasPurposeMoney()` |
+| `SortRank` | 38,19 | Ranking or scoring values. | `.HasPurposeSortRank()` |
+| `Scientific` | 38,19 | High-precision scientific values. | `.HasPurposeScientific()` |
+| `Longitude` | 9,6 | Geocraphic longitude | `.HasPurposeLongitude()` |
+| `Latitude` | 9,6 | Geocraphic latitude. | `.HasPurposeLatitude()` |
 
 Default (no attribute): `decimal(19,4)`.
 > Of course, you may specify the standard EF Core precision attribute instead, for example:
@@ -888,7 +875,7 @@ public class LogContext
     public int Tenant { get; set; } = 1;
 }
 ```
-We could make the model more expressive by using the semantic attributes provided by EfBoost.  
+We could make the model more expressive by using the semantic attributes provided by EfCore.Boost.  
 These attributes describe the purpose of the data, enabling clearer domain models while also allowing conventions and tooling to infer appropriate database mappings.  
 
 Using these attributes is entirely optional. Projects may choose to rely only on the basic Str* attributes, or define their own semantic attributes and conventions following the same pattern.
@@ -950,4 +937,4 @@ EfCore.Boost Model Building provides:
 ✔ MySQL timezone safety  
 ✔ PostgreSQL citext normalization  
 
-EfBoost doesn’t replace EF Core philosophy — it stabilizes it for multi‑database, enterprise‑scale systems, so you focus on architecture instead of vendor quirks.
+EfCore.Boost doesn’t replace EF Core philosophy — it stabilizes it for multi‑database, enterprise‑scale systems, so you focus on architecture instead of vendor quirks.

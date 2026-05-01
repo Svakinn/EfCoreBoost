@@ -104,7 +104,7 @@ In practice:
 This makes cross-database support predictable and significantly reduces the effort required to switch providers.  
 For those who want to dive deeper into the details, see the resources below.  
 EfCore.Boost handles these differences through conventions, so you typically do not need to deal with them directly.
-- [Applying EfBoost Conventions](./ModelBuilding.md#applying-efboost-conventions)
+- [Applying EfCore.Boost Conventions](./ModelBuilding.md#applying-efcore.boost-conventions)
 - [Naming & Schema Conventions](./ModelBuilding.md#naming--schema-conventions)
 - [Date & Timestamp Behavior](./ModelBuilding.md#date--timestamp-behavior)
 - [String Size Considerations](./ModelBuilding.md#string-size-considerations)

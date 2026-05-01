@@ -55,11 +55,10 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
         // Apply EfCore.Boost conventions
         // "core" is the default schema name for your tables/views
         modelBuilder.ApplyEfBoostConventions(this, "core");
-
-        base.OnModelCreating(modelBuilder);
     }
 }
 ```

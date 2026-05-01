@@ -29,9 +29,9 @@ In these workloads, the optimizations in EF Core’s normal unit-of-work pipelin
 
 ---
 
-## How EfBoost Implements Bulk Inserts
+## How EfCore.Boost Implements Bulk Inserts
 
-EfBoost does **not** attempt to batch normal EF inserts.  
+EfCore.Boost does **not** attempt to batch normal EF inserts.  
 It directly uses **native bulk ingestion mechanisms** per database provider:
 
 | Provider | Implementation |
@@ -68,7 +68,7 @@ No special EF configuration, no metadata handling, and no external packages are 
 
 The following example demonstrates how bulk insert is used to support a high-throughput structured logging solution. Error logs are buffered in memory and persisted as efficient bulk operations.
 
-This domain uses EfBoost’s model conventions and attributes to ensure cross-database consistency.
+This domain uses EfCore.Boost’s model conventions and attributes to ensure cross-database consistency.
 
 ---
 
@@ -127,7 +127,7 @@ public class LogContext
 }
 ```
 
-These attributes are part of EfBoost modeling conventions.  
+These attributes are part of EfCore.Boost modeling conventions.  
 They define index rules, identity behavior, and structured string semantics across supported providers.
 
 See: [ModelBuilding.md](.//ModelBuilding.md) for details.
@@ -240,7 +240,7 @@ This preserves bulk insert performance while reducing risk of failure.
 
 ## Identity Handling
 
-Many systems require retaining existing identity values during migration or replication. EfBoost supports identity preservation when explicitly requested.
+Many systems require retaining existing identity values during migration or replication. EfCore.Boost supports identity preservation when explicitly requested.
 
 This is typically needed when:
 
@@ -257,14 +257,14 @@ Identity preservation is activated with:
 await uow.MyEntities.BulkInsertAsync(list, includeIdentityValues: true);
 ```
 
-When enabled, EfBoost:
+When enabled, EfCore.Boost:
 
 - inserts supplied identity values as-is  
 - handles provider-specific identity insert rules  
 - ensures consistency with expected identity ranges  
 - maintains referential integrity expectation  
 
-Where necessary, EfBoost also ensures identity sequences remain valid so that subsequent inserts continue from correct identity positions.
+Where necessary, EfCore.Boost also ensures identity sequences remain valid so that subsequent inserts continue from correct identity positions.
 
 ---
 
@@ -295,7 +295,7 @@ Standard EF insert behavior is recommended in those scenarios.
 
 ## Summary
 
-Bulk Insert in EfCore.Boost is designed to support systems that must handle sustained, high-volume data insertion without sacrificing safety or correctness. It leverages native provider bulk ingestion mechanisms and integrates seamlessly into EfBoost’s repository and unit-of-work architecture.
+Bulk Insert in EfCore.Boost is designed to support systems that must handle sustained, high-volume data insertion without sacrificing safety or correctness. It leverages native provider bulk ingestion mechanisms and integrates seamlessly into EfCore.Boost’s repository and unit-of-work architecture.
 
 Use it for:
 

@@ -33,7 +33,7 @@ namespace BoostAnalyzer.Rules
             return false;
         }
 
-        /// <summary>Returns true if expression is (or returns) an EFBoost/EF query (IQueryable-based).</summary>
+        /// <summary>Returns true if expression is (or returns) an EFCore.Boost/EF query (IQueryable-based).</summary>
         internal static bool IsEfBoostQueryable(ExpressionSyntax expr, SemanticModel model, CancellationToken ct)
         {
             var type = model.GetTypeInfo(expr, ct).Type;

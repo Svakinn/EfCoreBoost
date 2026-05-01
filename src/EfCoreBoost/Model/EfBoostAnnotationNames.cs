@@ -37,4 +37,32 @@ internal static class EfBoostAnnotationNames
     public const string Salt = "EfBoost:Salt";
     public const string Encrypted = "EfBoost:Encrypted";
     public const string SigningKey = "EfBoost:SigningKey";
+
+    // Semantic String Purposes
+    public const string Name = "EfBoost:Name";
+    public const string UserName = "EfBoost:UserName";
+    public const string ExternalRef = "EfBoost:ExternalRef";
+    public const string Title = "EfBoost:Title";
+    public const string FileName = "EfBoost:FileName";
+    public const string MimeType = "EfBoost:MimeType";
+    public const string Email = "EfBoost:Email";
+    public const string PhoneNumber = "EfBoost:PhoneNumber";
+    public const string SiteUrl = "EfBoost:SiteUrl";
+    public const string CountryCode = "EfBoost:CountryCode";
+    public const string CurrencyCode = "EfBoost:CurrencyCode";
+    public const string LanguageCode = "EfBoost:LanguageCode";
+    public const string CultureCode = "EfBoost:CultureCode";
+    public const string AddressPostalCode = "EfBoost:AddressPostalCode";
+    public const string AddressAdminArea = "EfBoost:AddressAdminArea";
+    public const string AddressStreetName = "EfBoost:AddressStreetName";
+    public const string AddressStreetNumber = "EfBoost:AddressStreetNumber";
+    public const string AddressCity = "EfBoost:AddressCity";
+    public const string AddressBuildingUnit = "EfBoost:AddressBuildingUnit";
+    public const string AddressRecipientName = "EfBoost:AddressRecipientName";
+    public const string RegNo = "EfBoost:RegNo";
+    public const string Html = "EfBoost:Html";
+    public const string Editor = "EfBoost:Editor";
+    public const string Json = "EfBoost:Json";
+    public const string Markdown = "EfBoost:Markdown";
+    public const string RichText = "EfBoost:RichText";
 }

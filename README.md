@@ -12,7 +12,7 @@ It does not replace EF Core — it standardizes how EF Core is used in real-worl
 
 ---
 
-## 🎯 Why EfBoost Exists
+## 🎯 Why EfCore.Boost Exists
 Application code should ideally not need to care whether the underlying database is SQL Server, PostgreSQL, or MySQL.  
 At the same time, a raw `DbContext` often exposes a much larger surface area than most application modules should access directly.
 
@@ -69,7 +69,7 @@ EfCore.Boost may be unnecessary if:
 
 ## 🧠 Core Concepts
 
-EfBoost introduces a **structured data access architecture**:
+EfCore.Boost introduces a **structured data access architecture**:
 
 ### ✔ Unit of Work
 A UOW is the controlled gateway. It builds on top of DbContext and acts as the application’s entry point to the data layer:
@@ -104,7 +104,7 @@ Repositories work naturally with both tables and views.
 ---
 
 ### ✔ Routines (Procedures / Functions)
-EfBoost treats database intelligence as a first-class citizen:
+EfCore.Boost treats database intelligence as a first-class citizen:
 
 - Scalar routines
 - Tabular routines mapped to EF models
@@ -144,16 +144,16 @@ It also does not need to care whether the heat beneath the pot comes from SQL Se
 
 ## 🌍 Model Building & Cross-Platform Conventions
 
-EfBoost solves, **once and uniformly**, the practical differences between database engines.
+EfCore.Boost solves, **once and uniformly**, the practical differences between database engines.
 
-Instead of scattering provider-specific rules throughout your codebase, EfBoost establishes a **single, consistent model-building and execution contract** that works across SQL Server, PostgreSQL, and MySQL.
+Instead of scattering provider-specific rules throughout your codebase, EfCore.Boost establishes a **single, consistent model-building and execution contract** that works across SQL Server, PostgreSQL, and MySQL.
 
 This covers both:
 
 - **how models are mapped**
 - **how data is written and read safely**
 
-EfBoost provides:
+EfCore.Boost provides:
 
 - Provider-safe **model-building conventions**
 - **Intent-driven attributes** instead of fragile tuning
@@ -165,6 +165,7 @@ Instead of hand-tuning models per database flavor, you do this once:
 ```csharp
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
+    base.OnModelCreating(modelBuilder);
     modelBuilder.ApplyEfBoostConventions(this, "log"); 
     OnModelData(modelBuilder);
 }
@@ -176,12 +177,12 @@ From there:
 - Object names are mapped uniformly
 - Provider-specific quoting and casing are handled automatically
 - Routines are invoked consistently across databases
-- On **save**, EfBoost corrects common provider quirks such as:
+- On **save**, EfCore.Boost corrects common provider quirks such as:
     - invalid or overflowing string lengths
     - date and timestamp inconsistencies
 
 Your model expresses **intent**.  
-EfBoost applies **provider-correct behavior**.
+EfCore.Boost applies **provider-correct behavior**.
 
 The result is a model that stays **portable, predictable, and stable** as databases change.
 
@@ -195,14 +196,14 @@ Maybe suddenly the CTO waves a glittering Azure Enterprise plan in your face.
 
 If your EF model was built “raw by hand”, you are potentially stuck.
 
-If it was built with EfBoost conventions, the conversation changes:
+If it was built with EfCore.Boost conventions, the conversation changes:
 
 - ✔ “We can migrate”
 - ✔ “We don’t have to rewrite schema mapping”
 - ✔ “We can keep our UOW & Repos”
 - ✔ “We don’t have to redesign core data architecture”
 
-EfBoost makes **start here, grow there** realistic instead of terrifying.
+EfCore.Boost makes **start here, grow there** realistic instead of terrifying.
 
 A detailed guide lives in [ModelBuilding.md](./docs/ModelBuilding.md) explaining:
 
@@ -213,7 +214,7 @@ A detailed guide lives in [ModelBuilding.md](./docs/ModelBuilding.md) explaining
 
 **Your C# code stays unaware of database quirks.**
 
-EfBoost absorbs provider differences so your application logic remains clean and unchanged.
+EfCore.Boost absorbs provider differences so your application logic remains clean and unchanged.
 
 Database-specific behavior is handled once, centrally, instead of leaking into your codebase.
 
@@ -278,7 +279,7 @@ A detailed guide on manual integration is available here:
 # 💬 FAQ
 
 ### Do we still use EF Core?
-Yes. EfBoost sits above EF Core. EF remains your ORM.
+Yes. EfCore.Boost sits above EF Core. EF remains your ORM.
 
 ---
 
@@ -292,7 +293,7 @@ No. Single-provider systems benefit from structure, safe OData usage, bulk perfo
 
 ---
 
-### Does EfBoost remove the ability to access DbContext?
+### Does EfCore.Boost remove the ability to access DbContext?
 EfCore.Boost shapes and configures the DbContext and uses it internally, but it is not exposed through the Unit of Work.  
 All normal data access should go through:
 - **DbUow** for read-write operations
@@ -303,7 +304,7 @@ You can still access *DbContext* by other means if needed, but there should be n
 ---
 
 ### Does this replace migrations?
-No. EF migrations still apply normally. EfBoost adds helpers but does not take ownership of migrations.  
+No. EF migrations still apply normally. EfCore.Boost adds helpers but does not take ownership of migrations.  
 See [this document](./docs/EfMigrationsCMD.md) on how to apply migrations to multiple providers for the same model.
 
 ---
@@ -317,15 +318,15 @@ Your .NET code remains unchanged — only configuration changes.
 ---
 
 ### What happens when we scale teams and the system grows?
-EfBoost keeps data access disciplined, defined, and maintainable — instead of evolving into loosely organized DbContext usage everywhere.  
+EfCore.Boost keeps data access disciplined, defined, and maintainable — instead of evolving into loosely organized DbContext usage everywhere.  
 By supporting multiple providers, you can also move from a low‑cost database setup to enterprise environments such as Azure with relative ease.
 
 ---
 
-### How can EfBoost work uniformly across databases with different SQL and column types?
-EfBoost builds on EF Core’s model-first approach. Schemas are generated from the C# model, and EfBoost applies provider-specific conventions to select appropriate column types and behavior.  
+### How can EfCore.Boost work uniformly across databases with different SQL and column types?
+EfCore.Boost builds on EF Core’s model-first approach. Schemas are generated from the C# model, and EfCore.Boost applies provider-specific conventions to select appropriate column types and behavior.  
 Views and routines are implemented by you (or your DB admin) per database, but invoked uniformly, as long as naming conventions are followed and OUT / INOUT parameters are avoided.  
-EfBoost is intended to help you build and use your database in a portable way, not to expose every feature of every database.
+EfCore.Boost is intended to help you build and use your database in a portable way, not to expose every feature of every database.
 
 ---
 

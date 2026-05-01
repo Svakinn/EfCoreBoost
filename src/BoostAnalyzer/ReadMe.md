@@ -1,10 +1,10 @@
 ﻿# EfCore.Boost Analyzers + Code Fixers
 
-EfBoost ships with a small Roslyn analyzer + code-fix pack that targets one thing:
+EfCore.Boost ships with a small Roslyn analyzer + code-fix pack that targets one thing:
 
 **Avoid silly (and expensive) sync/async mistakes in EF Core, repositories, and Unit-of-Work code.**
 
-If you write `async` code, EfBoost nudges you to:
+If you write `async` code, EfCore.Boost nudges you to:
 - **await** important async calls (no “fire and forget” DB work)
 - avoid calling **sync** repo/UOW methods inside `async` methods
 - avoid **blocking** on EF async queries (`.Result`, `.Wait()`, `GetAwaiter().GetResult()`)

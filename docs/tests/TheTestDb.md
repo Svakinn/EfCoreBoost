@@ -38,6 +38,7 @@ Declaring view entities here ensures they participate fully in queries, even tho
 ```csharp
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
+    base.OnModelCreating(modelBuilder);
     modelBuilder.ApplyEfBoostConventions(this, "my");
     OnModelData(modelBuilder);
 }
@@ -87,7 +88,7 @@ public class MyTableRef
 
 Attributes sit next to the properties they affect, making schema intent visible without scrolling into fluent configuration.
 
-The EF Core provider/driver (SqlServer / Npgsql / MySql) together with EfBoost conventions determines the actual mapping from C# to provider-specific SQL.
+The EF Core provider/driver (SqlServer / Npgsql / MySql) together with EfCore.Boost conventions determines the actual mapping from C# to provider-specific SQL.
 That includes identifier quoting, schema handling, and provider-specific defaults.
 
 - SQL Server / Azure SQL (schema + brackets)  

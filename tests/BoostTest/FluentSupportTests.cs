@@ -10,7 +10,7 @@ public class FluentSupportTests
     public class TestEntity
     {
         [DbAutoUid] public long Id { get; set; }
-        [StrShort] public string Name { get; set; } = "";
+        [StrMed] public string Name { get; set; } = "";
         [Money] public decimal Balance { get; set; }
         [AutoIncrementConcurrency] public int Version { get; set; }
         [AddressRecipientName] public string Recipient { get; set; } = "";
@@ -39,17 +39,114 @@ public class FluentSupportTests
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<FluentTestEntity>(b =>
             {
                 b.Property(x => x.Id).HasDbAutoUid();
-                b.Property(x => x.Name).HasStrShort();
-                b.Property(x => x.Balance).HasMoney();
+                b.Property(x => x.Name).HasStrMed();
+                b.Property(x => x.Balance).HasPurposeMoney();
                 b.Property(x => x.Version).HasAutoIncrementConcurrency();
                 b.Property(x => x.Recipient).HasPurposeAddressRecipientName();
                 b.Property(x => x.IsDeleted).HasPurposeSoftDelete();
             });
 
+            modelBuilder.Entity<TestEntity>(b =>
+            {
+                // Just for chainability check
+                b.Property(x => x.Name).HasPurposeName().HasStrMed();
+            });
+
             modelBuilder.ApplyEfBoostConventions(this);
+        }
+    }
+
+    [TestClass]
+    public class DiscoveryTests
+    {
+        public class DiscoveryEntity
+        {
+            public int Id { get; set; }
+            public string Email { get; set; } = "";
+            public decimal Price { get; set; }
+            public bool IsActive { get; set; }
+
+            [StrCode] public string Code { get; set; } = "";
+            [StrShort] public string Short { get; set; } = "";
+            [StrMed] public string Med { get; set; } = "";
+            [StrLong] public string Long { get; set; } = "";
+            [Text] public string Text { get; set; } = "";
+
+            [Percentage] public decimal Pct { get; set; }
+        }
+
+        public class DiscoveryDbContext : DbContext
+        {
+            public DbSet<DiscoveryEntity> DiscoveryEntities { get; set; } = null!;
+            protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=DiscoveryDb;Trusted_Connection=True;");
+            protected override void OnModelCreating(ModelBuilder modelBuilder)
+            {
+                base.OnModelCreating(modelBuilder);
+                modelBuilder.Entity<DiscoveryEntity>(b =>
+                {
+                    b.Property(x => x.Email).HasPurposeEmail();
+                    b.Property(x => x.Price).HasPurposePrice();
+                    b.Property(x => x.IsActive).HasPurposeStatus();
+                });
+                modelBuilder.ApplyEfBoostConventions(this);
+            }
+        }
+
+        [TestMethod]
+        public void Fluent_Configuration_Should_Be_Discoverable_Via_Annotations()
+        {
+            using var ctx = new DiscoveryDbContext();
+            var emailProp = ctx.Model.FindEntityType(typeof(DiscoveryEntity))!.FindProperty(nameof(DiscoveryEntity.Email))!;
+            var priceProp = ctx.Model.FindEntityType(typeof(DiscoveryEntity))!.FindProperty(nameof(DiscoveryEntity.Price))!;
+            var statusProp = ctx.Model.FindEntityType(typeof(DiscoveryEntity))!.FindProperty(nameof(DiscoveryEntity.IsActive))!;
+
+            // We use string literals for annotation names since they are internal
+            Assert.IsNotNull(emailProp.FindAnnotation("EfBoost:Email"), "Email purpose annotation missing");
+            Assert.IsNotNull(emailProp.FindAnnotation("EfBoost:StrLong"), "Email bucket annotation missing");
+            Assert.AreEqual(512, emailProp.GetMaxLength());
+
+            Assert.IsNotNull(priceProp.FindAnnotation("EfBoost:Price"), "Price purpose annotation missing");
+            Assert.AreEqual(19, priceProp.GetPrecision());
+            Assert.AreEqual(4, priceProp.GetScale());
+
+            Assert.IsNotNull(statusProp.FindAnnotation("EfBoost:Status"), "Status purpose annotation missing");
+        }
+
+        [TestMethod]
+        public void Attribute_Configuration_Should_Be_Discoverable_Via_Annotations()
+        {
+            using var ctx = new DiscoveryDbContext();
+            var entity = ctx.Model.FindEntityType(typeof(DiscoveryEntity))!;
+
+            var codeProp = entity.FindProperty(nameof(DiscoveryEntity.Code))!;
+            var shortProp = entity.FindProperty(nameof(DiscoveryEntity.Short))!;
+            var medProp = entity.FindProperty(nameof(DiscoveryEntity.Med))!;
+            var longProp = entity.FindProperty(nameof(DiscoveryEntity.Long))!;
+            var textProp = entity.FindProperty(nameof(DiscoveryEntity.Text))!;
+            var pctProp = entity.FindProperty(nameof(DiscoveryEntity.Pct))!;
+
+            Assert.IsNotNull(codeProp.FindAnnotation("EfBoost:StrCode"), "StrCode annotation missing");
+            Assert.AreEqual(30, codeProp.GetMaxLength());
+
+            Assert.IsNotNull(shortProp.FindAnnotation("EfBoost:StrShort"), "StrShort annotation missing");
+            Assert.AreEqual(50, shortProp.GetMaxLength());
+
+            Assert.IsNotNull(medProp.FindAnnotation("EfBoost:StrMed"), "StrMed annotation missing");
+            Assert.AreEqual(256, medProp.GetMaxLength());
+
+            Assert.IsNotNull(longProp.FindAnnotation("EfBoost:StrLong"), "StrLong annotation missing");
+            Assert.AreEqual(512, longProp.GetMaxLength());
+
+            Assert.IsNotNull(textProp.FindAnnotation("EfBoost:Text"), "Text annotation missing");
+            Assert.IsNull(textProp.GetMaxLength());
+
+            Assert.IsNotNull(pctProp.FindAnnotation("EfBoost:Percentage"), "Percentage annotation missing");
+            Assert.AreEqual(18, pctProp.GetPrecision());
+            Assert.AreEqual(8, pctProp.GetScale());
         }
     }
 

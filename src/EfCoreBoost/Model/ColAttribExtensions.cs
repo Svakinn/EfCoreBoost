@@ -9,10 +9,8 @@ namespace EfCore.Boost.Model
     public static class ColAttribExtensions
     {
         /// <summary>
-        /// Handle all our custom attributes for columns:
+        /// Entry point for applying all EfCore.Boost attribute-based conventions to the EF Core model.
         /// </summary>
-        /// <param name="modelBuilder"></param>
-        /// <param name="ctx"></param>
         internal static void ApplyBoostColumnConventions(this ModelBuilder modelBuilder, DbContext ctx)
         {
             var provider = ctx.Database.ProviderName ?? string.Empty;
@@ -29,25 +27,20 @@ namespace EfCore.Boost.Model
                 {
                     var prop = entity.FindProperty(pi);
                     if (prop == null) continue;
-
                     // 1) DbGuid
                     var dbGuidAttr = pi.GetCustomAttribute<DbGuidAttribute>();
                     if (dbGuidAttr != null)
                         EfBoostPropertyConfiguration.ApplyDbGuid(prop, isSqlServer, isNpgsql, isMySql);
-
                     // 2) DbUid
                     var dbUidAttr = pi.GetCustomAttribute<DbAutoUidAttribute>();
                     if (dbUidAttr != null && !isView)
                         EfBoostPropertyConfiguration.ApplyDbAutoUid(entity, prop, isSqlServer, isNpgsql, isMySql);
-
                     // 3) String length attributes
                     if (pi.PropertyType == typeof(string))
                         ConfigureStringSize(prop, pi, isSqlServer, isNpgsql, isMySql);
-
                     // 4) Decimal precision
                     if (pi.PropertyType == typeof(decimal) || Nullable.GetUnderlyingType(pi.PropertyType) == typeof(decimal))
                         ConfigureDecimalPrecision(prop, pi);
-
                     // 5) AutoIncrementConcurrency
                     var auIncr = pi.GetCustomAttribute<AutoIncrementConcurrencyAttribute>();
                     if (auIncr != null && !isView && IsIntOrLong(pi.PropertyType))
@@ -58,10 +51,7 @@ namespace EfCore.Boost.Model
                     }
                     var oIncr = pi.GetCustomAttribute<AutoIncrementAttribute>();
                     if (oIncr != null && !isView && IsIntOrLong(pi.PropertyType))
-                    {
                         EfBoostPropertyConfiguration.ApplyAutoIncrement(prop, modelBuilder);
-                    }
-
                     // 6) Purpose markings
                     if (pi.GetCustomAttribute<SoftDeleteAttribute>() != null) EfBoostPropertyConfiguration.ApplySoftDelete(prop);
                     if (pi.GetCustomAttribute<LastChangedUtcAttribute>() != null) EfBoostPropertyConfiguration.ApplyLastChangedUtc(prop);
@@ -73,7 +63,6 @@ namespace EfCore.Boost.Model
                     if (pi.GetCustomAttribute<StatusAttribute>() != null) EfBoostPropertyConfiguration.ApplyStatus(prop);
                     if (pi.GetCustomAttribute<SoftRefAttribute>() != null) EfBoostPropertyConfiguration.ApplySoftRef(prop);
                     if (pi.GetCustomAttribute<BirthDateAttribute>() != null) EfBoostPropertyConfiguration.ApplyBirthDate(prop);
-
                     // 7) Raw data
                     if (pi.GetCustomAttribute<MediaAttribute>() != null) EfBoostPropertyConfiguration.ApplyMedia(prop);
                     if (pi.GetCustomAttribute<HashAttribute>() != null) EfBoostPropertyConfiguration.ApplyHash(prop);
@@ -96,7 +85,6 @@ namespace EfCore.Boost.Model
         {
             var p = modelBuilder.Entity(clr).Property(pi.Name).Metadata;
             if (HasAnyDefault(p)) return; // someone already set it (Fluent API, convention, etc.)
-
             var t = Nullable.GetUnderlyingType(pi.PropertyType) ?? pi.PropertyType;
             if (t == typeof(long)) modelBuilder.Entity(clr).Property(pi.Name).HasDefaultValue(1L);
             else if (t == typeof(int)) modelBuilder.Entity(clr).Property(pi.Name).HasDefaultValue(1);
@@ -116,9 +104,6 @@ namespace EfCore.Boost.Model
         private readonly record struct StrRule(Type AttrType, StrBucket Bucket);
         private static void ConfigureStringSize(IMutableProperty prop, PropertyInfo pi, bool isSqlServer, bool isNpgsql, bool isMySql)
         {
-            // DO NOT override explicit MaxLength if already set
-            if (prop.GetMaxLength().HasValue) return;
-
             static bool Has(PropertyInfo pi, Type attrType) => Attribute.IsDefined(pi, attrType, inherit: false);
             // Table-driven rules: add new attributes here
             // URL is mapped to Med (256).
@@ -143,7 +128,6 @@ namespace EfCore.Boost.Model
                 new(typeof(PhoneNumberAttribute), StrBucket.Short),
                 new(typeof(UserNameAttribute), StrBucket.Short),
                 new(typeof(RegNoAttribute), StrBucket.Code),
-
                 // Semantic: address bits (medium)
                 new(typeof(NameAttribute), StrBucket.Med),
                 new(typeof(TitleAttribute), StrBucket.Med),
@@ -190,39 +174,50 @@ namespace EfCore.Boost.Model
                 StrBucket.Long => 512,
                 _ => null // Text => unbounded
             };
-            if (maxLen.HasValue) prop.SetMaxLength(maxLen.Value);
-
-            var annotationName = bucket switch
+            // Apply semantic purpose annotation if present
+            var purposeAnnotation = firstAttr?.Name switch
             {
-                StrBucket.Code => EfBoostAnnotationNames.StrCode,
-                StrBucket.Short => EfBoostAnnotationNames.StrShort,
-                StrBucket.Med => EfBoostAnnotationNames.StrMed,
-                StrBucket.Long => EfBoostAnnotationNames.StrLong,
-                StrBucket.Text => EfBoostAnnotationNames.Text,
+                nameof(NameAttribute) => EfBoostAnnotationNames.Name,
+                nameof(UserNameAttribute) => EfBoostAnnotationNames.UserName,
+                nameof(ExternalRefAttribute) => EfBoostAnnotationNames.ExternalRef,
+                nameof(TitleAttribute) => EfBoostAnnotationNames.Title,
+                nameof(FileNameAttribute) => EfBoostAnnotationNames.FileName,
+                nameof(MimeTypeAttribute) => EfBoostAnnotationNames.MimeType,
+                nameof(EmailAttribute) => EfBoostAnnotationNames.Email,
+                nameof(PhoneNumberAttribute) => EfBoostAnnotationNames.PhoneNumber,
+                nameof(SiteUrlAttribute) => EfBoostAnnotationNames.SiteUrl,
+                nameof(CountryCodeAttribute) => EfBoostAnnotationNames.CountryCode,
+                nameof(CurrencyCodeAttribute) => EfBoostAnnotationNames.CurrencyCode,
+                nameof(LanguageCodeAttribute) => EfBoostAnnotationNames.LanguageCode,
+                nameof(CultureCodeAttribute) => EfBoostAnnotationNames.CultureCode,
+                nameof(AddressPostalCodeAttribute) => EfBoostAnnotationNames.AddressPostalCode,
+                nameof(AddressAdminAreaAttribute) => EfBoostAnnotationNames.AddressAdminArea,
+                nameof(AddressStreetNameAttribute) => EfBoostAnnotationNames.AddressStreetName,
+                nameof(AddressStreetNumberAttribute) => EfBoostAnnotationNames.AddressStreetNumber,
+                nameof(AddressCityAttribute) => EfBoostAnnotationNames.AddressCity,
+                nameof(AddressBuildingUnitAttribute) => EfBoostAnnotationNames.AddressBuildingUnit,
+                nameof(AddressRecipientNameAttribute) => EfBoostAnnotationNames.AddressRecipientName,
+                nameof(RegNoAttribute) => EfBoostAnnotationNames.RegNo,
+                nameof(HtmlAttribute) => EfBoostAnnotationNames.Html,
+                nameof(EditorAttribute) => EfBoostAnnotationNames.Editor,
+                nameof(JsonAttribute) => EfBoostAnnotationNames.Json,
+                nameof(MarkdownAttribute) => EfBoostAnnotationNames.Markdown,
+                nameof(RichTextAttribute) => EfBoostAnnotationNames.RichText,
+                nameof(StrCodeAttribute) => EfBoostAnnotationNames.StrCode,
+                nameof(StrShortAttribute) => EfBoostAnnotationNames.StrShort,
+                nameof(StrMedAttribute) => EfBoostAnnotationNames.StrMed,
+                nameof(StrLongAttribute) => EfBoostAnnotationNames.StrLong,
+                nameof(TextAttribute) => EfBoostAnnotationNames.Text,
                 _ => null
             };
-            if (annotationName != null) prop.SetAnnotation(annotationName, true);
-
-            // Column types: keep consistent across providers
-            if (isSqlServer)
-                prop.SetColumnType(maxLen.HasValue ? $"nvarchar({maxLen.Value})" : "nvarchar(max)");
-            else if (isNpgsql)
-                prop.SetColumnType(maxLen.HasValue ? $"varchar({maxLen.Value})" : "text");
-            else if (isMySql)
-                prop.SetColumnType(maxLen.HasValue ? $"varchar({maxLen.Value})" : "longtext");
+            EfBoostPropertyConfiguration.ApplyStringSize(prop, maxLen, purposeAnnotation, isSqlServer, isNpgsql, isMySql);
         }
 
         private static void ConfigureDecimalPrecision(IMutableProperty prop, PropertyInfo pi)
         {
             // Type guard: only decimal / decimal?
             var clrType = Nullable.GetUnderlyingType(pi.PropertyType) ?? pi.PropertyType;
-            if (clrType != typeof(decimal))
-                return;
-
-            // DO NOT override explicit precision/scale if already configured
-            if (prop.GetPrecision().HasValue || prop.GetScale().HasValue)
-                return;
-
+            if (clrType != typeof(decimal)) return;
             // Attributes (fixed mapping)
             var pct = pi.GetCustomAttribute<PercentageAttribute>();
             var price = pi.GetCustomAttribute<PriceAttribute>();
@@ -245,16 +240,16 @@ namespace EfCore.Boost.Model
             if (count > 1)
                 throw new InvalidOperationException(
                     $"Property '{prop.DeclaringType.ClrType.Name}.{prop.Name}' " + "has multiple decimal attributes. Only one is allowed.");
-            int precision, scale;
-            string annotationName;
-            if (pct != null || qty != null || rate != null) { precision = 18; scale = 8; annotationName = pct != null ? EfBoostAnnotationNames.Percentage : (qty != null ? EfBoostAnnotationNames.Qty : EfBoostAnnotationNames.Rate); }
-            else if (price != null || money != null) { precision = 19; scale = 4; annotationName = price != null ? EfBoostAnnotationNames.Price : EfBoostAnnotationNames.Money; }
-            else if (sort != null || sci != null) { precision = 38; scale = 19; annotationName = sort != null ? EfBoostAnnotationNames.SortRank : EfBoostAnnotationNames.Scientific; }
-            else if (lgt != null || lat != null) { precision = 9; scale = 6; annotationName = lgt != null ? EfBoostAnnotationNames.Longitude : EfBoostAnnotationNames.Latitude; }
-            else { precision = 19; scale = 4; annotationName = null!; } // default for all other decimals
-            prop.SetPrecision(precision);
-            prop.SetScale(scale);
-            prop.SetAnnotation(annotationName, true);
+            if (pct != null) EfBoostPropertyConfiguration.ApplyPrecision(prop, 18, 8, EfBoostAnnotationNames.Percentage);
+            else if (qty != null) EfBoostPropertyConfiguration.ApplyPrecision(prop, 18, 8, EfBoostAnnotationNames.Qty);
+            else if (rate != null) EfBoostPropertyConfiguration.ApplyPrecision(prop, 18, 8, EfBoostAnnotationNames.Rate);
+            else if (price != null) EfBoostPropertyConfiguration.ApplyPrecision(prop, 19, 4, EfBoostAnnotationNames.Price);
+            else if (money != null) EfBoostPropertyConfiguration.ApplyPrecision(prop, 19, 4, EfBoostAnnotationNames.Money);
+            else if (sort != null) EfBoostPropertyConfiguration.ApplyPrecision(prop, 38, 19, EfBoostAnnotationNames.SortRank);
+            else if (sci != null) EfBoostPropertyConfiguration.ApplyPrecision(prop, 38, 19, EfBoostAnnotationNames.Scientific);
+            else if (lgt != null) EfBoostPropertyConfiguration.ApplyPrecision(prop, 9, 6, EfBoostAnnotationNames.Longitude);
+            else if (lat != null) EfBoostPropertyConfiguration.ApplyPrecision(prop, 9, 6, EfBoostAnnotationNames.Latitude);
+            else EfBoostPropertyConfiguration.ApplyPrecision(prop, 19, 4, null); // default for all other decimals
         }
 
     }

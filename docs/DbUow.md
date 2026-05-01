@@ -4,7 +4,7 @@
 `DbUow<TContext>` is the foundational **Unit of Work** abstraction in EfCore.Boost.  
 It defines a controlled, structured, and powerful gateway between your .NET application and the database.
 
-Instead of working directly with raw Entity Framework DbContexts, EfBoost introduces a **layered, structured access model**:
+Instead of working directly with raw Entity Framework DbContexts, EfCore.Boost introduces a **layered, structured access model**:
 - Applications do **not** talk directly to DbContext
 - Applications talk to a **DbUOW**
 - The UOW decides
@@ -369,7 +369,7 @@ Using multiple UOW instances at the same time is quite safe.
 
 ## About Model Building & Migrations
 
-EfBoost also includes helpers related to model building and migrations, supporting:
+EfCore.Boost also includes helpers related to model building and migrations, supporting:
 
 - Multi-provider alignment  
 - Structure consistency  
@@ -392,5 +392,5 @@ However, that belongs to a dedicated topic:📄 [ModelBuilding.md](./ModelBuildi
 - Provider aware  
 - Ready for real-world workloads  
 
-EfBoost replaces “naked DbContext access” with a structured, layered, safer approach.  
+EfCore.Boost replaces “naked DbContext access” with a structured, layered, safer approach.  
 And this class is the heart of that design.

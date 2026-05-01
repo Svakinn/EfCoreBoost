@@ -13,7 +13,7 @@ EfCore.Boost is designed for systems that require any of the following:
 - consistent transactional semantics  
 - architecture that remains maintainable as systems grow  
 
-EfBoost strengthens how EF Core is used in real applications.
+EfCore.Boost strengthens how EF Core is used in real applications.
 
 ------------------------------------------------------------------------
 

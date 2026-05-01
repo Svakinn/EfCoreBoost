@@ -55,13 +55,13 @@ Provides everything from ReadRepo, plus:
 
 ## Async / Sync Philosophy
 
-EfBoost strongly encourages **async-first** usage because modern .NET workloads benefit enormously from non-blocking database I/O.
+EfCore.Boost strongly encourages **async-first** usage because modern .NET workloads benefit enormously from non-blocking database I/O.
 
 However:
 - sometimes synchronous execution is required
 - sometimes legacy code or job contexts still depend on it
 
-So for nearly every async API, EfBoost also provides a **synchronous twin**.
+So for nearly every async API, EfCore.Boost also provides a **synchronous twin**.
 
 To keep things honest and explicit:
 - async methods end with `Async`
@@ -170,7 +170,7 @@ This is your **default** read strategy.
 ### 🔷 RowTracked & RowUnTracked  
 *(why these exist, and yes this matches EF Core mental model)*
 
-EfBoost provides:
+EfCore.Boost provides:
 
 ```csharp
 var user = await uow.Users.RowUnTrackedAsync(u => u.Email == email, ct);
@@ -246,7 +246,7 @@ Primary key
 On almost every table
 ```
 
-EfBoost embraces that convention.
+EfCore.Boost embraces that convention.
 
 So in addition to generic `RowByKeyUnTrackedAsync(...)`, you get ergonomic helpers:
 
@@ -267,7 +267,7 @@ If your world uses auto-generated long primary keys, these are extremely pleasan
 OData is powerful — and dangerous when applied blindly to a `DbSet`.
 
 In typical WebAPI setups, an OData-capable controller provides an `ODataQueryOptions` instance that describes the requested filtering, ordering, and paging.  
-EfBoost deliberately does **not** expose raw `DbSet` access for OData. Instead, it offers **controlled entry points** that let you decide how much freedom the client gets.
+EfCore.Boost deliberately does **not** expose raw `DbSet` access for OData. Instead, it offers **controlled entry points** that let you decide how much freedom the client gets.
 
 EfCore.Boost currently supports two OData usage paths:
 
@@ -334,7 +334,7 @@ See more details about OData handling  in
 
 Bulk insert exists because there comes a moment in every growing system where normal EF insert loops start crying softly in the corner.
 
-EfBoost Bulk Insert:
+EfCore.Boost Bulk Insert:
 
 ```csharp
 await uow.LogEntries.BulkInsertAsync(listOfEvents);
@@ -343,10 +343,10 @@ await uow.LogEntries.BulkInsertAsync(listOfEvents);
 This is not a “just batching adds” helper.  
 It uses **true provider-native high-performance channels**:
 
-| Provider | What EfBoost Uses |
-|----------|-------------------|
-SQL Server | SqlBulkCopy |
-PostgreSQL | COPY (binary) |
+| Provider | What EfCore.Boost Uses                     |
+|----------|--------------------------------------------|
+SQL Server | SqlBulkCopy                                |
+PostgreSQL | COPY (binary)                              |
 MySQL | Optimized multi-row parameterized batching |
 
 Why this matters in real systems:
@@ -395,7 +395,7 @@ It gives every entity (and view):
 Repositories live inside a **Unit of Work**, meaning:
 
 - access boundaries are explicit  
-- read-only vs read/write semantics are enforced  
+- read-only vs. read/write semantics are enforced  
 - structure replaces “direct DbContext chaos”  
 
 You still write EF-like queries.  
@@ -407,5 +407,5 @@ But now you get:
 - more performance headroom  
 - a design that scales from small systems to serious enterprise workloads  
 
-EfBoost keeps DbContext behind a thoughtful API,  
+EfCore.Boost keeps DbContext behind a thoughtful API,  
 so your application code feels safer, cleaner, and more purposeful.

@@ -41,7 +41,7 @@
 // -------------------------
 // ✘ Outside async methods
 // ✘ When simply awaiting the async query (await query.ToListAsync())
-// ✘ On non-EF tasks that are outside the EfBoost/UoW query patterns
+// ✘ On non-EF tasks that are outside the EfCore.Boost/UoW query patterns
 //
 // Example of violation:
 //     var list = query.Where(x => x.IsActive).ToListAsync().Result;  // EFB0004 warning
@@ -49,7 +49,7 @@
 // Recommended fix:
 //     var list = await query.Where(x => x.IsActive).ToListAsync();
 //
-// This rule supports EfBoost’s guideline: never block on async EF queries.
+// This rule supports EfCore.Boost’s guideline: never block on async EF queries.
 //
 
 using Microsoft.CodeAnalysis;

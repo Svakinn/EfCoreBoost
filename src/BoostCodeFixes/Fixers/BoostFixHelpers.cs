@@ -1,4 +1,4 @@
-﻿// EfBoostFixHelpers.cs
+﻿// BoostFixHelpers.cs
 // Shared helpers for code fixes
 // Copyright © 2026  Sveinn S. Erlendsson
 // Licensed under the MIT License.

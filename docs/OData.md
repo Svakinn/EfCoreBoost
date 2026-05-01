@@ -10,7 +10,7 @@ EfCore.Boost integrates OData in a way that emphasizes:
 - security
 - predictable behavior
 
-OData becomes a strong querying capability, while EfBoost ensures it remains safe, bounded, and architecturally disciplined.
+OData becomes a strong querying capability, while EfCore.Boost ensures it remains safe, bounded, and architecturally disciplined.
 
 ---
 
@@ -42,13 +42,13 @@ OData solves this with a proven standard:
 ?$select=
 ```
 
-EfBoost ensures these translate into efficient SQL executed by the database engine, not processed in application memory.
+EfCore.Boost ensures these translate into efficient SQL executed by the database engine, not processed in application memory.
 
 ---
 
 ## Performance Characteristics
 
-EfBoost applies OData queries directly to EF Core queries. This means:
+EfCore.Boost applies OData queries directly to EF Core queries. This means:
 
 - filtering executes in SQL
 - paging is computed by the database
@@ -72,7 +72,7 @@ While OData supports full CRUD (Create, Read, Update, Delete) operations, many e
 
 Using OData for querying provides a flexible, standardized way to expose data without needing to build specialized endpoints for every possible filter or sort combination. Whether you choose to implement the full CRUD surface or focus solely on high-performance querying, OData integrates naturally with EfCore.Boost.
 
-EfBoost enables rich read capabilities while leaving the choice of write-logic implementation (whether via OData or standard REST/CQRS patterns) to the developer.
+EfCore.Boost enables rich read capabilities while leaving the choice of write-logic implementation (whether via OData or standard REST/CQRS patterns) to the developer.
 
 ---
 
@@ -96,7 +96,7 @@ To expose an OData service, you must first define an Entity Data Model (EDM). Ef
 
 #### 1. Build from Unit of Work
 
-If your Unit of Work owns its `DbContext` (which is standard in EfBoost), you can build the model without providing the context separately:
+If your Unit of Work owns its `DbContext` (which is standard in EfCore.Boost), you can build the model without providing the context separately:
 
 ```csharp
 // Simplest entry point
@@ -179,7 +179,7 @@ Raw OData exposed directly over DbSets is unsafe and potentially harmful. Withou
 - excessively large result sets
 - performance degradation
 
-EfBoost avoids this by requiring OData to be applied on controlled query roots, not raw DbSets.
+EfCore.Boost avoids this by requiring OData to be applied on controlled query roots, not raw DbSets.
 
 `ODataPolicy` defines **what the client is allowed to ask for**.
 
@@ -308,7 +308,7 @@ EF is naturally centered around tables and relations. This is excellent for pers
 
 Database views often represent the best surface for OData exposure.
 
-EfBoost treats views as first‑class read repositories, meaning:
+EfCore.Boost treats views as first‑class read repositories, meaning:
 
 - they support OData
 - they participate in paging and filtering
@@ -416,7 +416,7 @@ public async Task Get(ODataQueryOptions<User> options)
 
 This represents $filter, $orderby, $top, etc.
 
-EfBoost methods accept this object to apply filtering correctly. You may also optionally validate it using ODataValidationSettings to restrict:
+EfCore.Boost methods accept this object to apply filtering correctly. You may also optionally validate it using ODataValidationSettings to restrict:
 
 - allowed operators
 - allowed properties
@@ -645,14 +645,14 @@ Shaped expand supports projection, but your output is untyped (`object`) and sho
 
 # Summary
 
-EfBoost integrates OData as a controlled, high‑performance, secure query capability, built for:
+EfCore.Boost integrates OData as a controlled, high‑performance, secure query capability, built for:
 
 - large datasets
 - flexible read scenarios
 - administrative and reporting needs
 - client‑driven shaping with server‑side execution
 
-Designed correctly, OData + EfBoost provides:
+Designed correctly, OData + EfCore.Boost provides:
 
 - performance superior to custom APIs
 - safer defaults
@@ -662,4 +662,4 @@ Designed correctly, OData + EfBoost provides:
 OData for querying.  
 Application services for writing.  
 Views and routines for advanced shaping.  
-EfBoost ensures they all work in harmony.
+EfCore.Boost ensures they all work in harmony.
