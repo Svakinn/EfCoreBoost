@@ -5,7 +5,7 @@ EfCore.Boost builds directly on Entity Framework Core’s model-building foundat
 
 What EfBoost adds is:
 
-- higher-level intent attributes  
+- higher-level intent attributes or equivalent fluent API options  
 - uniform conventions across database engines  
 - predictable naming and schema behavior  
 - correct timestamp handling  
@@ -41,6 +41,72 @@ This activates:
 - view key support
 
 EF continues to work normally — EfBoost simply aligns environments and removes ambiguity.
+
+---
+
+# Model Configuration
+
+EfCore.Boost supports model configuration through both custom attributes and a fluent API. Both approaches provide identical behavior and can be used interchangeably.
+
+### Attributes vs Fluent API
+
+While both styles are supported, attributes are often simpler to visualize and maintain as they keep the metadata directly on the entity classes. The Fluent API provides a powerful alternative for cases where entities should remain clean of dependencies or when configuring models from an external library.
+
+### Naming Conventions in Fluent API
+
+To avoid naming collisions with common domain properties (like `Name` or `Email`), fluent methods for **semantic attributes** use the `HasPurpose-` prefix.
+
+- **Standard technical attributes** (like `DbAutoUid`, `StrShort`, `Money`) use the `Has-` prefix (e.g., `HasStrShort()`).
+- **Semantic attributes** (like `Name`, `Email`, `AddressCity`) use the `HasPurpose-` prefix (e.g., `HasPurposeName()`).
+
+### Side-by-Side Comparison
+
+| Intent | Attribute Style                                               | Fluent Style |
+| :--- |:--------------------------------------------------------------| :--- |
+| **Identity** | `[DbAutoUid] public long Id { get; set; }`                    | `builder.Property(x => x.Id).HasDbAutoUid();` |
+| **Short String** | `[StrShort] public string Name { get; set; }`                 | `builder.Property(x => x.Name).HasStrShort();` |
+| **Purpose: Name** | `[Name] public string FullName { get; set; }`                | `builder.Property(x => x.FullName).HasPurposeName();` |
+| **Money** | `[Money] public decimal Price { get; set; }`                  | `builder.Property(x => x.Price).HasMoney();` |
+| **Concurrency** | `[AutoIncrementConcurrency] public int Version { get; set; }` | `builder.Property(x => x.Version).HasAutoIncrementConcurrency();` |
+| **No Cascade** | `[NoCascadeDelete]` on navigation                             | `builder.HasOne(...).WithMany(...).HasNoCascadeDelete();` |
+| **Schema** | `[DbSchema("sales")]` on class                                | `builder.Entity<T>().HasDbSchema("sales");` |
+
+### Detailed Examples
+
+#### Using Attributes
+
+```csharp
+[DbSchema("sales")]
+public class Customer
+{
+    [DbAutoUid]
+    public long Id { get; set; }
+    [StrShort]
+    public string Name { get; set; }
+    [Money]
+    public decimal Balance { get; set; }
+    [AutoIncrementConcurrency]
+    public int Version { get; set; }
+}
+```
+
+#### Using Fluent API
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    base.OnModelCreating(modelBuilder);
+    
+    modelBuilder.Entity<Customer>(entity =>
+    {
+        entity.HasDbSchema("sales");
+        entity.Property(x => x.Id).HasDbAutoUid();
+        entity.Property(x => x.Name).HasStrShort();
+        entity.Property(x => x.Balance).HasMoney();
+        entity.Property(x => x.Version).HasAutoIncrementConcurrency();
+    });
+}
+```
 
 ---
 
@@ -81,12 +147,22 @@ EfBoost ensures:
 A view in EfBoost is a supported, intentional read model.
 
 ```csharp
-[ViewKey(nameof(Id)]
+[ViewKey(nameof(Id))]
 [DbSchema("cms", Table="CurrentMenuItemsV")]
 public class CurrentMenuItemsV
 {
     public long Id { get; set; }
 }
+```
+
+#### Using Fluent API
+
+```csharp
+modelBuilder.Entity<CurrentMenuItemsV>(entity =>
+{
+    entity.HasDbSchema("cms", "CurrentMenuItemsV");
+    entity.HasViewKey(x => x.Id);
+});
 ```
 
 EfBoost will:
@@ -557,12 +633,9 @@ public class LoginPermissionsV
 {
     public long LoginId { get; set; }
     public long CustId { get; set; }
-
     [StrCode]
     public string Code { get; set; } = string.Empty;
-
     public int ModuleId { get; set; }
-
     public bool IsExternal { get; set; } = false;
     public bool IsInternal { get; set; } = false;
 }
@@ -657,33 +730,33 @@ string buckets:
 This keeps database schemas consistent while still allowing the model to
 clearly express *what the data represents*.
 
-| Attribute | Maps to | Typical usage |
-|---|---|---|
-|`CountryCode`|`StrCode`|ISO country codes (`IS`, `US`, `DE`).|
-|`CurrencyCode`|`StrCode`|ISO currency codes (`ISK`, `EUR`, `USD`).|
-|`LanguageCode`|`StrCode`|ISO language codes (`en`, `is`).|
-|`CultureCode`|`StrCode`|Culture identifiers such as locale codes (`en-GB`, `is-IS`).|
-|`MimeType`|`StrShort`|MIME content type identifiers.|
-|`AddressPostalCode`|`StrShort`|Postal or ZIP codes.|
-|`AddressStreetNumber`|`StrShort`|Street number part of an address.|
-|`AddressBuildingUnit`|`StrShort`|Apartment, suite, or building unit identifiers.|
-|`Phone`|`StrShort`|Telephone numbers.|
-|`UserName`|`StrShort`|Login or account user names.|
-|`Name`|`StrMed`|Names of people, entities, or objects.|
-|`Title`|`StrMed`|Titles or headings.|
-|`ExternalRef`|`StrMed`|Identifiers referencing external systems.|
-|`AddressStreetName`|`StrMed`|Street names in addresses.|
-|`AddressCity`|`StrMed`|City or town names.|
-|`AddressAdminArea`|`StrMed`|Administrative region, state, or province.|
-|`AddressRecepientName`|`StrMed`|Recipient name used in address fields.|
-|`Email`|`StrLong`|Email addresses.|
-|`Url`|`StrLong`|Web addresses or resource URLs.|
-|`FileName`|`StrLong`|File names including extensions.|
-|`Html`|`Text`|Stored HTML markup content.|
-|`Markdown`|`Text`|Markdown formatted content.|
-|`RichText`|`Text`|Rich text editor output.|
-|`Json`|`Text`|JSON structured content.|
-|`Editor`|`Text`|Editor JSON payloads such as TipTap content.|
+| Attribute              | Maps to | Typical usage |
+|------------------------|---|---|
+| `CountryCode`          |`StrCode`|ISO country codes (`IS`, `US`, `DE`).|
+| `CurrencyCode`         |`StrCode`|ISO currency codes (`ISK`, `EUR`, `USD`).|
+| `LanguageCode`         |`StrCode`|ISO language codes (`en`, `is`).|
+| `CultureCode`          |`StrCode`|Culture identifiers such as locale codes (`en-GB`, `is-IS`).|
+| `MimeType`             |`StrShort`|MIME content type identifiers.|
+| `AddressPostalCode`    |`StrShort`|Postal or ZIP codes.|
+| `AddressStreetNumber`  |`StrShort`|Street number part of an address.|
+| `AddressBuildingUnit`  |`StrShort`|Apartment, suite, or building unit identifiers.|
+| `Phone`                |`StrShort`|Telephone numbers.|
+| `UserName`             |`StrShort`|Login or account user names.|
+| `Name`                 |`StrMed`|Names of people, entities, or objects.|
+| `Title`                |`StrMed`|Titles or headings.|
+| `ExternalRef`          |`StrMed`|Identifiers referencing external systems.|
+| `AddressStreetName`    |`StrMed`|Street names in addresses.|
+| `AddressCity`          |`StrMed`|City or town names.|
+| `AddressAdminArea`     |`StrMed`|Administrative region, state, or province.|
+| `AddressRecipientName` |`StrMed`|Recipient name used in address fields.|
+| `Email`                |`StrLong`|Email addresses.|
+| `Url`                  |`StrLong`|Web addresses or resource URLs.|
+| `FileName`             |`StrLong`|File names including extensions.|
+| `Html`                 |`Text`|Stored HTML markup content.|
+| `Markdown`             |`Text`|Markdown formatted content.|
+| `RichText`             |`Text`|Rich text editor output.|
+| `Json`                 |`Text`|JSON structured content.|
+| `Editor`               |`Text`|Editor JSON payloads such as TipTap content.|
 
 #### Notes
 
@@ -750,21 +823,23 @@ This prevents:
 These attributes **do not change the database schema**.  
 They exist to express **common domain semantics and allow conventions**, tooling, or libraries to recognize standard column meanings.
 
-| Attribute | Applies to | Typical usage |
-|---|---|---|
-|`Media`|`byte[]`|Binary media content such as images, files, or attachments stored in the database.|
-|`Hash`|`byte[]`|Cryptographic hashes such as password hashes or integrity hashes.|
-|`Salt`|`byte[]`|Salt values used together with hashed secrets.|
-|`Encrypted`|`byte[]`|Encrypted binary payloads or encrypted field storage.|
-|`SigningKey`|`byte[]`|Binary signing keys or cryptographic key material used for token signing or verification.|
-|`SoftDelete`|`bool` or `DateTime`|Marks a column used for soft-delete state or deletion timestamp (for example `IsDeleted`).|
-|`LastChangedUtc`|`DateTime`|Timestamp for the last modification of the row.|
-|`CreatedUtc`|`DateTime`|Timestamp when the record was created.|
-|`ValidFromUtc`|`DateTime`|Start of a validity period for temporal data.|
-|`ValidToUtc`|`DateTime`|End of a validity period for temporal data.|
-|`ExpiresUtc`|`DateTime`|Expiration timestamp for temporary or expiring data.|
-|`Tenant`|`long`, `int`, or `Guid`|Tenant identifier used for multi-tenant data partitioning.|
-|`Status`|`int`, `short`, or `string`|Application-defined status or state indicator.|
+| Attribute | Applies to | Typical usage | Fluent Style |
+|---|---|---|---|
+|`Media`|`byte[]`|Binary media content such as images, files, or attachments stored in the database.|`.HasPurposeMedia()`|
+|`Hash`|`byte[]`|Cryptographic hashes such as password hashes or integrity hashes.|`.HasPurposeHash()`|
+|`Salt`|`byte[]`|Salt values used together with hashed secrets.|`.HasPurposeSalt()`|
+|`Encrypted`|`byte[]`|Encrypted binary payloads or encrypted field storage.|`.HasPurposeEncrypted()`|
+|`SigningKey`|`byte[]`|Binary signing keys or cryptographic key material used for token signing or verification.|`.HasPurposeSigningKey()`|
+|`SoftDelete`|`bool` or `DateTime`|Marks a column used for soft-delete state or deletion timestamp (for example `IsDeleted`).|`.HasPurposeSoftDelete()`|
+|`LastChangedUtc`|`DateTime`|Timestamp for the last modification of the row.|`.HasPurposeLastChangedUtc()`|
+|`CreatedUtc`|`DateTime`|Timestamp when the record was created.|`.HasPurposeCreatedUtc()`|
+|`ValidFromUtc`|`DateTime`|Start of a validity period for temporal data.|`.HasPurposeValidFromUtc()`|
+|`ValidToUtc`|`DateTime`|End of a validity period for temporal data.|`.HasPurposeValidToUtc()`|
+|`ExpiresUtc`|`DateTime`|Expiration timestamp for temporary or expiring data.|`.HasPurposeExpiresUtc()`|
+|`Tenant`|`long`, `int`, or `Guid`|Tenant identifier used for multi-tenant data partitioning.|`.HasPurposeTenant()`|
+|`Status`|`int`, `short`, or `string`|Application-defined status or state indicator.|`.HasPurposeStatus()`|
+|`SoftRef`|Any key type|Lightweight reference to another entity (not a formal foreign key).|`.HasPurposeSoftRef()`|
+|`BirthDate`|`DateTime` or `DateOnly`|Birth date field, often subject to specific privacy or validation rules.|`.HasPurposeBirthDate()`|
 ---
 
 ### Notes on usage

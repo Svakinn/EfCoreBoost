@@ -13,7 +13,7 @@ namespace EfCore.Boost.Model
         /// </summary>
         /// <param name="modelBuilder"></param>
         /// <param name="ctx"></param>
-        public static void ApplyBoostColumnConventions(this ModelBuilder modelBuilder, DbContext ctx)
+        internal static void ApplyBoostColumnConventions(this ModelBuilder modelBuilder, DbContext ctx)
         {
             var provider = ctx.Database.ProviderName ?? string.Empty;
             var isSqlServer = provider.Contains("SqlServer", StringComparison.OrdinalIgnoreCase);
@@ -30,38 +30,56 @@ namespace EfCore.Boost.Model
                     var prop = entity.FindProperty(pi);
                     if (prop == null) continue;
 
-                    // 1) DbGuid (your existing behavior, slightly cleaned up)
+                    // 1) DbGuid
                     var dbGuidAttr = pi.GetCustomAttribute<DbGuidAttribute>();
                     if (dbGuidAttr != null)
-                        ConfigureDbGuid(prop, isSqlServer, isNpgsql, isMySql);
+                        EfBoostPropertyConfiguration.ApplyDbGuid(prop, isSqlServer, isNpgsql, isMySql);
 
-                    // 2) DbUid (shorthand: PK + database generated ID)
+                    // 2) DbUid
                     var dbUidAttr = pi.GetCustomAttribute<DbAutoUidAttribute>();
                     if (dbUidAttr != null && !isView)
-                        ConfigureDbUid(entity, prop, pi, dbUidAttr, isSqlServer, isNpgsql, isMySql);
+                        EfBoostPropertyConfiguration.ApplyDbAutoUid(entity, prop, isSqlServer, isNpgsql, isMySql);
 
-                    // 3) String length attributes: StrShort / StrLong / StrText
+                    // 3) String length attributes
                     if (pi.PropertyType == typeof(string))
                         ConfigureStringSize(prop, pi, isSqlServer, isNpgsql, isMySql);
 
                     // 4) Decimal precision
                     if (pi.PropertyType == typeof(decimal) || Nullable.GetUnderlyingType(pi.PropertyType) == typeof(decimal))
                         ConfigureDecimalPrecision(prop, pi);
+
                     // 5) AutoIncrementConcurrency
                     var auIncr = pi.GetCustomAttribute<AutoIncrementConcurrencyAttribute>();
                     if (auIncr != null && !isView && IsIntOrLong(pi.PropertyType))
                     {
                         if (conCurrCount > 0) throw new InvalidOperationException($"Multiple [AutoIncrementConcurrency] properties on '{clr.Name}', '{pi.Name}'.");
                         conCurrCount++;
-                        EnsureDefaultNumIfMissing(modelBuilder, clr, pi);
-                        modelBuilder.Entity(clr).Property(pi.Name).IsConcurrencyToken();
+                        EfBoostPropertyConfiguration.ApplyAutoIncrementConcurrency(prop, modelBuilder);
                     }
                     var oIncr = pi.GetCustomAttribute<AutoIncrementAttribute>();
                     if (oIncr != null && !isView && IsIntOrLong(pi.PropertyType))
                     {
-                        //Set default value to 0 if not set
-                        EnsureDefaultNumIfMissing(modelBuilder, clr, pi);
+                        EfBoostPropertyConfiguration.ApplyAutoIncrement(prop, modelBuilder);
                     }
+
+                    // 6) Purpose markings
+                    if (pi.GetCustomAttribute<SoftDeleteAttribute>() != null) EfBoostPropertyConfiguration.ApplySoftDelete(prop);
+                    if (pi.GetCustomAttribute<LastChangedUtcAttribute>() != null) EfBoostPropertyConfiguration.ApplyLastChangedUtc(prop);
+                    if (pi.GetCustomAttribute<CreatedUtcAttribute>() != null) EfBoostPropertyConfiguration.ApplyCreatedUtc(prop);
+                    if (pi.GetCustomAttribute<ValidFromUtcAttribute>() != null) EfBoostPropertyConfiguration.ApplyValidFromUtc(prop);
+                    if (pi.GetCustomAttribute<ValidToUtcAttribute>() != null) EfBoostPropertyConfiguration.ApplyValidToUtc(prop);
+                    if (pi.GetCustomAttribute<ExpiresUtcAttribute>() != null) EfBoostPropertyConfiguration.ApplyExpiresUtc(prop);
+                    if (pi.GetCustomAttribute<TenantAttribute>() != null) EfBoostPropertyConfiguration.ApplyTenant(prop);
+                    if (pi.GetCustomAttribute<StatusAttribute>() != null) EfBoostPropertyConfiguration.ApplyStatus(prop);
+                    if (pi.GetCustomAttribute<SoftRefAttribute>() != null) EfBoostPropertyConfiguration.ApplySoftRef(prop);
+                    if (pi.GetCustomAttribute<BirthDateAttribute>() != null) EfBoostPropertyConfiguration.ApplyBirthDate(prop);
+
+                    // 7) Raw data
+                    if (pi.GetCustomAttribute<MediaAttribute>() != null) EfBoostPropertyConfiguration.ApplyMedia(prop);
+                    if (pi.GetCustomAttribute<HashAttribute>() != null) EfBoostPropertyConfiguration.ApplyHash(prop);
+                    if (pi.GetCustomAttribute<SaltAttribute>() != null) EfBoostPropertyConfiguration.ApplySalt(prop);
+                    if (pi.GetCustomAttribute<EncryptedAttribute>() != null) EfBoostPropertyConfiguration.ApplyEncrypted(prop);
+                    if (pi.GetCustomAttribute<SigningKeyAttribute>() != null) EfBoostPropertyConfiguration.ApplySigningKey(prop);
                 }
             }
         }
@@ -86,69 +104,12 @@ namespace EfCore.Boost.Model
 
         private static void ConfigureDbGuid(IMutableProperty prop,bool isSqlServer, bool isNpgsql,bool isMySql)
         {
-            // Type guard: only Guid / Guid?
-            var clrType = Nullable.GetUnderlyingType(prop.ClrType) ?? prop.ClrType;
-            if (clrType != typeof(Guid))
-                throw new InvalidOperationException(
-                    $"[DbGuid] can only be used on Guid/Guid?. Property: {prop.ClrType.Name}.{prop.Name}");
-            if (isSqlServer)
-            {
-                prop.SetColumnType("uniqueidentifier");
-                prop.SetDefaultValueSql("NEWSEQUENTIALID()");
-            }
-            else if (isNpgsql)
-            {
-                prop.SetColumnType("uuid");
-                prop.SetDefaultValueSql("gen_random_uuid()");
-            }
-            else if (isMySql)
-            {
-                prop.SetColumnType("char(36)");
-                // Adjust later if you implement proper uuid generation in MySQL
-                prop.SetDefaultValueSql("(UUID())"); //works for MySQL 8.0.13+ & MariaDb 10.2+
-            }
+            EfBoostPropertyConfiguration.ApplyDbGuid(prop, isSqlServer, isNpgsql, isMySql);
         }
 
         private static void ConfigureDbUid(IMutableEntityType entity,IMutableProperty prop,PropertyInfo pi,DbAutoUidAttribute dbUidAttr,bool isSqlServer,bool isNpgsql,bool isMySql)
         {
-            // Type guard: allow int, long, Guid (plus nullable variants)
-            var clrType = Nullable.GetUnderlyingType(pi.PropertyType) ?? pi.PropertyType;
-            var isInt = clrType == typeof(int);
-            var isLong = clrType == typeof(long);
-            var isGuid = clrType == typeof(Guid);
-
-            if (!isInt && !isLong && !isGuid)
-                throw new InvalidOperationException(
-                    $"[DbUid] can only be applied to int/long/Guid properties. " +
-                    $"Property: {entity.ClrType.Name}.{pi.Name}, type: {clrType.Name}");
-
-            // If entity already has a PK, and it's not this property -> you may want to throw
-            var existingPk = entity.FindPrimaryKey();
-            if (existingPk != null && !existingPk.Properties.Contains(prop))
-            {
-                throw new InvalidOperationException(
-                    $"Entity '{entity.ClrType.Name}' already has a primary key " +
-                    $"({string.Join(",", existingPk.Properties.Select(p => p.Name))}). " +
-                    $"Cannot also mark '{pi.Name}' with [DbUid].");
-            }
-
-            // Make this property the primary key
-            entity.SetPrimaryKey(prop);
-            prop.IsNullable = false;
-            prop.ValueGenerated = ValueGenerated.OnAdd;
-            if (isSqlServer)
-            {
-                // Using provider strategy; you can customize to use sequences/HiLo later
-                prop.SetValueGenerationStrategy(
-                    SqlServerValueGenerationStrategy.IdentityColumn);
-            }
-            else if (isNpgsql)
-            {
-                prop.SetValueGenerationStrategy(
-                    Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
-            }
-            //else if (isMySql && (isInt || isLong))
-            //Ef conventions for MySql auto-increment are handled by Pomelo automatically
+            EfBoostPropertyConfiguration.ApplyDbAutoUid(entity, prop, isSqlServer, isNpgsql, isMySql);
         }
 
         private enum StrBucket { None, Code, Short, Med, Long, Text }
@@ -175,7 +136,7 @@ namespace EfCore.Boost.Model
                 new(typeof(LanguageCodeAttribute), StrBucket.Code),
                 new(typeof(CultureCodeAttribute), StrBucket.Code),
                 new(typeof(MimeTypeAttribute), StrBucket.Med),
-                // Semantic: address bits (short-ish)
+                // Semantic: address bits (shortish)
                 new(typeof(AddressPostalCodeAttribute), StrBucket.Short),
                 new(typeof(AddressStreetNumberAttribute), StrBucket.Short),
                 new(typeof(AddressBuildingUnitAttribute), StrBucket.Short),
@@ -190,7 +151,7 @@ namespace EfCore.Boost.Model
                 new(typeof(AddressStreetNameAttribute), StrBucket.Med),
                 new(typeof(AddressCityAttribute), StrBucket.Med),
                 new(typeof(AddressAdminAreaAttribute), StrBucket.Med),
-                new(typeof(AddressRecepientNameAttribute), StrBucket.Med), // consider renaming typo
+                new(typeof(AddressRecipientNameAttribute), StrBucket.Med), // consider renaming typo
                 // Semantic: special strings
                 new(typeof(EmailAttribute), StrBucket.Long), // RFC max 320 -> keep Long(512)
                 new(typeof(SiteUrlAttribute), StrBucket.Long),    // URL <= 356
@@ -217,7 +178,7 @@ namespace EfCore.Boost.Model
                     throw new InvalidOperationException(
                         $"Property '{prop.DeclaringType.Name}.{prop.Name}' has multiple string intent attributes " +
                         $"('{firstAttr?.Name}', '{r.AttrType.Name}'). Only one string intent/size attribute is allowed.");
-                // If same bucket (aliases), allow it.
+                // If the same bucket (aliases), allow it.
             }
             // If none -> let EF default
             if (bucket == StrBucket.None) return;
@@ -230,6 +191,18 @@ namespace EfCore.Boost.Model
                 _ => null // Text => unbounded
             };
             if (maxLen.HasValue) prop.SetMaxLength(maxLen.Value);
+
+            var annotationName = bucket switch
+            {
+                StrBucket.Code => EfBoostAnnotationNames.StrCode,
+                StrBucket.Short => EfBoostAnnotationNames.StrShort,
+                StrBucket.Med => EfBoostAnnotationNames.StrMed,
+                StrBucket.Long => EfBoostAnnotationNames.StrLong,
+                StrBucket.Text => EfBoostAnnotationNames.Text,
+                _ => null
+            };
+            if (annotationName != null) prop.SetAnnotation(annotationName, true);
+
             // Column types: keep consistent across providers
             if (isSqlServer)
                 prop.SetColumnType(maxLen.HasValue ? $"nvarchar({maxLen.Value})" : "nvarchar(max)");
@@ -260,7 +233,6 @@ namespace EfCore.Boost.Model
             var sci = pi.GetCustomAttribute<ScientificAttribute>();
             var lgt = pi.GetCustomAttribute<LongitudeAttribute>();
             var lat = pi.GetCustomAttribute<LatitudeAttribute>();
-
             var count = (pct != null ? 1 : 0)
                 + (price != null ? 1 : 0)
                 + (qty != null ? 1 : 0)
@@ -270,21 +242,19 @@ namespace EfCore.Boost.Model
                 + (lgt != null ? 1 : 0)
                 + (lat != null ? 1 : 0)
                 + (sci != null ? 1 : 0);
-
             if (count > 1)
                 throw new InvalidOperationException(
                     $"Property '{prop.DeclaringType.ClrType.Name}.{prop.Name}' " + "has multiple decimal attributes. Only one is allowed.");
-
             int precision, scale;
-
-            if (pct != null || qty != null || rate != null) { precision = 18; scale = 8; }
-            else if (price != null || money != null) { precision = 19; scale = 4; }
-            else if (sort != null || sci != null) { precision = 38; scale = 19; }
-            else if (lgt != null || lat != null) { precision = 9; scale = 6; }
-            else { precision = 19; scale = 4; } // default for all other decimals
-
+            string annotationName;
+            if (pct != null || qty != null || rate != null) { precision = 18; scale = 8; annotationName = pct != null ? EfBoostAnnotationNames.Percentage : (qty != null ? EfBoostAnnotationNames.Qty : EfBoostAnnotationNames.Rate); }
+            else if (price != null || money != null) { precision = 19; scale = 4; annotationName = price != null ? EfBoostAnnotationNames.Price : EfBoostAnnotationNames.Money; }
+            else if (sort != null || sci != null) { precision = 38; scale = 19; annotationName = sort != null ? EfBoostAnnotationNames.SortRank : EfBoostAnnotationNames.Scientific; }
+            else if (lgt != null || lat != null) { precision = 9; scale = 6; annotationName = lgt != null ? EfBoostAnnotationNames.Longitude : EfBoostAnnotationNames.Latitude; }
+            else { precision = 19; scale = 4; annotationName = null!; } // default for all other decimals
             prop.SetPrecision(precision);
             prop.SetScale(scale);
+            prop.SetAnnotation(annotationName, true);
         }
 
     }

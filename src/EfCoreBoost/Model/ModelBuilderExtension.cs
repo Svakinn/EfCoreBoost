@@ -43,7 +43,7 @@ namespace EfCore.Boost.Model
             modelBuilder.DisableAllCascadeDeletes();
         }
 
-        static void ApplyPostgresCitext(ModelBuilder modelBuilder)
+        private static void ApplyPostgresCitext(ModelBuilder modelBuilder)
         {
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
                 foreach (var prop in entity.GetProperties())
@@ -54,7 +54,7 @@ namespace EfCore.Boost.Model
                 }
         }
 
-        public static void ApplyPostgresDateTimeFix(this ModelBuilder modelBuilder)
+        internal static void ApplyPostgresDateTimeFix(this ModelBuilder modelBuilder)
         {
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
@@ -74,7 +74,7 @@ namespace EfCore.Boost.Model
         /// In case we dont run ApplyNoCascadeDelete, we run this in stead to look for [NoCascadeDelete] to apply to foreign key relation
         /// </summary>
         /// <param name="modelBuilder"></param>
-        public static void ApplyNoCascadeDelete(this ModelBuilder modelBuilder)
+        internal static void ApplyNoCascadeDelete(this ModelBuilder modelBuilder)
         {
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -86,7 +86,7 @@ namespace EfCore.Boost.Model
 
                     // Look for [NoCascadeDelete] on the navigation
                     if (Attribute.IsDefined(nav, typeof(NoCascadeDeleteAttribute), inherit: true))
-                        fk.DeleteBehavior = DeleteBehavior.Restrict;  // or NoAction
+                        EfBoostPropertyConfiguration.ApplyNoCascadeDelete(fk);
                 }
         }
 
@@ -96,7 +96,7 @@ namespace EfCore.Boost.Model
         /// Applying this method reverses this default, unless special-custom attribute [CascadeDelete] is placed on the navigation object along with the foreign key.
         /// </summary>
         /// <param name="modelBuilder"></param>
-        public static void DisableAllCascadeDeletes(this ModelBuilder modelBuilder)
+        internal static void DisableAllCascadeDeletes(this ModelBuilder modelBuilder)
         {
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
                 foreach (var fk in entityType.GetForeignKeys())
@@ -110,7 +110,7 @@ namespace EfCore.Boost.Model
                     if (!hasCascadeAttr)
                         fk.DeleteBehavior = DeleteBehavior.Restrict; // default: no cascade
                     else
-                        fk.DeleteBehavior = DeleteBehavior.Cascade;  // explicitly allowed
+                        EfBoostPropertyConfiguration.ApplyCascadeDelete(fk);
                 }
         }
     }

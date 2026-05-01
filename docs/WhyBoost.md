@@ -18,7 +18,7 @@ Further sections in this document expand on each topic in more detail.
 | 6              | Database Features                | Views, routines, and raw SQL are awkward to integrate cleanly  | [First-class support for database-native constructs](#link-6)                         |
 | 7              | Transactions                     | Transactions require manual handling and differ across providers                  | [Consistent transactional patterns across providers](#link-7)                         |
 | 8              | Maintainability                  | Different parts of the system use different data access patterns             | [Enforced conventions and predictable structure](#link-8)                             |
-| 9              | Model Definition                 | Fluent configuration becomes complex and fragmented            | [Attribute-driven conventions simplify and clarify model definitions](#link-9)        |
+| 9              | Model Definition                 | Fluent configuration becomes complex and fragmented            | [Attributes and equivalent fluent API simplify model definitions](#link-9)        |
 | 10             | Controlled Data Access           | DbContext is widely exposed and all DbSets are accessible from anywhere         | [Access is restricted through purpose-specific Unit of Work boundaries](#link-10)      |
 
 <a id="link-1"></a>
@@ -49,7 +49,8 @@ In short:
 - repositories expose the allowed operations
 - application code works through purpose-specific entry points
 
-This keeps the database model complete without turning the entire application into a free-for-all around DbSet access.
+This keeps the database model complete without turning the entire application into a free-for-all around DbSet access.  
+See more details in the [Unit of Work](./DbUow.md) documentation.
 <a id="link-2"></a>
 ## 2. Provider-aware conventions and consistent mappings
 
@@ -161,11 +162,10 @@ Even when working with a single database provider, using the migration template 
 
 For those who want to dive deeper into the migration workflow, see:
 
-- [Migration Project Structure](./Migrations.md#migration-project-structure)
-- [PowerShell Workflows](./Migrations.md#powershell-workflows)
-- [SQL Script Generation](./Migrations.md#sql-script-generation)
-- [Multi-Provider Migrations](./Migrations.md#multi-provider-migrations)
-- [Data Seeding from CSV](./Migrations.md#data-seeding)
+- [Migration Project Structure](./EfMigrationsCMD.md#the-snapshot-problem)
+- [PowerShell Workflows](./EfMigrationsCMD.md#why-powershell-helps)
+- [SQL Script Generation](./EfMigrationsCMD.md#13-generate-sql-deployment-scripts)
+- [Multi-Provider Migrations](./EfMigrationsCMD.md#strategy-used-in-the-templates)
 
 ---
 
@@ -477,40 +477,33 @@ This improves long-term maintainability and reduces the cost of onboarding and r
 ---
 
 <a id="link-9"></a>
-### 9. Attribute-driven modeling and DDD
+### 9. Attribute-driven modeling and Fluent Support
 
 **Typical EF Core challenge:**  
 Fluent configuration becomes complex and fragmented.
 
 **EfCore.Boost approach:**  
-Attribute-driven conventions simplify and clarify model definitions.
+Attributes and an equivalent fluent API simplify and clarify model definitions.
 
-EfCore.Boost supports both attribute-driven models and fluent EF Core configuration.
+EfCore.Boost provides a dual approach to model configuration: high-level intent attributes and a fully-featured fluent API.
 
-The preferred Boost style is to express database intent directly on the model using attributes. This keeps the model compact, readable, and easy to reason about.
+#### Attribute Style
+The preferred Boost style is to express database intent directly on the model using attributes. This keeps the model compact, readable, and easy to reason about as the metadata stays right next to the properties.
 
-EfCore.Boost introduces a small set of custom attributes to support this approach. These include attributes for string purpose and length, GUID and identity handling, and other common database concerns.  
-See [Model Building](./ModelBuilding.md#examples-of-applying-efboost-attributes) for more details.
+#### Fluent Style
+For projects following strict DDD or Clean Architecture, or when working with inherited models where you cannot (or should not) modify the entity classes, EfCore.Boost provides a complete Fluent API.
 
-Projects that follow strict DDD or Clean Architecture principles often use domain entities directly with EF Core, without introducing separate persistence models. In these cases, persistence metadata is typically defined using fluent configuration rather than attributes.
+Each Boost attribute has a corresponding `HasXxx()` extension method (e.g., `HasDbAutoUid()`, `HasStrShort()`, `HasMoney()`). This allows you to apply the same powerful Boost conventions without polluting your domain entities with persistence-specific attributes.
 
-This approach works fully with EfCore.Boost.
-
-The only tradeoff is reduced clarity in the model itself, as configuration is moved away from the entity definitions and into fluent mappings.
+The behavior is identical regardless of the approach chosen. See [Model Building](./ModelBuilding.md#attributes-vs-fluent-api) for more details and side-by-side examples.
 
 ### 9b. Database independence and DDD
 
-A common goal in DDD and Clean Architecture is to keep the database replaceable.
+A common goal in DDD and Clean Architecture is to keep the domain model decoupled from infrastructure concerns.
 
-EfCore.Boost directly supports this goal.
+EfCore.Boost directly supports this goal by providing the fluent alternative. This ensures that even if you choose to keep your entities "clean" of attributes, you still benefit from Boost's provider-aware conventions and consistent mappings.
 
-By centralizing provider-specific behavior into conventions and abstractions, EfCore.Boost ensures that database differences are handled consistently and in one place.
-
-This provides a clear and structured path for switching between supported providers (such as SQL Server, PostgreSQL, and MySQL), without requiring widespread changes to application code or model definitions.
-
-EfCore.Boost does not remove the need to understand your database, but it significantly reduces the effort required to adapt to a different provider.
-
-In practice, database portability becomes a matter of configuration and migration strategy, rather than a redesign of the data layer.
+By centralizing provider-specific behavior into these shared helpers, EfCore.Boost ensures that database differences are handled consistently. This provides a clear path for switching between supported providers (such as SQL Server, PostgreSQL, and MySQL) without requiring widespread changes to the core model logic.
 
 ---
 
