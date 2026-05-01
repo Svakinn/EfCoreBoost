@@ -22,7 +22,7 @@ Repositories are always accessed through a **Unit of Work**, which decides which
 
 ## Repo & ReadRepo
 
-EfBoost has two main repository families:
+EfCore.Boost has two main repository families:
 
 ### ✔ ReadRepo  
 Used for:
@@ -113,13 +113,11 @@ The sections below group functions according to these categories.
 
 Repositories do not fetch data immediately.  
 They **expose queries**, so you can build intent first and decide when and how to execute.  
-Of course this is the Ef´s IQueriable pattern, the repositiories expose.
+Of course this is the Ef’s IQueriable pattern, the repositories expose it.
 
 
 ```csharp
-var qry = uow.Users.QueryUnTracked()
-    .Where(u => u.IsActive && u.Role == "Admin");
-
+var qry = uow.Users.QueryUnTracked().Where(u => u.IsActive && u.Role == "Admin");
 var admins = await qry.ToListAsync(ct); //ct being the cancellation token
 ```
 
@@ -139,11 +137,7 @@ This design lets you:
 Use when you intend to modify entities and save changes:
 
 ```csharp
-var admin = await uow.Users
-    .QueryTracked()
-    .Where(u => u.Id == 123)
-    .FirstAsync(ct);
-
+var admin = await uow.Users.QueryTracked().Where(u => u.Id == 123).FirstAsync(ct);
 admin.DisplayName = "Updated";
 await uow.SaveChangesAsync(ct);
 ```
