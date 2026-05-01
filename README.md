@@ -13,24 +13,32 @@ It does not replace EF Core — it standardizes how EF Core is used in real-worl
 ---
 
 ## 🎯 Why EfBoost Exists
-EF Core is a powerful ORM, but real-world systems often expose gaps in structure and consistency.
+Application code should ideally not need to care whether the underlying database is SQL Server, PostgreSQL, or MySQL.  
+At the same time, a raw `DbContext` often exposes a much larger surface area than most application modules should access directly.
 
-EfCore.Boost addresses common friction points.  Each point describes a common issue encountered in EF Core projects and how EfCore.Boost addresses it.
+EfCore.Boost builds on top of Entity Framework Core by adding a disciplined Unit of Work, Repository, and Model Building layer for structured database development across SQL Server, PostgreSQL, and MySQL.
+
+Multiple targeted Unit of Work layers can be built on top of the same `DbContext`, allowing different parts of an application to expose only the repositories, routines, and access patterns they actually require.
+
+The goal is to keep application architecture and data-access patterns consistent across supported relational database providers while exposing controlled and predictable database access.
+
+The table below highlights common architectural and operational challenges in EF Core-based systems and the corresponding approach taken by EfCore.Boost.
+
 
 | #                         | Area                                       | Typical EF Core Challenge                                      | EfCore.Boost Approach                                                     |
 |---------------------------|--------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------|
-| [1](./docs/WhyBoost.md#link-1) | [Structure](./docs/WhyBoost.md#link-1)          | DbContext is used everywhere, exposing the entire database         | Clear Unit of Work boundaries and structured data access                   |
-| [2](./docs/WhyBoost.md#link-2)   | [Multi-Provider](./docs/WhyBoost.md#link-2)     | Behavior differs across SQL Server, PostgreSQL, and MySQL      | Provider-aware conventions and consistent mappings                         |
-| [3](./docs/WhyBoost.md#link-3)   | [Migrations](./docs/WhyBoost.md#link-3)         | Managing migrations across environments and providers is fragile | Controlled and streamlined migration workflows with script generation      |
-| [4](./docs/WhyBoost.md#link-4)   | [Bulk Operations](./docs/WhyBoost.md#link-4)    | High-volume inserts and updates require custom solutions       | Built-in patterns for efficient bulk handling                              |
-| [5](./docs/WhyBoost.md#link-5)   | [OData](./docs/WhyBoost.md#link-5)              | Query exposure can become unsafe or inconsistent               | Controlled and predictable OData integration                               |
-| [6](./docs/WhyBoost.md#link-6)   | [Database Features](./docs/WhyBoost.md#link-6)  | Views, routines, and raw SQL are awkward to integrate cleanly  | First-class support for database-native constructs                         |
-| [7](./docs/WhyBoost.md#link-7)   | [Transactions](./docs/WhyBoost.md#link-7)       | Transactions require manual handling and differ across providers                   | Consistent transactional patterns across providers                         |
-| [8](./docs/WhyBoost.md#link-8)   | [Maintainability](./docs/WhyBoost.md#link-8)    | Different parts of the system use different data access patterns             | Enforced conventions and predictable structure                             |
-| [9](./docs/WhyBoost.md#link-9)   | [Model Definition](./docs/WhyBoost.md#link-9)   | Fluent configuration becomes complex and fragmented            | Attribute-driven conventions simplify and clarify model definitions        |
-| [10](./docs/WhyBoost.md#link-10) | [Controlled Data Access](./docs/WhyBoost.md#link-10)   | DbContext is widely exposed and all DbSets are accessible from anywhere         | Access is restricted through purpose-specific Unit of Work boundaries      |
+| 1 | Structure | DbContext is used everywhere, exposing the entire database | [Clear Unit of Work boundaries and structured data access](./docs/WhyBoost.md#link-1)                   |
+| 2   | Multi-Provider | Behavior differs across SQL Server, PostgreSQL, and MySQL | [Provider-aware conventions and consistent mappings](./docs/WhyBoost.md#link-2)                         |
+| 3   | Migrations | Managing migrations across environments and providers is fragile | [Controlled and streamlined migration workflows with script generation](./docs/WhyBoost.md#link-3)      |
+| 4   | Bulk Operations | High-volume inserts and updates require custom solutions | [Built-in patterns for efficient bulk handling](./docs/WhyBoost.md#link-4)                              |
+| 5   | OData | Query exposure can become unsafe or inconsistent | [Controlled and predictable OData integration](./docs/WhyBoost.md#link-5)                               |
+| 6   | Database Features | Views, routines, and raw SQL are awkward to integrate cleanly | [First-class support for database-native constructs](./docs/WhyBoost.md#link-6)                         |
+| 7   | Transactions | Transactions require manual handling and differ across providers | [Consistent transactional patterns across providers](./docs/WhyBoost.md#link-7)                         |
+| 8   | Maintainability | Different parts of the system use different data access patterns | [Enforced conventions and predictable structure](./docs/WhyBoost.md#link-8)                             |
+| 9   | Model Definition | Fluent configuration becomes complex and fragmented | [Attribute-driven conventions simplify and clarify model definitions](./docs/WhyBoost.md#link-9)        |
+| 10 | Controlled Data Access | DbContext is widely exposed and all DbSets are accessible from anywhere | [Access is restricted through purpose-specific Unit of Work boundaries](./docs/WhyBoost.md#link-10)      |
 
-*Click on the numbers above for more details about each challenge.*
+*Click on the approaches above for more details.*
 
 ---
 

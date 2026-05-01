@@ -10,16 +10,16 @@ Further sections in this document expand on each topic in more detail.
 
 | #              | Area                        | Typical EF Core Challenge                                      | EfCore.Boost Approach                                                     |
 |----------------|-----------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------|
-| [1](#link-1)   | [Structure](#link-1)                | DbContext is used everywhere, exposing the entire database             | Clear Unit of Work boundaries and structured data access                   |
-| [2](#link-2)   | [Multi-Provider](#link-2)            | Behavior differs across SQL Server, PostgreSQL, and MySQL      | Provider-aware conventions and consistent mappings                         |
-| [3](#link-3)   | [Migrations](#link-3)                | Managing migrations across environments and providers is fragile | Controlled and streamlined migration workflows with script generation      |
-| [4](#link-4)   | [Bulk Operations](#link-4)           | High-volume inserts and updates require custom solutions       | Built-in patterns for efficient bulk handling                              |
-| [5](#link-5)   | [OData](#link-5)                       | Query exposure can become unsafe or inconsistent               | Controlled and predictable OData integration                               |
-| [6](#link-6)   | [Database Features](#link-6)            | Views, routines, and raw SQL are awkward to integrate cleanly  | First-class support for database-native constructs                         |
-| [7](#link-7)   | [Transactions](#link-7)                | Transactions require manual handling and differ across providers                  | Consistent transactional patterns across providers                         |
-| [8](#link-8)   | [Maintainability](#link-8)             | Different parts of the system use different data access patterns             | Enforced conventions and predictable structure                             |
-| [9](#link-9)   | [Model Definition](#link-9) | Fluent configuration becomes complex and fragmented            | Attribute-driven conventions simplify and clarify model definitions        |
-| [10](#link-10) | [Controlled Data Access](#link-10)   | DbContext is widely exposed and all DbSets are accessible from anywhere         | Access is restricted through purpose-specific Unit of Work boundaries      |
+| 1              | Structure                        | DbContext is used everywhere, exposing the entire database             | [Clear Unit of Work boundaries and structured data access](#link-1)                   |
+| 2              | Multi-Provider                  | Behavior differs across SQL Server, PostgreSQL, and MySQL      | [Provider-aware conventions and consistent mappings](#link-2)                         |
+| 3              | Migrations                       | Managing migrations across environments and providers is fragile | [Controlled and streamlined migration workflows with script generation](#link-3)      |
+| 4              | Bulk Operations                  | High-volume inserts and updates require custom solutions       | [Built-in patterns for efficient bulk handling](#link-4)                              |
+| 5              | OData                            | Query exposure can become unsafe or inconsistent               | [Controlled and predictable OData integration](#link-5)                               |
+| 6              | Database Features                | Views, routines, and raw SQL are awkward to integrate cleanly  | [First-class support for database-native constructs](#link-6)                         |
+| 7              | Transactions                     | Transactions require manual handling and differ across providers                  | [Consistent transactional patterns across providers](#link-7)                         |
+| 8              | Maintainability                  | Different parts of the system use different data access patterns             | [Enforced conventions and predictable structure](#link-8)                             |
+| 9              | Model Definition                 | Fluent configuration becomes complex and fragmented            | [Attribute-driven conventions simplify and clarify model definitions](#link-9)        |
+| 10             | Controlled Data Access           | DbContext is widely exposed and all DbSets are accessible from anywhere         | [Access is restricted through purpose-specific Unit of Work boundaries](#link-10)      |
 
 <a id="link-1"></a>
 ## 1. Clear Unit of Work boundaries and structured data access

@@ -91,9 +91,6 @@ public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(op
         /// </summary>
         [LastChangedUtc]
         public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
-
-        public int? HitsRecorded { get; set; }
-        public int? InternalHits { get; set; }
     }
 
     /// <summary>
@@ -111,13 +108,6 @@ public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(op
         /// Gets or sets the IP number.
         /// </summary>
         public string IpNo { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the host name.
-        /// </summary>
-        public string? HostName { get; set; }
-        public int? HitsRecorded { get; set; }
-
     }
 
     #endregion

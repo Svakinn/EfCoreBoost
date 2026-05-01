@@ -32,8 +32,11 @@ namespace BoostX.Test
         /// <returns></returns>
         static IConfiguration BuildConfig(Dictionary<string, string?> overrides)
         {
-            var basePath = AppDomain.CurrentDomain.BaseDirectory;
-            return new ConfigurationBuilder().SetBasePath(basePath).AddJsonFile("AppSettings.json", optional: false, reloadOnChange: false).AddInMemoryCollection(overrides).Build();
+            return new ConfigurationBuilder()
+                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                .AddJsonFile("AppSettings.json", optional: false, reloadOnChange: false)
+                .AddEnvironmentVariables()
+                .AddInMemoryCollection(overrides).Build();
         }
 
         /// <summary>

@@ -21,6 +21,10 @@ Put simply:
 > **This is the controlled entry point between your .NET application and the database.  
 > Everything meaningful passes through a UOW.**
 
+![UoW and DbContext relationship](./uow-500.png)
+
+*Relationship between targeted UoWs, boosted repositories, the shared `DbContext`, and its underlying `DbSet<T>` entries.*
+
 ---
 
 ## Purpose
@@ -81,9 +85,7 @@ Concrete UOWs declare how to securely create their DbContext using a provided se
 Example:
 
 ```csharp
-public partial class UOWTestDb(IConfiguration cfg, string cfgName) : UowFactory<DbTest>(cfg, cfgName)
-{
-}
+public partial class UOWTestDb(IConfiguration cfg, string cfgName) : UowFactory<DbTest>(cfg, cfgName){}
 ```
 
 ### Key Characteristics
@@ -130,7 +132,7 @@ The separation is intentional and architectural.
 It:
 
 - Allows tracking
-- Allows save operations
+- Allows saving operations
 - Defines transaction boundaries
 - Can expose both read/write and read-only repositories
 
@@ -342,16 +344,11 @@ public partial class UOWLogs(IConfiguration cfg) : UowFactory<DbLogs>(cfg, "Logs
 
 ```csharp
 using var uow = new UOWLogs(configuration);
-
 // Repository usage
-var recent = await uow.LoginLogs.QueryTracked()
-    .OrderByDescending(x => x.CreatedUtc)
-    .Take(20)
-    .ToListAsync();
-
+var recent = await uow.LoginLogs.QueryTracked().OrderByDescending(x => x.CreatedUtc)
+    .Take(20).ToListAsync();
 // Tabular routine
-var viewData = await uow.GetMyViewData(sessionId)
-    .ToListAsync();
+var viewData = await uow.GetMyViewData(sessionId).ToListAsync();
 ```
 
 The UOW defines the playground.  
