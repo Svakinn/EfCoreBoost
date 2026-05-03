@@ -266,7 +266,9 @@ This generates a ready-to-use solution with:
 - A **Test project** pre-configured for integration testing with TestContainers
 - A **Web-Api project** demonstrating dependency injection with the UoW-Factory and OData interface
 
-> **💡 Existing Solutions:** You can easily copy the generated projects (Model, Migrate, Test) from the new solution into your existing solution. Just update the project references and namespace names as needed.
+### Quick Start Guide
+For a step-by-step walkthrough of creating and developing your first EfCore.Boost project, check out our walkthrough guide:
+→ [**Getting Started: MyPets Walkthrough**](./docs/GettingStarted.md)
 
 ## Manual Integration
 If you prefer not to start from a template, you can integrate **EfCore.Boost** into an existing project.
