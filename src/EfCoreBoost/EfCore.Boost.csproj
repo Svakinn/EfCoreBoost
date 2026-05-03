@@ -9,7 +9,7 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
     <Version>8.0.1</Version>
-    <Authors>Sveinn S. Erlendsson</Authors>
+    <Authors>Sveinn S. Erlendsson</Authors> 
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>

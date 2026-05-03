@@ -21,9 +21,7 @@ EfCore.Boost strengthens how EF Core is used in real applications.
 
 EfCore.Boost is an architectural extension layer on top of EF Core.
 
-It simplifies model building and cross-platform conventions, and introduces a disciplined Unit-of-Work model for accessing tables, views, and stored procedures or functions.
-
-EfCore.Boost is designed for systems that must grow without turning data access into chaos.
+It simplifies model building and cross-platform conventions and introduces a disciplined Unit-of-Work model for accessing tables, views, and stored procedures or functions.
 
 It is about **architecture, discipline, and consistency**.
 
@@ -57,7 +55,7 @@ Key ideas:
 -   Applications talk to UOW, not DbContext
 -   Repositories expose tables and views
 -   Routines expose procedures and functions
--   Provider differences are absorbed by conventions
+-   Conventions absorb provider differences
 
 This creates a stable and testable data-access boundary.
 
@@ -77,7 +75,7 @@ EfCore.Boost centralizes these concerns into a single, coherent layer.
 
 You model **intent** in C#.
 EfCore.Boost applies **provider-correct behavior**.  
-The idea is to simplify everyday creation and handling of database models.
+The idea is to simplify the everyday creation and handling of database models.
 
 ------------------------------------------------------------------------
 
