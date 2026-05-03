@@ -52,9 +52,9 @@ public sealed class PetLogic(IUowMyPetsFactory uowMyPetsFactory)
     private MyPetsUow UoW => _uowMyPets ??= _uowMyPetsFactory.Create(); 
 
     /// <summary>
-    /// Adds a new pet to the database
+    /// Adds a new pet to the database and returns the created entity.
     /// </summary>
-    public async Task AddPet(string name, int animalTypeId, int birthYear)
+    public async Task<Pet> AddPet(string name, int animalTypeId, int birthYear)
     {
         var pet = new Pet
         {
@@ -63,9 +63,9 @@ public sealed class PetLogic(IUowMyPetsFactory uowMyPetsFactory)
             BirthYear = birthYear,
             CreatedUtc = DateTime.UtcNow
         };
-
-        await UoW.Pets.InsertAsync(pet);
+        UoW.Pets.Add(pet);
         await UoW.SaveChangesAsync();
+        return pet;
     }
 
     /// <summary>
@@ -75,7 +75,6 @@ public sealed class PetLogic(IUowMyPetsFactory uowMyPetsFactory)
     {
         // Base query - we can add default filters here if needed
         var baseQuery = UoW.PetDetails.QueryUnTracked();
-        
         // The client determines filters, paging, and sorting via OData parameters
         return await UoW.PetDetails.FilterODataAsync(baseQuery, options, null, false, ct);
     }
