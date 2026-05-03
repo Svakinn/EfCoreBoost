@@ -2,11 +2,20 @@
 
 Now that we've verified our model and views with TestContainers, it's time to get serious and deploy to a proper database server. This could be SQL Server (on-prem or Azure), PostgreSQL, or MySQL.
 
-In this step, we will demonstrate the deployment path using **SQL Server** running on your local computer.
+While you or your database administrator can always create the database and deploy migrations manually using the generated SQL scripts, we will demonstrate how to use the built-in command-line tool to handle the entire lifecycle.
+
+> **Important:** Creating a new database usually requires **administrative privileges** (e.g., `dbcreator` role in SQL Server or `superuser` in PostgreSQL). Ensure your connection string uses an account with sufficient permissions, especially for the `create` step.
+
+Specifically, we will show how the tool can:
+1.  **Create** the physical database.
+2.  **Apply** the EF Core migrations and custom views.
+3.  **Import** the seed data.
+
+In this walkthrough, we use **SQL Server** running on your local computer as our target.
 
 ## 8.1 Naming Your Database
 
-If you need to change the database name from the default `MyPets`, now is the time to do it. You must ensure your connection string is properly set up to point to your target server and database.
+If you need to change the database name from the default `MyPets` (from your project name), now is the time to do it. You must ensure your connection string is properly set up to point to your target server and database.
 
 You can find and modify this name in two key places:
 
@@ -35,7 +44,7 @@ Ensure your project is built before running the migration tool. This generates t
 
 Before running the full deployment, you can test if your connection settings are correct and check the status of your database. The migration tool includes a `check` command for this purpose.
 
-Open a terminal in the folder where the `MyPets.Migrate` executable is located (usually `bin/Debug/net8.0/`).
+Open a terminal in the folder where the `MyPets.Migrate` executable is located (usually `bin/Debug/net8.0/`, `net9.0/` or `net10.0/`).
 
 Run the check command:
 ```bash

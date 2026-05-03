@@ -9,7 +9,7 @@ After creating the `MyPets` solution, you will see several projects. Each has a 
 ### 1. MyPets.Model
 This project contains the core data model. It is kept clean of operational baggage:
 - **Entities**: Your domain models (classes).
-- **DbContext**: The `BoostCTX` class where EF Core is configured.
+- **DbContext**: The `MyPetsCtx` class where EF Core is configured.
 - **Unit of Work (UoW)**: The `MyPetsUow` class, which serves as the primary API for your data layer.
 - **Repositories**: Standardized repositories for data access.
 
@@ -25,9 +25,10 @@ Focuses on ensuring your data layer works correctly across all supported platfor
 - **Smoke Tests**: Validates the DbContext and UoW implementation.
 
 ### 4. MyPets.Api
-A lightweight API project that demonstrates:
-- **UoW Injection**: Shows how to inject the `MyPetsUow` into the application.
-- **Service Layering**: In a real application, you would typically have a business logic or infrastructure layer between the API and the UoW. This project keeps it simple to focus on the data layer.
+A very lightweight API project that demonstrates:
+- **Dependency Injection**: Shows how to inject the `IUowMyPetsFactory` and the Business Logic Layer (BLL).
+- **Service Layering**: Includes a simple BLL and Controller to demonstrate a clean path for using the Unit of Work.
+- **Pragmatic Example**: It serves as a minimal implementation to show how the data layer integrates with a web application.
 
 ## 2.2 Why This Structure?
 
@@ -35,7 +36,7 @@ The structure is designed for efficiency and operational reliability:
 - **Clean Model**: The model project only contains what is needed for the application to run, without seed data or migration logic.
 - **Deployment Isolation**: All database setup and data import tasks are isolated, making deployment and environment setup straightforward.
 - **Reliable Testing**: By using test containers, we ensure that the specific SQL features (like views and provider-specific defaults) work exactly as expected on every provider.
-- **Pragmatic Layering**: While the template is simplistic regarding the application layers, it provides a solid foundation for injecting the data layer into any architecture.
+- **Very Lightweight Entry Point**: The API project is intentionally kept simple to focus on demonstrating how to wire up the UoW factory and logic layers via dependency injection.
 
 ---
 

@@ -49,15 +49,28 @@ public class Pet
 ```
 
 ## 3.2 Key Attributes Used
+EfCore.Boost uses **string intent attributes** to ensure consistent column sizes and indexing across all database providers. These attributes map to standardized "size buckets":
+
 - `[DbAutoUid]`: Marks the property as an auto-incrementing primary key.
-- `[Name]`: A semantic string attribute. It ensures consistent length (typically 100-200 chars) and indexing across providers.
-- `[StrMed]`: Medium-length string (typically 250-500 chars).
+- `[Name]`: A semantic string attribute that maps to the **StrMed** bucket (256 characters). It is ideal for names, titles, and searchable labels.
+- `[StrMed]`: Medium-length string bucket (256 characters).
 - `[CreatedUtc]`: Marks the property as the record creation timestamp in UTC.
 - `[Index]`: Defines a database index. `AllDescending = true` is used for the `CreatedUtc` index to optimize for "newest first" queries.
 - `[ForeignKey]`: Standard EF Core attribute to explicitly define the foreign key relationship.
 
-## 3.3 Fluent API Alternative
-If you prefer not to use attributes on your POCO classes, you can achieve the same result using the Fluent API in your `DbContext`:
+### String Size Buckets
+For reference, EfCore.Boost defines these standard buckets:
+- **StrCode**: 30 characters (for identifiers/codes).
+- **StrShort**: 50 characters (for short labels).
+- **StrMed**: 256 characters (for names/titles).
+- **StrLong**: 512 characters (for descriptions/URLs).
+- **Text**: Unbounded (for large content).
+
+## 3.3 Attributes vs. Fluent API
+
+The attribute-based approach shown above is generally preferred in EfCore.Boost because it keeps the model definition and database schema configuration in one place. It is clear, easy to reason about, and provides an immediate understanding of how each property maps to the database.
+
+However, if you prefer not to use attributes on your POCO classes—or if you need to refer to external classes or complex configurations often found in Domain Driven Design (DDD)—you can achieve the same result using the Fluent API in your `DbContext`:
 
 ```csharp
 protected override void OnModelCreating(ModelBuilder modelBuilder)

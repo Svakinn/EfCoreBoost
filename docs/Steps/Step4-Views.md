@@ -1,8 +1,12 @@
 # Step 4: Creating Views
 
-Often, you want to read data from multiple tables merged into a single "Read Model". Although creating a view for just these two entities may not be strictly practical here, we want to demonstrate how views can be created and the path of having custom SQL shipped with the migration.
+Often, you want to read data from multiple tables merged into a single "Read Model". EF Core supports database views, and EfCore.Boost makes working with them even more convenient.
 
-In EfCore.Boost, we handle this by creating Database Views. We start by defining the view like any other entity, but the `ViewKey` attribute will register the entity as a read-only object.
+The path of using views in an application can be extremely efficient (especially when combined with OData) and powerful for reporting—both for performance and for creating clean, read-only structures.
+
+While creating a view for just these two entities may not be strictly practical for such a small and simple domain, we want to demonstrate how views are handled and how custom SQL can be shipped with your migrations.
+
+In EfCore.Boost, we handle this by creating Database Views. We start by defining the view like any other entity, but the `ViewKey` attribute will register the entity as a read-only object and specify the necessary primary key for the view entity.
 
 We will create a view called `PetDetails` that combines `Pet` data with the `AnimalType` name.
 

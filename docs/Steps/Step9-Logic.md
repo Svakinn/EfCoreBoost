@@ -85,7 +85,7 @@ public sealed class PetLogic(IUowMyPetsFactory uowMyPetsFactory)
 ### Key Takeaways:
 - **Injection**: We inject `IUowMyPetsFactory` via the constructor.
 - **Lazy Loading**: The `UoW` property ensures we only create the `MyPetsUow` instance when first accessed.
-- **View Access**: Querying the `PetDetails` view is as simple as querying any other table, thanks to EfCore.Boost.
+- **View Access**: Querying the `PetDetails` view is as simple as querying any other table.
 - **OData Support**: The `FilterODataAsync` method makes it incredibly easy to provide powerful querying capabilities to your API clients.
 
 ## 9.4 Updating the Controller

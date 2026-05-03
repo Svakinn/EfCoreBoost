@@ -68,7 +68,7 @@ static async Task BasicSmokeAsync(MyPetsUow uow)
 
 The test project uses **TestContainers** to spin up real instances of SQL Server, PostgreSQL, and MySQL in Docker. This is crucial because:
 1. **Manual SQL**: It verifies that your provider-specific View definitions are syntactically correct for each engine.
-2. **Provider Mapping**: It ensures that EF Core mappings and Boost attributes (like `[CreatedUtc]`) behave correctly on each specific database.
+2. **Provider Mapping**: It ensures that EF Core mappings and Boost attributes (like `[Name]`) behave correctly on each specific database.
 3. **Full Lifecycle**: It runs a complete "create, migrate, seed, read" lifecycle to catch configuration issues early.
 
 ## 7.3 Running the Tests
