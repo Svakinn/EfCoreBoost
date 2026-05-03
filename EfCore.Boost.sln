@@ -103,6 +103,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Steps", "Steps", "{A8D9B4E2
 		docs\Steps\PetsSolution.png = docs\Steps\PetsSolution.png
 		docs\Steps\Step9-Logic.md = docs\Steps\Step9-Logic.md
 		docs\Steps\PetsPs.png = docs\Steps\PetsPs.png
+		docs\Steps\PetsSql.png = docs\Steps\PetsSql.png
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{0C1D36E7-DDA0-4FC2-BD6D-E4B391148071}"
