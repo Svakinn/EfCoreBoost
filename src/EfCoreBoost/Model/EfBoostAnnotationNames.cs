@@ -65,4 +65,5 @@ internal static class EfBoostAnnotationNames
     public const string Json = "EfBoost:Json";
     public const string Markdown = "EfBoost:Markdown";
     public const string RichText = "EfBoost:RichText";
+    public const string DbDefaultCurrentUtc = "EfBoost:DbDefaultCurrentUtc";
 }

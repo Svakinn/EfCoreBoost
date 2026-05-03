@@ -23,7 +23,7 @@ namespace TestDb
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.ApplyEfBoostConventions(this, "my");  //Here is where the magic happens with each db-flavor and our Boost attributes, default schema set to "my"
+
             OnModelData(modelBuilder); //Data Seeder: TestDbData.cs
         }
 

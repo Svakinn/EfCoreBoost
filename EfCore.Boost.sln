@@ -89,6 +89,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{830F8B07
 		docs\tests\TheTestDb.md = docs\tests\TheTestDb.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Steps", "Steps", "{A8D9B4E2-F4F1-4F2E-9C3E-8D5F6B9D8E7C}"
+	ProjectSection(SolutionItems) = preProject
+		docs\Steps\Step1-Template.md = docs\Steps\Step1-Template.md
+		docs\Steps\Step2-ProjectStructure.md = docs\Steps\Step2-ProjectStructure.md
+		docs\Steps\Step3-Modeling.md = docs\Steps\Step3-Modeling.md
+		docs\Steps\Step4-Views.md = docs\Steps\Step4-Views.md
+		docs\Steps\Step5-Migrations.md = docs\Steps\Step5-Migrations.md
+		docs\Steps\Step6-SeedData.md = docs\Steps\Step6-SeedData.md
+		docs\Steps\Step7-Testing.md = docs\Steps\Step7-Testing.md
+		docs\Steps\Step8-Deployment.md = docs\Steps\Step8-Deployment.md
+		docs\Steps\SolutionIDE-950.png = docs\Steps\SolutionIDE-950.png
+		docs\Steps\PetsSolution.png = docs\Steps\PetsSolution.png
+		docs\Steps\Step9-Logic.md = docs\Steps\Step9-Logic.md
+	EndProjectSection
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{0C1D36E7-DDA0-4FC2-BD6D-E4B391148071}"
 	ProjectSection(SolutionItems) = preProject
 		docs\templates\UseTheTemplate.md = docs\templates\UseTheTemplate.md
@@ -286,6 +301,7 @@ Global
 		{4C0DE1EE-6F00-4BFA-A7A2-BB672D0F291A} = {241F6359-9CBC-4230-A8AC-621EE2188156}
 		{830F8B07-EB6E-4661-83B4-1F5E5676D5E8} = {A18E53C9-514A-4C0D-AECE-A8C2F786D024}
 		{0C1D36E7-DDA0-4FC2-BD6D-E4B391148071} = {A18E53C9-514A-4C0D-AECE-A8C2F786D024}
+		{A8D9B4E2-F4F1-4F2E-9C3E-8D5F6B9D8E7C} = {A18E53C9-514A-4C0D-AECE-A8C2F786D024}
 		{0B403138-AD0B-4466-9F91-EE7B56671033} = {9648E154-3913-4766-A0E3-564F9AB658B4}
 	EndGlobalSection
 EndGlobal

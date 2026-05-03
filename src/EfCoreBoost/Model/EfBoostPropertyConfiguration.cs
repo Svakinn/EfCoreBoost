@@ -31,6 +31,42 @@ internal static class EfBoostPropertyConfiguration
     }
 
     /// <summary>
+    /// Configures a property to have a database-generated current UTC date/time default value.
+    /// For MySQL, we use UTC_TIMESTAMP(6) to match the default datetime(6) column precision.
+    /// </summary>
+    internal static void ApplyDbDefaultCurrentUtc(IMutableProperty property, bool isSqlServer, bool isNpgsql, bool isMySql)
+    {
+        var clrType = Nullable.GetUnderlyingType(property.ClrType) ?? property.ClrType;
+        if (clrType != typeof(DateTime) && clrType != typeof(DateTimeOffset))
+        {
+            throw new InvalidOperationException(
+                $"[DbDefaultCurrentUtc] can only be used on DateTime or DateTimeOffset properties. Property: {property.DeclaringType.Name}.{property.Name}");
+        }
+
+        property.SetAnnotation(EfBoostAnnotationNames.DbDefaultCurrentUtc, true);
+        property.ValueGenerated = ValueGenerated.OnAdd;
+
+        if (isSqlServer)
+        {
+            property.SetDefaultValueSql(
+                clrType == typeof(DateTimeOffset)
+                    ? "TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')"
+                    : "SYSUTCDATETIME()");
+        }
+        else if (isNpgsql)
+        {
+            property.SetDefaultValueSql(
+                clrType == typeof(DateTimeOffset)
+                    ? "CURRENT_TIMESTAMP"
+                    : "CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
+        }
+        else if (isMySql)
+        {
+            property.SetDefaultValueSql("UTC_TIMESTAMP(6)");
+        }
+    }
+
+    /// <summary>
     /// Configures a property as a primary key with automatic value generation (Identity or GUID).
     /// </summary>
     internal static void ApplyDbAutoUid(IMutableEntityType entity, IMutableProperty property, bool isSqlServer, bool isNpgsql, bool isMySql)

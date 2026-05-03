@@ -27,10 +27,15 @@ namespace EfCore.Boost.Model
                 {
                     var prop = entity.FindProperty(pi);
                     if (prop == null) continue;
+
                     // 1) DbGuid
                     var dbGuidAttr = pi.GetCustomAttribute<DbGuidAttribute>();
                     if (dbGuidAttr != null)
                         EfBoostPropertyConfiguration.ApplyDbGuid(prop, isSqlServer, isNpgsql, isMySql);
+
+                    // 1b) DbDefaultCurrentUtc
+                    if (pi.GetCustomAttribute<DbDefaultCurrentUtcAttribute>() != null || prop.FindAnnotation(EfBoostAnnotationNames.DbDefaultCurrentUtc) != null)
+                        EfBoostPropertyConfiguration.ApplyDbDefaultCurrentUtc(prop, isSqlServer, isNpgsql, isMySql);
                     // 2) DbUid
                     var dbUidAttr = pi.GetCustomAttribute<DbAutoUidAttribute>();
                     if (dbUidAttr != null && !isView)

@@ -111,6 +111,15 @@ public static class EfBoostPropertyExtensions
     public static PropertyBuilder<decimal?> HasPurposeLatitude(this PropertyBuilder<decimal?> builder) { EfBoostPropertyConfiguration.ApplyPrecision(builder.Metadata, 9, 6, EfBoostAnnotationNames.Latitude); return builder; }
 
     /// <summary>
+    /// Configures a property to have a database-generated current UTC date/time default value.
+    /// </summary>
+    public static PropertyBuilder<T> HasDbDefaultCurrentUtc<T>(this PropertyBuilder<T> builder)
+    {
+        EfBoostPropertyConfiguration.ApplyDbDefaultCurrentUtc(builder.Metadata, false, false, false);
+        return builder;
+    }
+
+    /// <summary>
     /// Configures a property as an auto-incrementing concurrency token.
     /// </summary>
     public static PropertyBuilder<T> HasAutoIncrementConcurrency<T>(this PropertyBuilder<T> builder)
