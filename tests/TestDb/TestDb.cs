@@ -23,7 +23,7 @@ namespace TestDb
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
+            modelBuilder.ApplyEfBoostConventions(this, "my");
             OnModelData(modelBuilder); //Data Seeder: TestDbData.cs
         }
 
