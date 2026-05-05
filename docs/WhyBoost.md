@@ -16,7 +16,7 @@ Further sections in this document expand on each topic in more detail.
 | 4              | Bulk Operations                  | High-volume inserts and updates require custom solutions       | [Built-in patterns for efficient bulk handling](#link-4)                              |
 | 5              | OData                            | Query exposure can become unsafe or inconsistent               | [Controlled and predictable OData integration](#link-5)                               |
 | 6              | Database Features                | Views, routines, and raw SQL are awkward to integrate cleanly  | [First-class support for database-native constructs](#link-6)                         |
-| 7              | Transactions                     | Transactions require manual handling and differ across providers                  | [Consistent transactional patterns across providers](#link-7)                         |
+| 7              | Transactions                     | Complex transactions require manual coordination across EF operations, bulk work, routines, retries, and provider differences. | [Structured Unit of Work transactions with coordinated execution, rollback safety, and retry-aware handling.](#link-7)                         |
 | 8              | Maintainability                  | Different parts of the system use different data access patterns             | [Enforced conventions and predictable structure](#link-8)                             |
 | 9              | Model Definition                 | Fluent configuration becomes complex and fragmented            | [Attributes and equivalent fluent API simplify model definitions](#link-9)        |
 | 10             | Controlled Data Access           | DbContext is widely exposed and all DbSets are accessible from anywhere         | [Access is restricted through purpose-specific Unit of Work boundaries](#link-10)      |
@@ -349,29 +349,71 @@ For those who want to dive deeper, see:
 ## 7. Consistent transactional patterns across providers
 
 **Typical EF Core challenge:**  
-Transactions require manual handling and differ across providers.
+Complex transactions require manual coordination across EF operations, bulk work, routines, retries, and provider differences.
 
 **EfCore.Boost approach:**  
-Consistent transactional patterns across providers.
+Structured Unit of Work transactions with coordinated execution, rollback safety, and retry-aware handling.
 
-Transaction handling in EF Core can become verbose when real workloads combine normal repository operations, bulk operations, and routine calls.
+Transaction handling in EF Core can become verbose once real workloads combine:
+- normal repository operations
+- bulk operations
+- routine calls
+- multiple SaveChanges calls
+- retry handling for transient cloud failures
 
-EfCore.Boost simplifies this by exposing a transaction envelope on the Unit of Work instead of requiring application code to manually begin, commit, or roll back transactions.
+While EF Core provides a common transaction API, transactional behavior still differs between providers such as SQL Server, PostgreSQL, and MySQL.
 
-The application defines the block of work.  
-The Unit of Work handles the transaction lifecycle.
+EfCore.Boost simplifies this by exposing structured transaction execution directly on the Unit of Work.
+
+The application defines the block of work.
+The Unit of Work manages the transaction lifecycle.
+
+For exampel a typical EfCore.Boost transaction block might look like this:
+```csharp
+var strategy = db.Database.CreateExecutionStrategy();
+await strategy.ExecuteAsync(async () =>
+{
+    await using var tx = await db.Database.BeginTransactionAsync(ct);
+    try
+    {
+        // repository work
+        // routine calls
+        // bulk operations
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+    }
+    catch
+    {
+        await tx.RollbackAsync(ct);
+        throw;
+    }
+});
+```
+
+But with EfCore.Boost like this:
+
+```csharp
+await uow.RunInTransactionAsync(async ct =>
+{
+    // repository work
+    // routine calls
+    await uow.LogEntries.BulkInsertAsync(items, ct);
+    await uow.SaveChangesAsync(ct);
+}, ct);
+```
 
 This provides:
 
 - automatic commit when the block succeeds
 - automatic rollback when an exception escapes the block
-- consistent behavior for repository operations, bulk inserts, and routines
+- coordinated transactions across repositories, routines, and bulk operations
 - protection against accidental nested transactions on the same Unit of Work
-- retry-safe execution through EF Core execution strategies, which is especially useful for cloud databases such as Azure SQL
+- retry-aware execution through EF Core execution strategies
+- cleaner transactional boundaries in application code
 
-This means bulk operations and routine calls can participate in the same transaction as ordinary EF operations.
+This allows bulk operations and routine calls to participate in the same transaction as ordinary EF operations.
 
-Instead of managing transaction objects directly, application code works through a structured transaction boundary.
+Instead of manually orchestrating transaction objects, application code works through a structured transactional boundary.
 
 ---
 
@@ -389,18 +431,13 @@ A single logical task may need to:
 
 EfCore.Boost keeps this as one coordinated unit of work.
 
-This makes transaction handling easier to read, safer to use, and more consistent across providers.
+This makes transactional code:
+- easier to read
+- safer to maintain
+- less repetitive
+- more resilient in cloud environments
+- more consistent across supported providers
 
-Example:
-```csharp
-await uow.RunInTransactionAsync(async ct =>
-{
-    ...some reopo work perhaps eding with the code below...
-    await uow.LogEntries.BulkInsertAsync(items, ct);
-    await uow.SaveChangesAsync(ct);
-}, ct);
-```
-*You can also wrap try-catch blocks around the transaction block to handle exceptions and what to do when transaction fails.* 
 ### Further details
 
 For those who want to dive deeper, see:

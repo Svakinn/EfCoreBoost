@@ -33,7 +33,7 @@ The table below highlights common architectural and operational challenges in EF
 | 4   | Bulk Operations | High-volume inserts and updates require custom solutions | [Built-in patterns for efficient bulk handling](./docs/WhyBoost.md#link-4)                              |
 | 5   | OData | Query exposure can become unsafe or inconsistent | [Controlled and predictable OData integration](./docs/WhyBoost.md#link-5)                               |
 | 6   | Database Features | Views, routines, and raw SQL are awkward to integrate cleanly | [First-class support for database-native constructs](./docs/WhyBoost.md#link-6)                         |
-| 7   | Transactions | Transactions require manual handling and differ across providers | [Consistent transactional patterns across providers](./docs/WhyBoost.md#link-7)                         |
+| 7   | Transactions | Complex transactions require manual coordination across EF operations, bulk work, routines, retries, and provider differences. | [Structured Unit of Work transactions with coordinated execution, rollback safety, and retry-aware handling.](./docs/WhyBoost.md#link-7)                         |
 | 8   | Maintainability | Different parts of the system use different data access patterns | [Enforced conventions and predictable structure](./docs/WhyBoost.md#link-8)                             |
 | 9   | Model Definition | Fluent configuration becomes complex and fragmented | [Attribute-driven conventions simplify and clarify model definitions](./docs/WhyBoost.md#link-9)        |
 | 10 | Controlled Data Access | DbContext is widely exposed and all DbSets are accessible from anywhere | [Access is restricted through purpose-specific Unit of Work boundaries](./docs/WhyBoost.md#link-10)      |
@@ -234,11 +234,11 @@ Choose the package version that matches your target framework and EF Core versio
 Example:
 
 ```bash
-dotnet add package EfCore.Boost --version 8.0.0
+dotnet add package EfCore.Boost --version 8.0.1
 ```
 or
 ```bash
-dotnet add package EfCore.Boost --version 9.0.0
+dotnet add package EfCore.Boost --version 9.0.1
 ```
 ---
 
@@ -249,12 +249,12 @@ dotnet add package EfCore.Boost --version 9.0.0
 The easiest way to get started with EfCore.Boost is to use the solution template:
 
 ```bash
-dotnet new install EfCore.Boost.Template.Simple.Solution@8.0.0
+dotnet new install EfCore.Boost.Template.Simple.Solution@8.0.1
 dotnet new boostsimplesolution -n YourProjectName
 ```
 for .net 8 projects, or
 ```bash
-dotnet new install EfCore.Boost.Template.Simple.Solution@9.0.0
+dotnet new install EfCore.Boost.Template.Simple.Solution@9.0.1
 dotnet new boostsimplesolution -n YourProjectName --Schema YourSchemaName --Context YourDbContextName
 ```
 For .net9 or .net10 projects.  
