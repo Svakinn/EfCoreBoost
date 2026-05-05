@@ -11,7 +11,7 @@ The templates are available as NuGet packages or directly from the source. For t
 You can install the templates using the following command:
 
 ```bash
-dotnet new install EfCore.Boost.Template.Simple.Solution::9.0.0
+dotnet new install EfCore.Boost.Template.Simple.Solution::9.0.1
 ```
 There is also a version for .NET 8 and a pre-release version for .NET10
 
