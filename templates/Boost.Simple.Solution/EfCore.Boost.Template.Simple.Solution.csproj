@@ -20,10 +20,10 @@
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost/tree/main/templates/Boost.Simple.Solution</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>
-        Update to EfCore.Boost 8.0.1
+        Update to EfCore.Boost 9.0.1
         Scripts for migration upgrade path (upgrade from one deployment version to another).
     </PackageReleaseNotes>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <ContentTargetFolders>content</ContentTargetFolders>
@@ -31,7 +31,7 @@
     <!-- Prevent the SDK from trying to compile the template source files -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <NoWarn>$(NoWarn);NU5110;NU5111;NU5128</NoWarn>
-      <Version>8.0.1</Version>
+      <Version>9.0.1</Version>
   </PropertyGroup>
   <ItemGroup>
       <None Include="LICENSE" Pack="true" PackagePath="" />
