@@ -249,7 +249,7 @@ dotnet add package EfCore.Boost --version 9.0.1
 The easiest way to get started with EfCore.Boost is to use the solution template:
 
 ```bash
-dotnet new install EfCore.Boost.Template.Simple.Solution@8.0.1
+dotnet new install EfCore.Boost.Template.Simple.Solution@8.0.1ddd
 dotnet new boostsimplesolution -n YourProjectName
 ```
 for .net 8 projects, or
