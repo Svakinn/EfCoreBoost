@@ -76,13 +76,12 @@ public async Task<long?> GetMaxIdByChanger(string changer)
 ```
 even
 ```csharp 
-public async Task<long?> GetMaxIdByChanger(string changer) => await RunRoutineLongAsync("my", "GetMaxIdByChanger", [new("@Changer", changer)]);
-}
+public async Task<long?> GetMaxIdByChanger(string changer) =>
+    await RunRoutineLongAsync("my", "GetMaxIdByChanger", [new("@Changer", changer)]);
 ```
 
 **Example routines from our TestDb:**  
-Stored procedure for MySQL and SQL Server.  
-Function for PostgreSQL.  
+Stored-procedure for MySQL and SQL Server, function for PostgreSQL.  
 All are mapped uniformly by the `RunRoutineLongAsync` method.
 ```SQL 
 DELIMITER $$
@@ -149,7 +148,7 @@ IQueryable<T> RunRoutineQuery<T>(string schema, string routineName, List<DbParmI
 **Contract**
 
 - Routine returns 0–N rows.
-- Columns must map to T.
+- Columns must map to T (one of our entities).
 - Returned via SELECT.
 - No OUT / INOUT parameters.
 
