@@ -87,6 +87,7 @@ namespace BoostX.Test
             }
         }
 
+        /** Disabled until MSQL-Driver is ready for .net10
         [TestMethod]
         public async Task Uow_MySql_Test()
         {
@@ -97,6 +98,7 @@ namespace BoostX.Test
                 await BasicSmokeAsync(uow);
             }
         }
+        */
 
         static async Task ImportAsync(BoostXUow uow)
         {
@@ -134,7 +136,7 @@ namespace BoostX.Test
         {
             const string dbName = "BoostXDb";
             const string connName = "BoostXMs";
-            var msBuilder = new MsSqlBuilder().WithImage("mcr.microsoft.com/mssql/server:2022-latest").WithPassword("MyPassword123!").Build();
+            var msBuilder = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").WithPassword("MyPassword123!").Build();
             await msBuilder.StartAsync();
             var newConnString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(msBuilder.GetConnectionString()) { InitialCatalog = dbName };
             var overrides = new Dictionary<string, string?>
@@ -179,6 +181,7 @@ namespace BoostX.Test
             return (uow);
         }
 
+        /** Disabled until MSQL-Driver is ready for .net10
         /// <summary>
         ///  Spin up temporary MySql Server in Docker
         ///  Note: we are sort of cheating on the usual connection string from appsettings.json
@@ -189,8 +192,7 @@ namespace BoostX.Test
         {
             const string dbName = "BoostXDb";
             const string connName = "BoostXMy";
-            var myBuilder = new MySqlBuilder()
-                .WithImage("mysql:8.0")
+            var myBuilder = new MySqlBuilder("mysql:8.0")
                 .WithUsername("root")
                 .WithPassword("root")
                 .WithCommand("--default-authentication-plugin=mysql_native_password")
@@ -211,6 +213,7 @@ namespace BoostX.Test
             await ImportAsync(uow); //Import data from CSV files
             return (myBuilder, uow);
         }
+        */
 
         static async Task<string> ReadSql(string fileName)
         {
@@ -228,8 +231,7 @@ namespace BoostX.Test
         {
             const string dbName = "BoostXDb";
             const string connName = "BoostXPg";
-            var pgBuilder = new PostgreSqlBuilder()
-                .WithImage("postgres:16.3")
+            var pgBuilder = new PostgreSqlBuilder("postgres:16.3")
                 .WithUsername("postgres")
                 .WithPassword("postgres")
                 .WithDatabase("postgres")
