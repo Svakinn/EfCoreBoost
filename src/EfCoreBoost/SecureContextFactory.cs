@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 // Optional but sometimes helps with tooling
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+//using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace EfCore.Boost
 {
@@ -165,6 +165,8 @@ namespace EfCore.Boost
                     });
                     break;
                 case "mysql": //version 8.0 is bare minimum for Pomelo, lesser versions require different migration output
+                    throw new NotImplementedException("MySql not supproted for .NET10 beta version");
+                    /***
                     optionsBuilder.UseMySql(
                         connectionString,
                         ServerVersion.Create(8, 0, 13, ServerType.MySql),  //8.0.13+ supports UUID()
@@ -173,7 +175,9 @@ namespace EfCore.Boost
                             if (!string.IsNullOrWhiteSpace(migrationAssembly))
                                 mySql.MigrationsAssembly(migrationAssembly);
                         });
-                    break;
+                        break;
+                        **/
+
                 default:
                     throw new Exception($"Unknown or unsupported provider: {prov}");
             }
@@ -269,6 +273,8 @@ namespace EfCore.Boost
                     };
                     return csb.ConnectionString;
                 case "mysql":
+                    throw new NotImplementedException("MySql not supproted for .NET10 beta version");
+                    /***
                     // MySQL is more slippery here.
                     // Often use the same server / user credentials, optionally clear DB name
                     // or switch to a configured admin database if you later support that.
@@ -276,6 +282,7 @@ namespace EfCore.Boost
                     if (!string.IsNullOrWhiteSpace(my.Database))
                         my.Database = string.Empty;
                     return my.ConnectionString;
+                    ***/
                 default:
                     throw new Exception($"Unknown or unsupported provider: {prov}");
             }

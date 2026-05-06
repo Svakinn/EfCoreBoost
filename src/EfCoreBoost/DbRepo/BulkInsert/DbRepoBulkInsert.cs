@@ -135,6 +135,8 @@ public partial class EfRepo<T> where T : class
     // ---- MySQL ----
     private async Task BulkInsert_MySqlAsync(List<T> items, CancellationToken ct)
     {
+        throw new NotImplementedException("MySql not supproted for .NET10 beta version");
+        /***
         var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new("Entity metadata not found");
         var schema = et.GetSchema();
         var table = et.GetTableName() ?? throw new("No table name");
@@ -174,10 +176,13 @@ public partial class EfRepo<T> where T : class
             oc.Cmd.CommandText = $"INSERT INTO {(schema == null ? $"`{table}`" : $"`{schema}`.`{table}`")} ({cols}) VALUES {string.Join(", ", values)}";
             await oc.Cmd.ExecuteNonQueryAsync(ct);
         }
+        ***/
     }
 
     private void BulkInsert_MySqlSynchronized(List<T> items)
     {
+        throw new NotImplementedException("MySql not supproted for .NET10 beta version");
+        /***
         var et = Ctx.Model.FindEntityType(typeof(T)) ?? throw new("Entity metadata not found");
         var schema = et.GetSchema();
         var table = et.GetTableName() ?? throw new("No table name");
@@ -220,6 +225,7 @@ public partial class EfRepo<T> where T : class
             oc.Cmd.CommandText = $"INSERT INTO {(schema == null ? $"`{table}`" : $"`{schema}`.`{table}`")} ({cols}) VALUES {string.Join(", ", values)}";
             oc.Cmd.ExecuteNonQuery();
         }
+        ***/
     }
 
     // ---- Helpers ----
