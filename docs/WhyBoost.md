@@ -223,10 +223,8 @@ await uow.Customers.BulkInsert(customers);
 
 For those who want to dive deeper, see:
 
-- [Bulk Operations Overview](./Bulk.md#overview)
-- [Provider-Specific Implementations](./Bulk.md#provider-specific)
-- [Integration with Repositories](./Bulk.md#repository-integration)
-- [Bulk Inserts and Transactions](./Bulk.md#transactions)
+- [Bulk Operations Overview](./BulkInserts.md)
+- [Provider-Specific Implementations](./BulkInserts.md#How-EfCore-Boost-Implements-Bulk-Inserts)
 
 ---
 
@@ -266,9 +264,9 @@ This ensures that:
 For those who want to dive deeper into OData usage, see:
 
 - [OData Integration](./OData.md#integration)
-- [Using ODataQueryOptions](./OData.md#query-options)
-- [EDM Helper](./OData.md#edm-helper)
-- [Controlling Exposed Entities](./OData.md#exposure-control)
+- [Using ODataQueryOptions](./OData.md#ODataQueryOptions-in-Controllers)
+- [EDM Helper](./OData.md#How-to-think-about-OData-in-EfCore-Boost)
+- [Controlling Exposed Entities](./OData.md#security-odatapolicy-and-data-boundary-control)
 
 ---
 
