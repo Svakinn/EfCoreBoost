@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using EfCore.Boost.DbRepo;
 
 namespace BoostX.Migrate;
@@ -62,7 +63,7 @@ public class ImportHelper<T>(IRepo<T> repo, string csvFilePath, int bulkSize = 1
             {
                 if (properties.TryGetValue(columns[i], out var prop))
                 {
-                    var value = ConvertValue(values[i], prop.PropertyType);
+                    var value = ConvertValue(values[i], prop);
                     prop.SetValue(entity, value);
                 }
             }
@@ -81,7 +82,7 @@ public class ImportHelper<T>(IRepo<T> repo, string csvFilePath, int bulkSize = 1
     /// Reads and parses the first data row (after the header) from the CSV file.
     /// Useful for existence checks or data preview.
     /// </summary>
-    /// <returns>The first entity from the CSV file, or null if empty or file missing.</returns>
+    /// <returns>The first entity from the CSV file, or null if empty or the file missing.</returns>
     public async Task<T?> ReadFirstRowAsync()
     {
         if (!File.Exists(csvFilePath)) return null;
@@ -100,7 +101,7 @@ public class ImportHelper<T>(IRepo<T> repo, string csvFilePath, int bulkSize = 1
         {
             if (properties.TryGetValue(columns[i], out var prop))
             {
-                var value = ConvertValue(values[i], prop.PropertyType);
+                var value = ConvertValue(values[i], prop);
                 prop.SetValue(entity, value);
             }
         }
@@ -109,41 +110,76 @@ public class ImportHelper<T>(IRepo<T> repo, string csvFilePath, int bulkSize = 1
 
     /// <summary>
     /// Simple CSV line parser that handles quoted values.
+    /// Returns null for unquoted empty fields, and string.Empty for "".
     /// </summary>
     /// <param name="line">The raw CSV line string.</param>
-    /// <returns>An array of parsed values.</returns>
-    private string[] ParseCsvLine(string line)
+    /// <returns>An array of parsed values (can contain nulls).</returns>
+    private string?[] ParseCsvLine(string line)
     {
-        // Simple CSV parser that handles quotes
-        var result = new List<string>();
+        var result = new List<string?>();
         var current = new System.Text.StringBuilder();
         bool inQuotes = false;
+        bool hasQuotes = false;
+
         foreach (var c in line)
         {
             if (c == '\"')
-                inQuotes = !inQuotes;
-            else if (c == ',' && !inQuotes)
             {
-                result.Add(current.ToString().Trim());
+                inQuotes = !inQuotes;
+                hasQuotes = true;
+                continue;
+            }
+            if (c == ',' && !inQuotes)
+            {
+                var val = current.ToString();
+                if (!hasQuotes && string.IsNullOrWhiteSpace(val))
+                    result.Add(null);
+                else
+                    result.Add(hasQuotes ? val : val.Trim());
                 current.Clear();
+                hasQuotes = false;
             }
             else
                 current.Append(c);
         }
-        result.Add(current.ToString().Trim());
+        var lastVal = current.ToString();
+        if (!hasQuotes && string.IsNullOrWhiteSpace(lastVal))
+            result.Add(null);
+        else
+            result.Add(hasQuotes ? lastVal : lastVal.Trim());
         return result.ToArray();
     }
 
     /// <summary>
     /// Converts a string value from CSV to the target property type.
+    /// Handles nullability and preserves empty strings if requested.
     /// </summary>
     /// <param name="value">The string value to convert.</param>
-    /// <param name="targetType">The type to convert to.</param>
+    /// <param name="prop">The property info of the target property.</param>
     /// <returns>The converted value, or null if the input is empty.</returns>
-    private object? ConvertValue(string value, Type targetType)
+    private object? ConvertValue(string? value, PropertyInfo prop)
     {
-        if (string.IsNullOrWhiteSpace(value)) return null;
+        var targetType = prop.PropertyType;
+
+        if (value == null)
+        {
+            if (targetType == typeof(string))
+            {
+                var nullabilityContext = new NullabilityInfoContext();
+                var nullabilityInfo = nullabilityContext.Create(prop);
+                if (nullabilityInfo.WriteState is not NullabilityState.Nullable)
+                    return string.Empty;
+            }
+            return null;
+        }
+
         var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        if (underlyingType.IsEnum)
+        {
+            if (int.TryParse(value, out var intValue))
+                return Enum.ToObject(underlyingType, intValue);
+            return Enum.Parse(underlyingType, value, true);
+        }
         if (underlyingType == typeof(string)) return value;
         if (underlyingType == typeof(int)) return int.Parse(value, CultureInfo.InvariantCulture);
         if (underlyingType == typeof(long)) return long.Parse(value, CultureInfo.InvariantCulture);
@@ -153,6 +189,19 @@ public class ImportHelper<T>(IRepo<T> repo, string csvFilePath, int bulkSize = 1
         if (underlyingType == typeof(DateTime)) return DateTime.Parse(value, CultureInfo.InvariantCulture);
         if (underlyingType == typeof(DateTimeOffset)) return DateTimeOffset.Parse(value, CultureInfo.InvariantCulture);
         if (underlyingType == typeof(Guid)) return Guid.Parse(value);
+        //Support for both Hex and Base64 binary data
+        if (underlyingType == typeof(byte[]))
+        {
+            if (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                var hex = value[2..];
+                var bytes = new byte[hex.Length / 2];
+                for (int i = 0; i < bytes.Length; i++)
+                    bytes[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+                return bytes;
+            }
+            return Convert.FromBase64String(value);
+        }
         return Convert.ChangeType(value, underlyingType, CultureInfo.InvariantCulture);
     }
 }
