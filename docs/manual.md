@@ -1,5 +1,7 @@
 # Manual Installation & Integration
 
+> **Note:** The quickest way to get started is by using the **EfCore.Boost project templates**. Simply create a new project from a template and copy the relevant parts into your application.
+
 If you prefer not to start from a template, you can integrate **EfCore.Boost** into an existing project. This guide demonstrates how to apply EfCore.Boost to a pre-existing database project or `DbContext`.
 
 ## 1. Install the NuGet Package
@@ -14,7 +16,25 @@ dotnet add package EfCore.Boost
 
 ## 2. Update Your Models (Entities)
 
-EfCore.Boost encourages using attributes for model definition, which can eliminate much of the need for complex Fluent API configurations in `OnModelCreating`.
+EfCore.Boost encourages using attributes for model definition, which can avoid much of the need for complex Fluent API configurations in `OnModelCreating`.
+
+### Conversion Guide
+
+When integrating with an existing database, you typically face two scenarios:
+
+1.  **Make the current model portable**: You want your model to work across different database providers (SQL Server, PostgreSQL, etc.). Use EfCore.Boost attributes to abstract away provider-specific types.
+2.  **Work with current database (Non-portable)**: You want to keep your existing database schema exactly as is. Use attributes to match your current column types and sizes.
+
+#### Attribute Checklist for Existing Models
+
+*   **Identifiers**: Use `[DbUid]` for primary keys or unique identifiers.
+*   **Precision vs. Decimal**: Use precision attributes to match your database column definitions, or saving to it can get messy.
+*   **String Lengths**: Ensure your `string` property lengths match your database columns.
+    *   If you decide to update your database, we recommend standardizing on "slot sizes": **50, 80, 256, & 512**.
+    *   Use `[StrCode]` (50), `[StrShort]` (80), `[StrMed]` (256), or `[StrLong]` (512) and attach `strsize` if needed.
+*   **PostgreSQL Case-Insensitivity**: EfCore.Boost expects PostgreSQL to use `citext` columns for case-insensitive searching.
+    *   *Best Practice*: Move your PostgreSQL database to use `citext` if possible.
+    *   *Alternative*: If you cannot change the column type, use Fluent API to override the database type (see example in the Attribute Section below).
 
 ### Add EfCore.Boost Attributes
 At a minimum, you should identify your primary keys or unique identifiers using the `DbUid` attribute if you want to leverage EfCore.Boost's repository features effectively.
@@ -35,10 +55,26 @@ You don't need to change every attribute except if you have a string without a l
 Then you select `[StrCode]`, `[StrMed]`, or  `[StrLong]` to indicate the string length, or just like above where we use the `[Name]` attribute.
 
 
+### Attribute Section & Fluent API
+
+While attributes are preferred, the **Fluent API** is fully supported and sometimes necessary for fine-grained control or when you cannot modify the entity classes.
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    base.OnModelCreating(modelBuilder);
+   modelBuilder.ApplyEfBoostConventions(this, "core");
+    // Example: Using Fluent API to mark a property as a unique identifier
+    modelBuilder.Entity<Customer>()
+        .Property(c => c.Id).HasDbUid();
+    // Example: Overriding database type for PostgreSQL (if not using citext)
+    modelBuilder.Entity<Customer>()
+        .Property(c => c.Name).HasColumnType("varchar(255)"); 
+}
+```
+
 ### Benefits of Attributes vs. Fluent API
 - **Readability**: The schema intent is visible directly on the entity.
-- **Portability**: EfCore.Boost attributes are translated into provider-specific SQL (e.g., `NVARCHAR` for SQL Server, `TEXT` for PostgreSQL) automatically.
-- **Consistency**: EfCore.Boost changes several EF Core defaults to "standardize" behavior. For example, it configures **cascading deletes** to be turned off by default, which helps avoid circular reference problems when defining foreign relations.
 
 ---
 
@@ -50,7 +86,6 @@ Your `DbContext` needs to call the EfCore.Boost convention builder.
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
     public DbSet<Customer> Customers => Set<Customer>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -151,7 +186,7 @@ Register your factory in `Program.cs`:
 builder.Services.AddSingleton<IAppUowFactory, AppUowFactory>();
 ```
 
-Usage in a service:
+Usage within a service:
 ```csharp
 public class CustomerService(IAppUowFactory uowFactory)
 {

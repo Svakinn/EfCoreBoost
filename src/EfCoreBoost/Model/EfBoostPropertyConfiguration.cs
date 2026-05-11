@@ -126,7 +126,10 @@ internal static class EfBoostPropertyConfiguration
         if (property.GetMaxLength().HasValue) return;
         if (maxLen.HasValue) property.SetMaxLength(maxLen.Value);
         if (isSqlServer) property.SetColumnType(maxLen.HasValue ? $"nvarchar({maxLen.Value})" : "nvarchar(max)");
-        else if (isNpgsql) property.SetColumnType(maxLen.HasValue ? $"varchar({maxLen.Value})" : "text");
+        else if (isNpgsql)
+            property.SetColumnType("citext");
+            //Note that we force all strings to citext in postgres (superior text handling we want to take advantage of)
+            //property.SetColumnType(maxLen.HasValue ? $"varchar({maxLen.Value})" : "text");
         else if (isMySql) property.SetColumnType(maxLen.HasValue ? $"varchar({maxLen.Value})" : "longtext");
     }
 

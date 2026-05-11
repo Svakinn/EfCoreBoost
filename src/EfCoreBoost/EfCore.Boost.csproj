@@ -19,8 +19,8 @@
         NOTE: MySQL not supported in this preview, revert to the .NET9 version if you need MySQL/MariaDB
     </Description>
     <PackageReleaseNotes>
-EfCore.Boost attributes now available as fluent property extensions. I.e. .HasDbUid(). 
-OData EDM tuned to UoW scope rather than the DbContext scope.
+Postgres bugfix: In previous versions accidentaly were mapped to varchar(x) instead of citext for Postgres. 
+This is now fixed. Sring columns now again default to citext.  For command parameters (routines) we also expect strings to map to citext
     </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-framework;dotnet;ef-core-migrations;EntityFrameworkCore</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  

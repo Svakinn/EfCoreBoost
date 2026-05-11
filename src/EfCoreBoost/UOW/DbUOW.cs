@@ -11,6 +11,8 @@ using Microsoft.OData.Edm;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
+using Npgsql;
+using NpgsqlTypes;
 
 namespace EfCore.Boost.UOW
 {
@@ -1058,7 +1060,12 @@ namespace EfCore.Boost.UOW
                     param.HookUpOutValue(pa);
                 }
                 else pa.Value = param.ObjValue;
-                cmd.Parameters.Add(pa);
+                //We have a special case for postgres where the driver has issues with citext parameters, default for string is "text" but we expect "citext".
+                //Therefore, we must pass on native polemo parameter configured for citext
+                if (this.DbType == DatabaseType.PostgreSql && (param.DbType == System.Data.DbType.String || (param.DbType == null && param.ObjValue is string)) )
+                    cmd.Parameters.Add(new NpgsqlParameter(pa.ParameterName, NpgsqlDbType.Citext) { Value = pa.Value, Direction = pa.Direction });
+                else
+                    cmd.Parameters.Add(pa);
             }
         }
 
