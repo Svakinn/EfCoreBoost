@@ -19,7 +19,7 @@ namespace EfCore.Boost
             TransportUrl = url;
             Status = status;
             Origin = origin;
-            
+
             if (string.IsNullOrWhiteSpace(content))
                 content = ExceptRecurse(inner);
             Content = content;
@@ -29,7 +29,7 @@ namespace EfCore.Boost
                 IsTimeOutError = true;
             else if (status == HttpStatusCode.Unauthorized || status == HttpStatusCode.Forbidden)
                 IsDenyError = true;
-            else 
+            else
                 IsRemoteErrror = true;
         }
 
@@ -92,6 +92,6 @@ namespace EfCore.Boost
         public bool IsDenyError { get; set; } = false;
         public string Origin { get; set; } = "";
         public string Content { get; set; } = "";
-        
+
     }
 }

@@ -32,9 +32,9 @@ using System.Threading.Tasks;
 public sealed class UtcSessionInterceptor : DbConnectionInterceptor
 {
     public override void ConnectionOpened(DbConnection connection, ConnectionEndEventData eventData)
-    {                
+    {
         var typeName = connection.GetType().FullName ?? string.Empty;
-        if (typeName.Contains("Npgsql", StringComparison.OrdinalIgnoreCase)) 
+        if (typeName.Contains("Npgsql", StringComparison.OrdinalIgnoreCase))
         {
             // PostgreSQL: force session timezone to UTC
             using var cmd = connection.CreateCommand();
@@ -52,7 +52,7 @@ public sealed class UtcSessionInterceptor : DbConnectionInterceptor
 
 
     public override async Task ConnectionOpenedAsync(DbConnection connection, ConnectionEndEventData eventData, CancellationToken cancellationToken = default)
-    {        
+    {
         var typeName = connection.GetType().FullName ?? string.Empty;
         if (typeName.Contains("Npgsql", StringComparison.OrdinalIgnoreCase))
         {

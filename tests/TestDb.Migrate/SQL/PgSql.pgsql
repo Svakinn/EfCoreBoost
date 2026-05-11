@@ -17,7 +17,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Stored procedure test scalar result
-CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(Changer VARCHAR(50)) RETURNS BIGINT AS $$
+CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(Changer citext) RETURNS BIGINT AS $$
 BEGIN
     RETURN (
         SELECT MAX("Id") FROM my."MyTable" WHERE "LastChangedBy" = Changer
