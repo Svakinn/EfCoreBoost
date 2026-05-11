@@ -52,7 +52,7 @@ namespace EfCore.Boost.Model
                     {
                         entity.SetTableName(finalName);
                         entity.SetSchema(null);
-                    }                    
+                    }
                 }
                 else
                 {
