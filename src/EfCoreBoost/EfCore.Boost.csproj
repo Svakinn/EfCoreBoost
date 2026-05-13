@@ -19,8 +19,12 @@
         NOTE: MySQL not supported in this preview, revert to the .NET9 version if you need MySQL/MariaDB
     </Description>
     <PackageReleaseNotes>
-Postgres bugfix: In previous versions, strings were accidentaly mapped to varchar(x) instead of citext for. 
-This is now fixed. Sring columns now again default to citext.  For command parameters (routines) we also expect strings to map to citext
+Bugfixes for routine calls (SetUpRoutineQuery, all providers). 
+Added the following routine calls:
+        RunRoutineQueryAsync
+        RunRoutineDecimalAsync
+        RunRoutineDateTimeAsync
+        RunRoutineDateTimeOffsetAsync
     </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-framework;dotnet;ef-core-migrations;EntityFrameworkCore</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
