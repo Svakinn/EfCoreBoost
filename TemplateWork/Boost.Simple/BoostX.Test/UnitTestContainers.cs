@@ -284,6 +284,11 @@ namespace BoostX.Test
             var id = await uow.GetIpId("127.0.3.3");
             Assert.IsNotNull(id, "GetIpId failed");
             //
+            //Test view lookup via SP
+            //
+            var viewRow = await uow.GetIpInfoViewByIdAsync(-1);
+            Assert.IsNotNull(viewRow, "View row lookup failed");
+            //
             // Bulk- insert & delete tests
             //
             var tt = new BoostCTX.IpInfo {  LastChangedUtc = DateTimeOffset.UtcNow, HostName = "Host one", Processed = true, IpNo = "127.33.3.3" };

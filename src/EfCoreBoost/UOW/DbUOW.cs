@@ -186,6 +186,15 @@ namespace EfCore.Boost.UOW
         Task<int?> RunRoutineIntAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
+        /// Synchronized version of RunRoutineIntAsync
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        int? RunRoutineIntSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
+
+        /// <summary>
         /// Synchronized version of RunRoutineStringAsync
         /// </summary>
         /// <param name="schema"></param>
@@ -204,6 +213,64 @@ namespace EfCore.Boost.UOW
         /// <returns></returns>
         Task<string?> RunRoutineStringAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
+
+        /// <summary>
+        /// Executes a scalar database routine and returns the result as a nullable decimal.
+        /// </summary>
+        /// <param name="schema">The name of the database schema that contains the routine to execute.</param>
+        /// <param name="routineName">The name of the routine to execute. (Case sensitive)</param>
+        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>The scalar value from the routine</returns>
+        Task<decimal?> RunRoutineDecimalAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Synchronized version of RunRoutineDecimalAsync
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        decimal? RunRoutineDecimalSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
+
+        /// <summary>
+        /// Executes a scalar database routine and returns the result as a nullable DateTime.
+        /// </summary>
+        /// <param name="schema">The name of the database schema that contains the routine to execute.</param>
+        /// <param name="routineName">The name of the routine to execute. (Case sensitive)</param>
+        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>The scalar value from the routine</returns>
+        Task<DateTime?> RunRoutineDateTimeAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Synchronized version of RunRoutineDateTimeAsync
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        DateTime? RunRoutineDateTimeSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
+
+        /// <summary>
+        /// Executes a scalar database routine and returns the result as a nullable DateTimeOffset.
+        /// </summary>
+        /// <param name="schema">The name of the database schema that contains the routine to execute.</param>
+        /// <param name="routineName">The name of the routine to execute. (Case sensitive)</param>
+        /// <param name="parameters">An optional list of parameters to pass to the routine.</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>The scalar value from the routine</returns>
+        Task<DateTimeOffset?> RunRoutineDateTimeOffsetAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
+
+        /// <summary>
+        /// Synchronized version of RunRoutineDateTimeOffsetAsync
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        DateTimeOffset? RunRoutineDateTimeOffsetSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
+
         /// <summary>
         /// Executes a scalar database routine pre-made for returning a list of 64-bit integers.
         /// </summary>
@@ -217,7 +284,7 @@ namespace EfCore.Boost.UOW
         /// <summary>
         /// Synchronized version of RunRoutineLongListAsync
         /// </summary>
-        /// <param name="schema"></param>
+        /// <param name="schema">Schema name</param>
         /// <param name="routineName"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
@@ -236,7 +303,7 @@ namespace EfCore.Boost.UOW
         /// <summary>
         /// Synchronized version of RunRoutineIntListAsync
         /// </summary>
-        /// <param name="schema"></param>
+        /// <param name="schema">Schema name</param>
         /// <param name="routineName"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
@@ -255,32 +322,33 @@ namespace EfCore.Boost.UOW
         /// <summary>
         /// Synchronized version of RunRoutineStringListAsync
         /// </summary>
-        /// <param name="schema"></param>
+        /// <param name="schema">Schema name</param>
         /// <param name="routineName"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
         List<string> RunRoutineStringListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null);
 
-        /// <summary>
-        /// Raw SQL runner, returning scalar long value
-        /// </summary>
-        /// <remarks>
-        /// Raw SQL is not cross-db compatible and should be avoided.
-        /// The proper way would be to set up a routine and call that one instead.
-        /// </remarks>
-        /// <param name="sql">Raw SQL to execute</param>
-        /// <param name="parameters">An optional list of parameters to pass to the routine. If null, no parameters are used.</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns></returns>
-        Task<long?> GetLongScalarAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default);
 
         /// <summary>
-        /// Synchronized version of GetLongScalarAsync
+        /// Execute a stored procedure that returns a list of Entities of a particular type T
         /// </summary>
-        /// <param name="sql"></param>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
         /// <param name="parameters"></param>
+        /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        long? GetLongScalarSynchronized(string sql, List<DbParmInfo>? parameters = null);
+        IList<T> RunRoutineQuerySynchronized<T>(string schema, string routineName, List<DbParmInfo>? parameters = null) where T : class;
+
+        /// <summary>
+        /// Execute a stored procedure that returns a list of Entities of a particular type T
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="routineName"></param>
+        /// <param name="parameters"></param>
+        /// <param name="ct"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        Task<IList<T>> RunRoutineQueryAsync<T>(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)  where T : class;
     }
 
     public interface IDbUow : IDbReadUow {
@@ -795,6 +863,125 @@ namespace EfCore.Boost.UOW
             return result != null && result != DBNull.Value ? Convert.ToString(result, CultureInfo.InvariantCulture) : null;
         }
 
+
+        //See interface for documentation
+        public async Task<decimal?> RunRoutineDecimalAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var result = await oc.Cmd.ExecuteScalarAsync(ct);
+            return result != null && result != DBNull.Value ? Convert.ToDecimal(result, CultureInfo.InvariantCulture) : null;
+        }
+
+        //See interface for documentation
+        public decimal? RunRoutineDecimalSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var result = oc.Cmd.ExecuteScalar();
+            return result != null && result != DBNull.Value ? Convert.ToDecimal(result, CultureInfo.InvariantCulture) : null;
+        }
+
+        //See interface for documentation
+        public async Task<DateTime?> RunRoutineDateTimeAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var result = await oc.Cmd.ExecuteScalarAsync(ct);
+            return ToDateTimeOrNull(result);
+        }
+
+        //See interface for documentation
+        public DateTime? RunRoutineDateTimeSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            return ToDateTimeOrNull(oc.Cmd.ExecuteScalar());
+        }
+
+        //See interface for documentation
+        public async Task<DateTimeOffset?> RunRoutineDateTimeOffsetAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            var result = await oc.Cmd.ExecuteScalarAsync(ct);
+            return ToDateTimeOffsetOrNull(result);
+         }
+
+        //See interface for documentation
+        public DateTimeOffset? RunRoutineDateTimeOffsetSynchronized(string schema, string routineName,
+            List<DbParmInfo>? parameters = null)
+        {
+            parameters ??= [];
+            var conv = new RoutineConvention(DbType);
+            var call = conv.Build(schema, routineName, RoutineKind.Scalar, parameters);
+            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
+            oc.Cmd.CommandText = call.Text;
+            oc.Cmd.CommandType = CalcCommandType(call.Mode);
+            ToDbParms(parameters, oc.Cmd);
+            return ToDateTimeOffsetOrNull(oc.Cmd.ExecuteScalar());
+        }
+
+        internal static DateTimeOffset? ToDateTimeOffsetOrNull(object? result)
+        {
+            return result switch
+            {
+                null or DBNull => null,
+                DateTimeOffset dto => dto,
+                DateTime dt => dt.Kind switch
+                {
+                    DateTimeKind.Utc => new DateTimeOffset(dt),
+                    DateTimeKind.Local => new DateTimeOffset(dt.ToUniversalTime()),
+                    _ => new DateTimeOffset(DateTime.SpecifyKind(dt, DateTimeKind.Utc))
+                },
+                _ => DateTimeOffset.Parse(Convert.ToString(result, CultureInfo.InvariantCulture)!, CultureInfo.InvariantCulture)
+            };
+        }
+
+        internal static DateTime? ToDateTimeOrNull(object? result)
+        {
+            return result switch
+            {
+                null or DBNull => null,
+                DateTime dt => dt.Kind switch
+                {
+                    DateTimeKind.Utc => dt,
+                    DateTimeKind.Local => dt.ToUniversalTime(),
+                    _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc)
+                },
+                DateTimeOffset dto => dto.UtcDateTime,
+                _ => DateTime.Parse(
+                    Convert.ToString(result, CultureInfo.InvariantCulture)!,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal)
+            };
+        }
+
         //See interface for documentation
         public async Task<List<long>> RunRoutineLongListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
@@ -1071,32 +1258,12 @@ namespace EfCore.Boost.UOW
 
         private static CommandType CalcCommandType(RoutineCallMode mode) => mode == RoutineCallMode.ProcedureName ? CommandType.StoredProcedure : CommandType.Text;
 
-        //See interface for documentation
-        public async Task<long?> GetLongScalarAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
-        {
-            await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
-            oc.Cmd.CommandText = sql;
-            oc.Cmd.CommandType = CommandType.Text;
-            ToDbParms(parameters, oc.Cmd);
-            var result = await oc.Cmd.ExecuteScalarAsync(ct);
-            return result != null && result != DBNull.Value ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : null;
-        }
 
-        //See interface for documentation
-        public long? GetLongScalarSynchronized(string sql, List<DbParmInfo>? parameters = null)
-        {
-            using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
-            oc.Cmd.CommandText = sql;
-            oc.Cmd.CommandType = CommandType.Text;
-            ToDbParms(parameters, oc.Cmd);
-            var result = oc.Cmd.ExecuteScalar();
-            return result != null && result != DBNull.Value ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : null;
-        }
         #endregion
 
         #region trunc helpers
 
-        private string? STrunc(string? str, int maxLen = 0)
+        protected string? STrunc(string? str, int maxLen = 0)
         {
             if (str == null) return null;
             if (maxLen == 0 || maxLen >= str.Length) return str;
@@ -1117,10 +1284,8 @@ namespace EfCore.Boost.UOW
         {
             if (this.DbType != DatabaseType.PostgreSql)
                 return;
-
             var entries = this.Ctx.ChangeTracker.Entries()
                 .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
-
             foreach (var entry in entries)
             {
                 foreach (var prop in entry.Properties)
@@ -1152,20 +1317,17 @@ namespace EfCore.Boost.UOW
                     {
                         var maxLength = prop.Metadata.GetMaxLength();
                         if (maxLength.HasValue && strVal.Length > maxLength.Value)
-                        {
                             prop.CurrentValue = STrunc(strVal, maxLength.Value);
-                        }
                     }
                 }
             }
         }
 
-        //See interface for documentation
         public IQueryable<T> SetUpRoutineQuery<T>(string schema, string routineName, List<DbParmInfo>? parameters = null) where T : class
         {
             parameters ??= [];
             var conv = new RoutineConvention(DbType);
-            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters);
+            var call = conv.Build(schema, routineName, RoutineKind.Query, parameters, useFromSqlRaw: true);
             var cmd = Ctx.Database.GetDbConnection().CreateCommand(); //NoTE: only used for parameter handling, so transaction binding the command or open connection is not needed
             var dbParams = parameters
                 .Select(p =>
@@ -1177,6 +1339,17 @@ namespace EfCore.Boost.UOW
                 })
                 .ToArray();
             return Ctx.Set<T>().FromSqlRaw(call.Text, dbParams).AsNoTracking();
+        }
+
+        public IList<T> RunRoutineQuerySynchronized<T>(string schema, string routineName, List<DbParmInfo>? parameters = null) where T : class
+        {
+            return SetUpRoutineQuery<T>(schema, routineName, parameters).ToList();
+        }
+
+
+        public async Task<IList<T>> RunRoutineQueryAsync<T>(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default) where T : class
+        {
+            return await SetUpRoutineQuery<T>(schema, routineName, parameters).ToListAsync(ct);
         }
 
         #endregion
