@@ -23,7 +23,7 @@ namespace EfCore.Boost.DbRepo;
 
 ///
 /// Enumeration to define the supported database engines.
-/// Used to adapt quoting and raw SQL execution based on provider
+/// Used to adapt quoting and raw SQL execution based on the provider
 public enum DatabaseType
 {
     Unknown,
@@ -102,7 +102,7 @@ public interface IReadRepo<T> where T : class
 
     /// <summary>
     /// Streams entities using async iteration (no tracking).
-    /// Useful for large data fetches, i.e. data exports.
+    /// Useful for large data fetches, i.e., data exports.
     /// Saves on memory usage and wait time from db.
     /// </summary>
     /// <remarks>
@@ -358,7 +358,7 @@ public interface IReadRepo<T> where T : class
     /// Convenience method: BuildODataQueryPlan + MaterializeODataAsync (typed path).
     /// </summary>
     /// <remarks>
-    /// $select and $expand shaping are not applied by this helper (they are effectively ignored).
+    /// this helper does not apply $select and $expand shaping (they are effectively ignored).
     /// </remarks>
     /// <param name="baseQuery">Base query defining security and scope boundaries.</param>
     /// <param name="options">OData options parsed from the HTTP request.</param>
@@ -372,7 +372,7 @@ public interface IReadRepo<T> where T : class
     /// Synchronous version of FilterODataAsync.
     /// </summary>
     /// <remarks>
-    /// $select and $expand shaping are not applied by this helper (they are effectively ignored).
+    /// this helper does not apply $select and $expand shaping (they are effectively ignored).
     /// </remarks>
     /// <param name="baseQuery">Base query defining security and scope boundaries.</param>
     /// <param name="options">OData options parsed from the HTTP request.</param>
@@ -398,7 +398,7 @@ public interface IReadRepo<T> where T : class
     /// Executes a shaped OData query and materializes OData projection objects.
     /// </summary>
     /// <remarks>
-    /// shapedQuery should be created by ApplyODataSelectExpand. InlineCount is computed from plan.CountQuery
+    /// a shapedQuery should be created by ApplyODataSelectExpand. InlineCount is computed from plan.CountQuery
     /// only when "plan.CountRequested" is true.
     /// </remarks>
     /// <param name="plan">A plan produced by BuildODataQueryPlan.</param>
@@ -514,26 +514,26 @@ public interface IRepo<T> : IReadRepo<T> where T : class
     /// <param name="entity"></param>
     void Delete(T entity);
     /// <summary>
-    /// Delete row from dataset without provoking tracking
+    /// Delete row from the dataset without provoking tracking
     /// </summary>
     /// <param name="entity"></param>
     void DeleteBrute(T entity);
     /// <summary>
-    /// Remove list of rows from dataset
+    /// Remove the list of rows from the dataset
     /// </summary>
     /// <param name="entities"></param>
     void DeleteMany(IEnumerable<T> entities);
     /// <summary>
-    /// Remove list of rows from dataset without tracking
+    /// Remove the list of rows from the dataset without tracking
     /// </summary>
     /// <param name="entities"></param>
     void DeleteManyBrute(IEnumerable<T> entities);
 
     /// <summary>
-    /// Bulk deleting from database by primary key values.
+    /// Bulk deleting from a database by primary key values.
     /// No checks and very fast
     /// Uses transaction block
-    /// No effects on current dataset
+    /// No effects on the current dataset
     /// </summary>
     /// <param name="ids"></param>
     /// <param name="ct"></param>
@@ -1029,7 +1029,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var strat = Ctx.Database.CreateExecutionStrategy();
         await strat.ExecuteAsync(async () =>
         {
-            await Ctx.Database.OpenConnectionAsync(ct); //Make sure connection is open before starting transaction
+            await Ctx.Database.OpenConnectionAsync(ct); //Make sure the connection is open before starting transaction
             await using var efTx = await Ctx.Database.BeginTransactionAsync(ct);
             try
             {
@@ -1063,7 +1063,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var strat = Ctx.Database.CreateExecutionStrategy();
         strat.Execute(() =>
         {
-            Ctx.Database.OpenConnection(); //Make sure connection is open before starting transaction
+            Ctx.Database.OpenConnection(); //Make sure the connection is open before starting transaction
             using var efTx = Ctx.Database.BeginTransaction();
             try
             {
@@ -1116,7 +1116,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
 
     private void BulkDeleteByIdsCoreSynchronized(IEnumerable<long> ids, DbTransaction trans)
     {
-        // Materialize once, and bail early if nothing to do
+        // Materialize once and bail early if nothing to do
         var idArray = ids as long[] ?? ids.ToArray();
         if (idArray.Length == 0)
             return;
@@ -1152,7 +1152,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     }
 
     /// <summary>
-    /// Search for single integer valued primary key, throws exception if conditions are not matched
+    /// Search for a single integer valued primary key, throws exception if conditions are not matched
     /// </summary>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
@@ -1226,8 +1226,8 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
 
     /// <summary>
     /// So when we have DbGuidAttribute we expect the database to set default values
-    /// If no value for that column is passed in, bulk insert omits it but... if there is value in the data to be inserted we need different approach.
-    /// In that case we need to generate data for any null values and include the column in bulk-insert operation
+    /// If no value for that column is passed in, bulk insert omits it, but... if there is value in the data to be inserted, we need a different approach.
+    /// In that case we need to generate data for any null values and include the column in the bulk-insert operation
     /// </summary>
     /// <param name="items"></param>
     /// <returns></returns>
@@ -1290,13 +1290,13 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     /// - Entities are not tracked by the DbContext during this operation.
     ///   No call to uow.SaveChanges is required unless the caller manages its own transaction.
     ///
-    /// This operation does not modify or rely on the DbSet change tracker, and does not
+    /// This operation does not modify or rely on the DbSet change tracker and does not
     /// commit any unrelated pending EF changes.
     /// </summary>
     /// <param name="items">The entity instances to insert in bulk.</param>
     /// <param name="includeIdentityValues">
     /// If <c>true</c>, identity column values from the provided entities are preserved.
-    /// Otherwise, identity values are generated by the database.
+    /// Otherwise, the database generates identity values.
     /// </param>
     /// <param name="ct">A token for cancelling the asynchronous operation.</param>
     /// <returns>A task representing the asynchronous bulk insert.</returns>
@@ -1341,7 +1341,13 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             await this.MyBulkInsertAsync(items, trans, guidPlan.OmitColumnNames, includeIdentityValues, ct);
     }
 
-    protected sealed record BulkColPlan(PropertyInfo ClrProp, string ColumnName, Type DataType);
+    protected sealed record BulkColPlan(
+        PropertyInfo ClrProp,
+        string ColumnName,
+        Type DataType,
+        NpgsqlDbType? PgType = null
+    );
+
 
     protected List<BulkColPlan> BuildBulkPlan<TEntity>(bool includeStoreGenerated, HashSet<string> omitColumnNames , Func<IProperty, bool>? extraSkipEfProp = null)
     {
@@ -1363,7 +1369,15 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             if (extraSkipEfProp != null && extraSkipEfProp(p))
                 continue;
             var t = Nullable.GetUnderlyingType(p.ClrType) ?? p.ClrType;
-            cols.Add(new BulkColPlan(p.PropertyInfo, colName, t));
+            var isEnum = t.IsEnum;
+            if (isEnum)
+                t = Enum.GetUnderlyingType(t);
+
+            NpgsqlDbType? pgType = null;
+            if (DbType == DatabaseType.PostgreSql)
+                pgType = InferNpgsqlDbType(t);
+
+            cols.Add(new BulkColPlan(p.PropertyInfo, colName, t, pgType));
         }
         return cols;
     }
@@ -1419,7 +1433,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             for (int i = 0; i < cols.Count; i++)
             {
                 var v = cols[i].ClrProp.GetValue(item);
-                row[i] = v ?? DBNull.Value;
+                row[i] = PrepareValue(v) ?? DBNull.Value;
             }
             dt.Rows.Add(row);
         }
@@ -1571,7 +1585,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
                         sb.Append(paramName);
                         var p = cmd.CreateParameter();
                         p.ParameterName = paramName;
-                        p.Value = prop.ClrProp.GetValue(items[i]) ?? DBNull.Value;
+                        p.Value = PrepareValue(prop.ClrProp.GetValue(items[i])) ?? DBNull.Value;
                         cmd.Parameters.Add(p);
                     }
                     sb.Append(")");
@@ -1622,7 +1636,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
                         sb.Append(paramName);
                         var p = cmd.CreateParameter();
                         p.ParameterName = paramName;
-                        p.Value = prop.ClrProp.GetValue(items[i]) ?? DBNull.Value;
+                        p.Value = PrepareValue(prop.ClrProp.GetValue(items[i])) ?? DBNull.Value;
                         cmd.Parameters.Add(p);
                     }
                     sb.Append(")");
@@ -1664,14 +1678,14 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
                 await writer.StartRowAsync(ct);
                 foreach (var col in cols)
                 {
-                    var val = col.ClrProp.GetValue(item);
+                    var raw = col.ClrProp.GetValue(item);
+                    var val = PrepareForPostgres(raw);
                     if (val == null)
                     {
                         await writer.WriteNullAsync(ct);
                         continue;
                     }
-                    var typ = InferNpgsqlDbType(col.ClrProp.PropertyType);
-                    await writer.WriteAsync(val, typ, ct);
+                    await writer.WriteAsync(val, col.PgType!.Value, ct);
                 }
             }
             await writer.CompleteAsync(ct);
@@ -1705,13 +1719,10 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
                 writer.StartRow();
                 foreach (var col in cols)
                 {
-                    var val = col.ClrProp.GetValue(item);
+                    var raw = col.ClrProp.GetValue(item);
+                    var val = PrepareForPostgres(raw);
                     if (val == null) { writer.WriteNull(); continue; }
-                    //If you trust Npgsql inference, this is usually enough:
-                    //writer.Write(val);
-                    //If you prefer explicit typing:
-                    var typ = InferNpgsqlDbType(col.ClrProp.PropertyType);
-                    writer.Write(val, typ);
+                    writer.Write(val, col.PgType!.Value);
                 }
             }
             writer.Complete();
@@ -1725,18 +1736,25 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         }
     }
 
-    protected static object? PrepareForPostgres(object? value)
+    protected static object? PrepareValue(object? value)
     {
         if (value is DateTime dt)
             return DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+        if (value is DateTimeOffset)
+            return value;
         var type = value?.GetType();
-        if (type == typeof(DateTime?))
+        if (type is { IsEnum: true })
+            return Convert.ChangeType(value, Enum.GetUnderlyingType(type));
+        if (value is null) return null;
+        var underlyingType = Nullable.GetUnderlyingType(type!) ?? type;
+        if (underlyingType == typeof(DateTime))
         {
-            var ndt = (DateTime?)value;
-            return ndt.HasValue ? DateTime.SpecifyKind(ndt.Value, DateTimeKind.Unspecified) : null;
+            return DateTime.SpecifyKind((DateTime)value!, DateTimeKind.Unspecified);
         }
         return value;
     }
+
+    protected static object? PrepareForPostgres(object? value) => PrepareValue(value);
 
     /// <summary>
     /// MYSQL only

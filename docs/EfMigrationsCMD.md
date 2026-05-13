@@ -92,7 +92,6 @@ To make this work, we use a simple scripting approach:
 - one provider snapshot is kept active
 - the other provider snapshots are temporarily disabled
 - the migration is generated
-- the disabled snapshots are restored afterward
 
 In practice, this is handled by a PowerShell script that renames snapshot files so EF only sees the snapshot for the provider currently being migrated.
 
