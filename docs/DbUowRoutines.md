@@ -27,7 +27,7 @@ DbRepo / EfCore.Boost exposes the following routine helpers in UoW:
 For side-effect-only routines:
 
 ```csharp 
-async Task<int> RunRoutineNoneQueryAsync(string schema, string routineName, List<DbParmInfo>? parameters = null);  
+async Task<int> RunRoutineNonQueryAsync(string schema, string routineName, List<DbParmInfo>? parameters = null);  
 ```  
 
 **Contract**
@@ -35,7 +35,7 @@ async Task<int> RunRoutineNoneQueryAsync(string schema, string routineName, List
 - Routine performs side effects (delete, cleanup, recalc, etc.).
 - Return value is `rowsAffected` or provider-specific `ExecuteNonQuery` count.
 - Routine must **not** use OUT/INOUT parameters.
-- Routine may optionally SELECT a trivial scalar or message, but DbRepo ignores it for `NoneQuery` helpers.
+- Routine may optionally SELECT a trivial scalar or message, but DbRepo ignores it for `NonQuery` helpers.
 
 ---
 
@@ -44,9 +44,12 @@ async Task<int> RunRoutineNoneQueryAsync(string schema, string routineName, List
 For a single scalar value:
 
 ```csharp 
-async Task<long?>   RunRoutineLongAsync   (string schema, string routineName, List<DbParmInfo>? parameters = null)  
-async Task<int?>    RunRoutineIntAsync    (string schema, string routineName, List<DbParmInfo>? parameters = null)  
-async Task<string?> RunRoutineStringAsync (string schema, string routineName, List<DbParmInfo>? parameters = null)
+async Task<long?>           RunRoutineLongAsync           (string schema, string routineName, List<DbParmInfo>? parameters = null)  
+async Task<int?>            RunRoutineIntAsync            (string schema, string routineName, List<DbParmInfo>? parameters = null)  
+async Task<string?>         RunRoutineStringAsync         (string schema, string routineName, List<DbParmInfo>? parameters = null)
+async Task<decimal?>        RunRoutineDecimalAsync        (string schema, string routineName, List<DbParmInfo>? parameters = null)
+async Task<DateTime?>       RunRoutineDateTimeAsync       (string schema, string routineName, List<DbParmInfo>? parameters = null)
+async Task<DateTimeOffset?> RunRoutineDateTimeOffsetAsync (string schema, string routineName, List<DbParmInfo>? parameters = null)
 ```  
 
 **Contract**
@@ -138,28 +141,30 @@ public async Task<List<long>> GetNextSequenceIds(int count)
 
 ### 1.4 Fully tabular routines
 
-For arbitrary row shapes mapped to EF Core models:
+For arbitrary row shapes mapped to EF Core models (Entities or Keyless View types):
 
 ```csharp 
-IQueryable<T> RunRoutineQuery<T>(string schema, string routineName, List<DbParmInfo>? parameters = null)  
+async Task<IList<T>> RunRoutineQueryAsync<T>(string schema, string routineName, List<DbParmInfo>? parameters = null)  
     where T : class;
 ```  
 
 **Contract**
 
 - Routine returns 0–N rows.
-- Columns must map to T (one of our entities).
+- Columns must map to T (one of our entities or [Keyless] view models).
 - Returned via SELECT.
 - No OUT / INOUT parameters.
 
 **Example usage:**
 
 ```csharp 
-public async Task<List<CurrentMenuItemsV>> GetCurrentMenuItemsForSession(long myId)
+public async Task<IList<CurrentMenuItemsV>> GetCurrentMenuItemsForSession(long sessionId)
 {
-    return await RunRoutineQuery<CurrentMenuItemsV>("my", "GetCurrentMenuItemsForSession", [ new("@SessionId", sessionId) ]).ToListAsync();
+    return await RunRoutineQueryAsync<CurrentMenuItemsV>("my", "GetCurrentMenuItemsForSession", [ new("@SessionId", sessionId) ]);
 }
 ```  
+
+> **Note:** If you need the raw `IQueryable<T>` for further composition (e.g. OData), use `SetUpRoutineQuery<T>(...)` instead.
 
 ---
 
@@ -243,9 +248,9 @@ DbRepo resolves this automatically.
 
 ## 4. Official EfCore.Boost Doctrine
 
-1 Tabular → SELECT → RunRoutineQuery or List helpers  
-2 Scalar → scalar SELECT / function return → RunRoutineScalar helpers  
-3 NonQuery → side effects → RunRoutineNoneQuery  
+1 Tabular → SELECT → RunRoutineQueryAsync or List helpers  
+2 Scalar → scalar SELECT / function return → RunRoutine (Long/Int/String/...) helpers  
+3 NonQuery → side effects → RunRoutineNonQuery  
 4 OUT / INOUT → Not allowed in portable routines
 
 Clean, predictable, portable.

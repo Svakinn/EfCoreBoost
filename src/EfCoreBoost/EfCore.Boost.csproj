@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>9.0.3</Version>
+    <Version>8.0.4</Version>
     <Authors>Sveinn S. Erlendsson</Authors> 
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
@@ -17,12 +17,8 @@
         EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core, plus utilities for routines, bulk operations, and OData suport.
         Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.    </Description>
     <PackageReleaseNotes>
-Bugfixes for routine calls (SetUpRoutineQuery, all providers). 
-Added the following routine calls:
-        RunRoutineQueryAsync
-        RunRoutineDecimalAsync
-        RunRoutineDateTimeAsync
-        RunRoutineDateTimeOffsetAsync
+UoW no longer by default allows access to the dbcontxt.  It is optional, but not default.
+EDM-builder now part of the UoW (uow.GetModel())
     </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-framework;dotnet;ef-core-migrations;EntityFrameworkCore</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
@@ -42,17 +38,17 @@ Added the following routine calls:
 	  <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.15" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.15" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.15" />
-    <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.15" />
-    <PackageReference Include="Microsoft.OData.Core" Version="8.4.3" />
-    <PackageReference Include="Microsoft.OData.Edm" Version="8.4.3" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.15" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.15" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.26" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.26" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.26" />
+      <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
+      <PackageReference Include="Microsoft.OData.Core" Version="8.4.3" />
+      <PackageReference Include="Microsoft.OData.Edm" Version="8.4.3" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+      <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
   </ItemGroup>
   <Target Name="BuildDesignProject" BeforeTargets="Pack">
   <MSBuild Projects="..\EfCore.Boost.Design\EfCore.Boost.Design.csproj"
@@ -60,13 +56,13 @@ Added the following routine calls:
            Properties="Configuration=$(Configuration)" />
 </Target>
   <ItemGroup>
-  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net9.0\EfCore.Boost.Design.dll"
+  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.dll"
         Pack="true"
-        PackagePath="lib\net9.0\" />
-  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net9.0\EfCore.Boost.Design.xml"
+        PackagePath="lib\net8.0\" />
+  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.xml"
         Pack="true"
-        PackagePath="lib\net9.0\"
-        Condition="Exists('..\EfCore.Boost.Design\bin\$(Configuration)\net9.0\EfCore.Boost.Design.xml')" />
+        PackagePath="lib\net8.0\"
+        Condition="Exists('..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.xml')" />
 </ItemGroup>
   <ItemGroup>
 	  <ProjectReference Include="..\BoostAnalyzer\BoostAnalyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all"  />

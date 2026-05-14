@@ -8,48 +8,73 @@ The table below summarizes these areas. Each point highlights a typical issue in
 
 Further sections in this document expand on each topic in more detail.
 
-| #              | Area                        | Typical EF Core Challenge                                      | EfCore.Boost Approach                                                     |
-|----------------|-----------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------|
-| 1              | Structure                        | DbContext is used everywhere, exposing the entire database             | [Clear Unit of Work boundaries and structured data access](#link-1)                   |
-| 2              | Multi-Provider                  | Behavior differs across SQL Server, PostgreSQL, and MySQL      | [Provider-aware conventions and consistent mappings](#link-2)                         |
-| 3              | Migrations                       | Managing migrations across environments and providers is fragile | [Controlled and streamlined migration workflows with script generation](#link-3)      |
-| 4              | Bulk Operations                  | High-volume inserts and updates require custom solutions       | [Built-in patterns for efficient bulk handling](#link-4)                              |
-| 5              | OData                            | Query exposure can become unsafe or inconsistent               | [Controlled and predictable OData integration](#link-5)                               |
-| 6              | Database Features                | Views, routines, and raw SQL are awkward to integrate cleanly  | [First-class support for database-native constructs](#link-6)                         |
-| 7              | Transactions                     | Complex transactions require manual coordination across EF operations, bulk work, routines, retries, and provider differences. | [Structured Unit of Work transactions with coordinated execution, rollback safety, and retry-aware handling.](#link-7)                         |
-| 8              | Maintainability                  | Different parts of the system use different data access patterns             | [Enforced conventions and predictable structure](#link-8)                             |
-| 9              | Model Definition                 | Fluent configuration becomes complex and fragmented            | [Attributes and equivalent fluent API simplify model definitions](#link-9)        |
-| 10             | Controlled Data Access           | DbContext is widely exposed and all DbSets are accessible from anywhere         | [Access is restricted through purpose-specific Unit of Work boundaries](#link-10)      |
+| #              | Area                    | Typical EF Core Challenge                                      | EfCore.Boost Approach                                                     |
+|----------------|-------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------|
+| 1              | Data Access Boundaries  | Direct DbContext usage can expose too much of the database surface area across an application. | [EfCore.Boost allows applications to expose only the repositories, entities, routines, and operations intended for each part of the system.](#link-1)                   |
+| 2              | Multi-Provider          | Behavior differs across SQL Server, PostgreSQL, and MySQL      | [Provider-aware conventions and consistent mappings](#link-2)                         |
+| 3              | Migrations              | Managing migrations across environments and providers is fragile | [Controlled and streamlined migration workflows with script generation](#link-3)      |
+| 4              | Bulk Operations         | High-volume inserts and updates require custom solutions       | [Built-in patterns for efficient bulk handling](#link-4)                              |
+| 5              | OData                   | Query exposure can become unsafe or inconsistent               | [Controlled and predictable OData integration](#link-5)                               |
+| 6              | Database Features       | Views, routines, and raw SQL are awkward to integrate cleanly  | [First-class support for database-native constructs](#link-6)                         |
+| 7              | Transactions            | Complex transactions require manual coordination across EF operations, bulk work, routines, retries, and provider differences. | [Structured Unit of Work transactions with coordinated execution, rollback safety, and retry-aware handling.](#link-7)                         |
+| 8              | Maintainability         | Different parts of the system use different data access patterns | [Enforced conventions and predictable structure](#link-8)                             |
+| 9              | Model Definition        | Fluent configuration becomes complex and fragmented            | [Attributes and equivalent fluent API simplify model definitions](#link-9)        |
 
 <a id="link-1"></a>
 ## 1. Clear Unit of Work boundaries and structured data access
 
 **Typical EF Core challenge:**  
-DbContext is used everywhere, exposing the entire database.
+Direct DbContext usage can expose too much of the database surface area across an application.  
+
+`DbContext` commonly contains many DbSet models representing different parts of the underlying database structure.  
+However, application modules and services often require more controlled and intentional access to data and operations than a shared DbContext naturally provides.
 
 **EfCore.Boost approach:**  
-Clear Unit of Work boundaries and structured data access.
 
-A DbContext often represents a large part of the database schema. In many systems it may contain all tables, views, relationships, and provider-specific model configuration needed for that database.
 
-That is not necessarily a problem by itself.
+EfCore.Boost introduces structured Unit of Work and Repository boundaries on top of EF Core, allowing each part of the application to expose only the repositories, entities, routines, and operations intended for its responsibilities.  
+Different Unit of Work implementations can expose different capabilities while still sharing the same underlying DbContext and entity model.
 
-The problem starts when the DbContext is used directly throughout the application. Once every service can reach every DbSet, the database access layer becomes too wide, too permissive, and too easy to misuse.
+### Purpose-specific access
 
-EfCore.Boost treats the DbContext as the lower-level database model and places one or more Unit of Work layers on top of it.
+Each Unit of Work can expose only the capabilities required for a specific purpose.
 
-Each Unit of Work can expose only the repositories needed for a specific purpose. One Unit of Work may expose read-only access to lookup data. Another may expose read/write access to business tables. Another may be designed for import, synchronization, reporting, or administrative routines.
+For example:
 
-This makes it possible to use a broad DbContext while still keeping application access narrow, intentional, and controlled.
+- Readonly UOW → exposes query operations only
+- Write-enabled UOW → allows controlled mutations
+- Reporting UOW → exposes readonly views and reporting queries
+- Integration UOW → supports imports, exports, or synchronization workflows
+- Administrative UOW → exposes elevated operational functionality
 
-In short:
+This helps ensure that each part of the application only accesses what it actually needs.
 
-- DbContext describes the database model
-- Unit of Work defines the access boundary
-- repositories expose the allowed operations
-- application code works through purpose-specific entry points
+### Structured and predictable access patterns
 
-This keeps the database model complete without turning the entire application into a free-for-all around DbSet access.  
+EfCore.Boost helps standardize how repositories, transactions, routines, bulk operations, and queries are organized throughout the system.  
+This creates clearer boundaries between application modules and reduces inconsistent data access patterns across services and components.
+
+Readonly repositories and query paths also make tracked and untracked query behavior more explicit.  
+Readonly access enforces untracked entity usage, helping reduce accidental state tracking, unintended updates, and unnecessary change tracking overhead in reporting and lookup scenarios.
+
+### Reduced surface area and safer operations
+
+Instead of exposing the full database model everywhere, Unit of Work implementations define controlled access surfaces tailored to operational responsibilities.
+
+This helps reduce:
+
+- unintended coupling between unrelated modules
+- accidental writes in readonly scenarios
+- inconsistent transaction handling
+- broad or unnecessary database exposure
+- side effects caused by unrestricted data access
+
+The database model can remain complete and expressive while application access stays focused and intentional.
+
+### Reporting and lookup workflows
+
+Readonly Unit of Work implementations may expose database views instead of direct table entities where appropriate.  
+Combined with OData support, this allows applications to build flexible lookup and reporting endpoints directly on top of EF Core, reducing the common temptation to introduce separate read-oriented ORM layers such as Dapper purely for reporting and query workloads.
 See more details in the [Unit of Work](./DbUow.md) documentation.
 <a id="link-2"></a>
 ## 2. Provider-aware conventions and consistent mappings

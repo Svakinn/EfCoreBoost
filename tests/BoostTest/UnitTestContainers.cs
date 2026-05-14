@@ -18,7 +18,6 @@ using EfCore.Boost.CFG;
 using Testcontainers.MsSql;
 using Testcontainers.MySql;
 using Testcontainers.PostgreSql;
-using EfCore.Boost.EDM;
 using BoostTest.Helpers;
 using TestDb;
 
@@ -271,9 +270,8 @@ namespace BoostTest
             Npgsql.NpgsqlConnection.ClearAllPools();
             await uowMigrate.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_PgSql.pgsql")); // Note: The migration script itself contains transactions, so we do not run in transaction here
             // Force Npgsql to refresh type mappings ("citext", etc.) for this database
-            var dbConn = (Npgsql.NpgsqlConnection)uowMigrate.GetDbContext().Database.GetDbConnection();
-            if (dbConn.State != ConnectionState.Open)
-                await uowMigrate.GetDbContext().Database.OpenConnectionAsync();
+            // We are allowed to do some driver-specific oddities in this out-case (you don't usually migrate db and then continue to test it)
+            var dbConn = (Npgsql.NpgsqlConnection) await uowMigrate.EnsureDbConnectionOpenAsync();
             await dbConn.ReloadTypesAsync();
             Npgsql.NpgsqlConnection.ClearAllPools();
             var uow = CreateUow(cfg, connName);
@@ -449,18 +447,20 @@ namespace BoostTest
             //
             // Test UOW EDM generation
             //
-            var xmlUow = EdmBuilder.BuildXmlModelFromUow(uow);
+            var xmlUow = uow.Metadata();
             Assert.Contains("<EntitySet Name=\"MyTables\"", xmlUow, "XML model for UOW should contain EntitySet name MyTables");
             Assert.Contains("<EntitySet Name=\"MyTableRefs\"", xmlUow, "XML model for UOW should contain EntitySet name MyTableRefs");
             Assert.Contains("<EntityType Name=\"MyTable\"", xmlUow, "XML model for UOW should contain EntityType name MyTable");
             Assert.Contains("<EntityType Name=\"MyTableRef\"", xmlUow, "XML model for UOW should contain EntityType name MyTableRef");
 
             // Test generic UOW EDM generation (new simplified API)
-            var xmlUowGeneric = EdmBuilder.BuildXmlModelFromUow<UOWTestDb>();
+            using var uowGeneric = new UOWTestDb();
+            var xmlUowGeneric = uowGeneric.Metadata();
+            Assert.IsNotEmpty(xmlUowGeneric);
             Assert.Contains("<EntitySet Name=\"MyTables\"", xmlUowGeneric);
 
             // Test custom EDM configuration (functions/actions)
-            var xmlCustom = EdmBuilder.BuildXmlModelFromUow(uow, builder => {
+            var xmlCustom = uow.Metadata(builder => {
                 builder.EntityType<DbTest.MyTable>().Collection.Function("MyCustomFunction").Returns<string>();
             });
             Assert.Contains("<Function Name=\"MyCustomFunction\"", xmlCustom, "XML model should contain custom function");
