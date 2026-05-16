@@ -2,12 +2,16 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using EfCore.Boost.DbRepo;
-using EfCore.Boost.EDM;
+//using EfCore.Boost.EDM;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OData.Edm;
+using Microsoft.OData.ModelBuilder;
+using Microsoft.OData.Edm.Csdl;
+using System.Reflection;
+using System.Xml;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
@@ -26,15 +30,38 @@ namespace EfCore.Boost.UOW
     {
         /// <summary>
         /// Returns the underlying EF DbContext instance for advanced scenarios where you need direct access.
+        /// By default, this is disabled and will raise an exception if accessed.
+        /// Use CanAccessDbContext to check if access is allowed.
         /// </summary>
         /// <returns>The EF´s DBContext</returns>
         DbContext GetDbContext();
 
         /// <summary>
-        /// Returns the EDMX metadata XML representation of the model. Used by OData endpoints.
+        /// For some scenarios access to the dbconnection may be helpful
+        /// This method returns the current DbConnection instance (from the dbcontext)
         /// </summary>
         /// <returns></returns>
-        string Metadata();
+        DbConnection GetDbConnection();
+
+        /// <summary>
+        /// For some scenarios access to the dbconnection may be helpful, but we need to be able to make sure it is open
+        /// </summary>
+        /// <returns></returns>
+        Task<DbConnection> EnsureDbConnectionOpenAsync();
+
+        DbConnection EnsureDbConnectionOpenSynchronized();
+
+        /// <summary>
+        /// For checking if the underlying DbContext is available or not via GetDbContext()
+        /// </summary>
+        bool CanAccessDbContext { get; }
+
+        /// <summary>
+        /// Returns the EDMX metadata XML representation of the model. Used by OData endpoints.
+        /// </summary>
+        /// <param name="configure">Optional delegate to configure the OData model builder (add functions, actions, etc.)</param>
+        /// <returns></returns>
+        string Metadata(Action<ODataConventionModelBuilder>? configure = null);
 
         /// <summary>
         /// Override default command timeout (in seconds)
@@ -45,8 +72,9 @@ namespace EfCore.Boost.UOW
         /// <summary>
         /// Gets the Entity Data Model (EDM) associated with the dataset. Also used by OData endpoints.
         /// </summary>
+        /// <param name="configure">Optional delegate to configure the OData model builder (add functions, actions, etc.)</param>
         /// <returns>An <see cref="IEdmModel"/> instance representing the EDM for the current context.</returns>
-        IEdmModel GetModel();
+        IEdmModel GetModel(Action<ODataConventionModelBuilder>? configure = null);
 
         /// <summary>
         /// Gets the type of database associated with the current context.
@@ -378,8 +406,6 @@ namespace EfCore.Boost.UOW
         /// </summary>
         void SaveChangesAndNewSynchronized();
 
-
-
         /// <summary>
         /// Enables or disables automatic change detection in the underlying DbContext.
         /// Set to <c>false</c> when performing bulk inserts (e.g., via <c>AddRange</c>) to improve performance.
@@ -387,7 +413,6 @@ namespace EfCore.Boost.UOW
         /// </summary>
         /// <param name="enable">True to enable automatic change detection; false to disable.</param>
         void SetAutoDetectChanges(bool enable);
-
 
         /// <summary>
         /// Returns the current state of automatic change detection in the DbContext.
@@ -537,6 +562,8 @@ namespace EfCore.Boost.UOW
         //Transaction support
         protected IDbContextTransaction? CurrentTx;
         private readonly SemaphoreSlim _sync = new(1, 1);
+        //Override this to true if you want the underlying DbContext to be available via GetDbContext
+        protected virtual bool AllowDbContextAccess => false;
 
         /// <summary>
         /// Store configuration for use by helper methods, such as admin connection string building.
@@ -556,7 +583,35 @@ namespace EfCore.Boost.UOW
         }
 
         ///See interface for documentation
-        public DbContext GetDbContext() => Ctx;
+        public DbContext GetDbContext()
+        {
+            if (!AllowDbContextAccess)
+                throw new InvalidOperationException(
+                    "Direct DbContext access is disabled for this Unit of Work. " +
+                    "Override AllowDbContextAccess to true if this UOW intentionally exposes the underlying DbContext.");
+
+            return Ctx;
+        }
+
+        public bool CanAccessDbContext => AllowDbContextAccess;
+
+        public DbConnection GetDbConnection() => Ctx.Database.GetDbConnection();
+
+        public async Task<DbConnection> EnsureDbConnectionOpenAsync()
+        {
+            var conn = Ctx.Database.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                await Ctx.Database.OpenConnectionAsync();
+            return conn;
+        }
+
+        public DbConnection EnsureDbConnectionOpenSynchronized()
+        {
+            var conn = Ctx.Database.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                 Ctx.Database.OpenConnection();
+            return conn;
+        }
 
         protected void RecreateContext()
         {
@@ -589,21 +644,88 @@ namespace EfCore.Boost.UOW
         }
 
         //See interface for documentation
-        public string Metadata()
+        public string Metadata(Action<ODataConventionModelBuilder>? configure = null)
         {
-            return EdmBuilder.BuildXmlModelFromUow(this);
+            return SerializeEdmModelXml(GetModel(configure));
         }
 
         ///See interface for documentation
-        public IEdmModel GetModel()
+        public IEdmModel GetModel(Action<ODataConventionModelBuilder>? configure = null)
         {
-            if (this._cachedEdmModel != null) return this._cachedEdmModel;
-            lock (this._edmLock)
+            if (configure == null && this._cachedEdmModel != null) return this._cachedEdmModel;
+            if (configure == null)
             {
-                this._cachedEdmModel ??= EdmBuilder.BuildEdmModelFromUow(this);
+                lock (this._edmLock)
+                {
+                    this._cachedEdmModel ??= BuildEdmModelFromUow();
+                }
+                return this._cachedEdmModel;
             }
-            return this._cachedEdmModel;
+            return BuildEdmModelFromUow(configure);
         }
+
+        #region EDM Building
+
+        private IEdmModel BuildEdmModelFromUow(Action<ODataConventionModelBuilder>? configure = null)
+        {
+            var uowType = this.GetType();
+            var repoProps = uowType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.PropertyType.IsGenericType &&
+                            (p.PropertyType.GetGenericTypeDefinition() == typeof(EfCore.Boost.DbRepo.EfRepo<>) ||
+                             p.PropertyType.GetGenericTypeDefinition() == typeof(EfCore.Boost.DbRepo.EfReadRepo<>) ||
+                             p.PropertyType.GetGenericTypeDefinition() == typeof(EfCore.Boost.DbRepo.EfLongIdRepo<>) ||
+                             p.PropertyType.GetGenericTypeDefinition() == typeof(EfCore.Boost.DbRepo.EfLongIdReadRepo<>)));
+
+            var types = repoProps.Select(p => new KeyValuePair<string, Type>(p.Name, p.PropertyType.GetGenericArguments()[0]));
+            return BuildEdmModelInternal(types, configure);
+        }
+
+        private IEdmModel BuildEdmModelInternal(IEnumerable<KeyValuePair<string, Type>> entityTypes, Action<ODataConventionModelBuilder>? configure = null)
+        {
+            var builder = new ODataConventionModelBuilder();
+            var added = new List<(Type ClrType, EntityTypeConfiguration EdmType)>();
+            foreach (var kvp in entityTypes)
+            {
+                var efType = Ctx.Model.FindEntityType(kvp.Value);
+                if (efType?.IsOwned() == true) continue;
+                if (efType?.FindPrimaryKey() == null) continue;
+                var edmType = builder.AddEntityType(kvp.Value);
+                builder.AddEntitySet(kvp.Key, edmType);
+                added.Add((kvp.Value, edmType));
+            }
+            foreach (var x in added)
+                EdmApplyEfPrimaryKey(x.EdmType, x.ClrType);
+            configure?.Invoke(builder); // Allow custom configuration (functions, actions, etc.)
+            return builder.GetEdmModel();
+        }
+
+        private void EdmApplyEfPrimaryKey(EntityTypeConfiguration edmType, Type clrType)
+        {
+            var et = Ctx.Model.FindEntityType(clrType);
+            var pk = et?.FindPrimaryKey();
+            if (pk == null || pk.Properties.Count == 0) return;
+            foreach (var k in pk.Properties)
+            {
+                var pi = clrType.GetProperty(k.Name, BindingFlags.Public | BindingFlags.Instance);
+                if (pi == null)
+                    throw new InvalidOperationException($"Primary key property '{k.Name}' not found on CLR type '{clrType.Name}'.");
+                edmType.HasKey(pi);
+            }
+        }
+
+        private string SerializeEdmModelXml(IEdmModel model)
+        {
+            using var sw = new StringWriter();
+            using var xw = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true });
+            if (CsdlWriter.TryWriteCsdl(model, xw, CsdlTarget.OData, out var errors))
+            {
+                xw.Flush();
+                return sw.ToString(); // EDMX XML
+            }
+            return string.Join("\n", errors.Select(e => e.ErrorMessage));
+        }
+
+        #endregion
 
         /// <summary>
         /// Used for generating an exception message including all inner exceptions
@@ -616,9 +738,7 @@ namespace EfCore.Boost.UOW
             if (ex.Errors is { Count: > 0 })
             {
                 foreach (var err in ex.Errors)
-                {
                     ret += "\r\n" + err;
-                }
                 ret += "\r\n";
             }
             return ret;
@@ -651,7 +771,7 @@ namespace EfCore.Boost.UOW
             {
                 var name = ConfigName ?? Configuration["DefaultAppConnName"];
                 if (!string.IsNullOrWhiteSpace(name))
-                    return EfCore.Boost.CFG.DbConnectionCfg.Get(Configuration, name)?.Provider;
+                    return CFG.DbConnectionCfg.Get(Configuration, name)?.Provider;
             }
             return null;
         }
@@ -661,14 +781,12 @@ namespace EfCore.Boost.UOW
             var connStr = GetAdminConnectionString();
             if (string.IsNullOrWhiteSpace(connStr))
                 throw new InvalidOperationException("Admin connection string not configured for this UOW.");
-
             var provider = GetAdminProvider();
             var prov = SecureContextFactory.NormalizeProvider(provider ?? DbType.ToString());
-
             return prov switch
             {
                 "sqlserver" => new SqlConnection(connStr),
-                "postgresql" => new Npgsql.NpgsqlConnection(connStr),
+                "postgresql" => new NpgsqlConnection(connStr),
                 "mysql" => new MySqlConnector.MySqlConnection(connStr),
                 _ => throw new NotSupportedException($"Admin connection not supported for provider '{prov}'.")
             };
@@ -730,13 +848,10 @@ namespace EfCore.Boost.UOW
                 return 0;
             if (this.CurrentTx != null)
                 throw new InvalidOperationException("ExecuteAdminDbSqlScriptAsync cannot be used while a transaction is active.");
-
             var scripts = ScriptSplitter(scriptContent).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
             if (scripts.Count == 0) return 0;
-
             await using var conn = CreateAdminConnection();
             await conn.OpenAsync(ct);
-
             int totalAffected = 0;
             foreach (var sql in scripts)
             {
@@ -756,13 +871,10 @@ namespace EfCore.Boost.UOW
                 return 0;
             if (this.CurrentTx != null)
                 throw new InvalidOperationException("ExecuteAdminDbSqlScriptSynchronized cannot be used while a transaction is active.");
-
             var scripts = ScriptSplitter(scriptContent).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
             if (scripts.Count == 0) return 0;
-
             using var conn = CreateAdminConnection();
             conn.Open();
-
             int totalAffected = 0;
             foreach (var sql in scripts)
             {
