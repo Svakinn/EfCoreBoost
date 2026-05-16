@@ -5,7 +5,7 @@ This test project serves two roles:
 1. **Validation**: it verifies that EfCore.Boost behaves consistently across database providers.
 2. **Demonstration**: it shows practical, copy-pasteable examples of how to use Boost in real code.
 
-The guiding principle is simple: **same model, same Unit of Work code, different database ´reality´**.
+The guiding principle is straightforward: **same model, same Unit of Work code, different database ´reality´**.
 
 ## What´s in here
 
@@ -25,7 +25,7 @@ For PostgreSQL, SQL Server, and MySQL we use **Testcontainers** to spin up ephem
 
 This demonstrates the intended Boost workflow:
 
-- choose a provider (connection + driver)
+- choose a provider (connection and driver)
 - migrate the same model
 - run the same UOW + Repo operations
 - verify results and behavior consistently
@@ -40,11 +40,6 @@ The smoke tests are intentionally written as a compact, end-to-end walkthrough o
 - **Bulk inserts** (provider-optimized paths, batching behavior, identity handling)
 
 In other words: if you want to understand how Boost is meant to be used, the smoke tests are the shortest path.
-
-### 4) Ef-migrations helpers
-
-In the folder [TestDb/Ps/](./TestDb/Ps/) you´ll find powershell scripts that handle the model migrations for all supported providers.
-Take a look a them if you want to see examples on how to automate migrations for multiple providers.
 
 ## Usage of Testcontainers
 
@@ -71,8 +66,9 @@ For each supported database provider, the test flow is the same:
 
 Because the database lifecycle itself is part of what is being validated, **each provider is exercised end-to-end within a single test method**, with synchronized variants included where relevant.
 
-This makes the test intent explicit: we are testing how Boost, EF Core, and the database provider behave together, from startup to shutdown.  
+This makes the test intent explicit: we are testing how Boost, EF Core, and the database provider behave together, from startup to shut down.  
 See [TestContainers.md](./TestContainers.md) for more details on the Testcontainers setup.
+See this [test-code](../../../tests/BoostTest/UnitTestContainers.cs#L157-L178) to see how the test-container is spun up and the database is initialized for the smoke test.
 
 ### One test per database provider
 
@@ -84,7 +80,7 @@ Each database flavor (PostgreSQL, SQL Server, MySQL) has:
 - the same Unit of Work and repository logic
 - the same smoke test code
 
-This structure demonstrates that Boost´s conventions allow the _same code_ to run against _different database realities_ without branching or provider-specific logic in the test body.
+This structure demonstrates that EfCore.Boost conventions allow the _same code_ to run against _different database realities_ without branching or provider-specific logic in the test body.
 
 Synchronized test variants exist only to validate those execution paths. They are not intended as guidance for modern application code, where asynchronous database access should be preferred.
 
@@ -102,18 +98,18 @@ The container-backed tests validate:
 
 In short: this is an **integration test suite by design**, and the tests double as executable documentation.
 
-See [UnitTestContainers.cs](./UnitTestContainers.cs#L299-L451) for the actual test code.
+See [UnitTestContainers.cs](../../../tests/BoostTest/UnitTestContainers.cs#L290-L473) for the actual test code.
 And [SmokeTest.md](./SmokeTest.md) for more details about the smoke test.
 
 ### Requirements to run container-based tests
 
-To run these tests locally or in CI, the following are required:
+To run these tests locally or in CI, the following is required:
 
 - Docker installed
 - Docker running and accessible to the current user
 - permission to start and stop containers
 
-Testcontainers communicates directly with Docker. If Docker is unavailable or not running, the container-based tests will fail before any test logic is executed.
+Testcontainers communicate directly with Docker. If Docker is unavailable or not running, the container-based tests will fail before any test logic is executed.
 
 See [TestContainers.md](./TestContainers.md) for more details.
 

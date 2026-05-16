@@ -29,14 +29,14 @@ See [UnitTestContainers.cs](./UnitTestContainers.cs#L299-L451) for the actual te
 ## Test entry point
 
 ```csharp
-static async Task BasicSmokeAsync(UOWTestDb uow)
+static async Task BasicSmokeAsync(UOWTestDb uow, UOWTestDb uow2, UOWTestView uowV)
 ```
 
 At this point:
 
-- the database exists  
-- migrations are applied  
-- seed data is present  
+- the database exists
+- migrations are applied
+- seed data is present (from `TestDbData.cs`)
 
 Everything that follows verifies runtime behavior rather than setup.
 
@@ -46,14 +46,14 @@ Everything that follows verifies runtime behavior rather than setup.
 
 ```csharp
 var myRow = await uow.MyTables.QueryTracked().FirstOrDefaultAsync();
-Assert.NotNull(myRow);
+Assert.IsNotNull(myRow);
 ```
 
 Confirms that:
 
-- the database is reachable  
-- seeded data exists  
-- the repository pipeline works  
+- the database is reachable
+- seeded data exists
+- the repository pipeline works
 
 Next we add a related row via navigation property:
 
@@ -65,16 +65,15 @@ await uow.SaveChangesAsync();
 
 This validates:
 
-- relationship mapping  
-- change tracking  
-- normal `SaveChangesAsync` behavior  
+- relationship mapping
+- change tracking
+- normal `SaveChangesAsync` behavior
 
 Then we verify that the row was actually persisted:
 
 ```csharp
-var found = await uow.MyTableRefs.QueryUnTracked()
-    .FirstOrDefaultAsync(t => t.Id == refRow.Id);
-Assert.NotNull(found);
+var found = await uow.MyTableRefs.RowUnTrackedAsync(tt => tt.Id == refRow.Id);
+Assert.IsNotNull(found);
 ```
 
 ---
@@ -82,10 +81,11 @@ Assert.NotNull(found);
 ## 2. View lookup (and GUID auto-seeding)
 
 ```csharp
-var viewItem = await uow.MyTableRefViews.QueryUnTracked()
+var viewItem = await uowV.MyTableRefViews.QueryUnTracked()
     .FirstOrDefaultAsync(tt => tt.RefId == refRow.Id);
-Assert.NotNull(viewItem);
-Assert.True((viewItem.RowID != Guid.Empty), "RowID should not be empty");
+Assert.IsNotNull(viewItem);
+Assert.IsTrue((viewItem.RowID != Guid.Empty), "RowID should not be empty");
+```
 ```
 
 This validates:
@@ -102,8 +102,8 @@ The additional check for `RowID` confirms that **GUID default generation / auto-
 ## 3. Routine call: ID reservation
 
 ```csharp
-var IdList = await uow.GetNextSequenceIds(10);
-Assert.True(10 == IdList.Count, "Did not get 10 rows from sequence function");
+var idList = await uow.GetNextSequenceIds(10);
+Assert.HasCount(10, idList, "Did not get 10 rows from sequence function");
 ```
 
 This validates:
@@ -128,8 +128,8 @@ This section validates several tightly related behaviors:
 ### Bulk insert with explicit identities
 
 ```csharp
-var tt = new DbTest.MyTable { Id = 10, LastChanged = DateTime.UtcNow, LastChangedBy = "gorm", RowID = Guid.NewGuid() };
-var tt2 = new DbTest.MyTable { Id = 11, LastChanged = DateTime.UtcNow, LastChangedBy = "gorm2", RowID = Guid.NewGuid() };
+var tt = new DbTest.MyTable { Id = 10, LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "gorm" };
+var tt2 = new DbTest.MyTable { Id = 11, LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "gorm2" };
 ```
 
 We deliberately use fixed identity values so later delete and verification steps are deterministic.
@@ -151,7 +151,7 @@ Important notes:
 ### Verify identity/sequence continuity
 
 ```csharp
-uow.MyTables.Add(new DbTest.MyTable() { LastChanged = DateTime.UtcNow, LastChangedBy = "swarm" });
+uow.MyTables.Add(new DbTest.MyTable() { LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "swarm", RowID = Guid.NewGuid() });
 await uow.SaveChangesAndNewAsync();
 ```
 
@@ -161,11 +161,11 @@ After explicitly inserting IDs 10 and 11, the next generated ID should be **12**
 
 ```csharp
 await uow.MyTables.BulkDeleteByIdsAsync([10]);
-var currIds = await uow.MyTables.QueryUnTracked().Select(tt => tt.Id).ToListAsync();
+var currIds = await uow.MyTables.QueryUnTracked().Select(xx => xx.Id).ToListAsync();
 
-Assert.False(currIds.Where(tt => tt == 10).Any(), "Bulkdelete failed, row 10 still exists");
-Assert.True(currIds.Where(tt => tt == 11).Any(), "Bulk inserted row not found");
-Assert.True(currIds.Where(tt => tt == 12).Any(), "Sequence not resetting after bulk-insert");
+Assert.IsFalse(currIds.Any(xx => xx == 10), "Bulk delete failed, row 10 still exists");
+Assert.IsTrue(currIds.Any(xx => xx == 11), "Bulk inserted row not found");
+Assert.IsTrue(currIds.Any(aa => aa == 12), "Sequence not resetting after bulk-insert");
 ```
 
 Both bulk insert and bulk delete execute inside transactions automatically.
@@ -179,7 +179,7 @@ await uow.MyTables.BulkDeleteByIdsAsync([11]);
 await uow.MyTables.BulkInsertAsync([tt, tt2]);
 var row2 = await uow.MyTables.RowByKeyUnTrackedAsync(13);
 
-Assert.True(row2 != null, "Bulk-insert without identities fail");
+Assert.IsNotNull(row2, "Bulk-insert without identities fail");
 ```
 
 Validates:
@@ -195,7 +195,7 @@ Validates:
 ```csharp
 var fId = await uow.GetMaxIdByChanger("Stefan");
 
-Assert.True(fId == -2, "Scalar routine did not return valid id");
+Assert.AreEqual(-2, fId, "Scalar routine did not return valid id");
 ```
 
 Validates scalar routine execution and return-value mapping.
@@ -226,7 +226,7 @@ try
         await uow.SaveChangesAsync(ct);
         var insideExists = await uow.MyTables.QueryUnTracked().AnyAsync(t => t.Id == rb.Id, cancellationToken: ct);
 
-        Assert.True(insideExists, "Row should be visible inside active transaction");
+        Assert.IsTrue(insideExists, "Row should be visible inside active transaction before rollback");
 
         uow.MyTables.Add(rb2);
         await uow.SaveChangesAsync(ct);
@@ -240,7 +240,7 @@ After transaction:
 ```csharp
 var afterRollbackExists = await uow.MyTables.QueryUnTracked().AnyAsync(t => t.Id == rb.Id);
 
-Assert.False(afterRollbackExists, "Row should not exist after rollback");
+Assert.IsFalse(afterRollbackExists, "Row should not exist after rollback");
 ```
 
 Validates full rollback and transactional consistency.
@@ -250,16 +250,16 @@ Validates full rollback and transactional consistency.
 ## 8. OData filter
 
 ```csharp
- var options = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow,"$filter=LastChangedBy eq 'Stefan'" );
+ var options = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=LastChangedBy eq 'Stefan'");
  var baseQuery = uow.MyTables.QueryUnTracked();
- var filtResult = await uow.MyTables.FilterODataAsync(baseQuery,options,null,true);
+ var filteredResult = await uow.MyTables.FilterODataAsync(baseQuery, options);
 
- Assert.True(filtResult.InlineCount > 0 && !filtResult.Results.Any(x => x.LastChangedBy != "Stefan"), "We expect to find Stefans, but only Stefans" );
+ Assert.IsTrue(filteredResult.InlineCount > 0 && filteredResult.Results.All(x => x.LastChangedBy == "Stefan"), "We expect to find Stefan's, but only Stefan's");
 
  // Verify that data exist with linQ
- var normRow = await uow.MyTables.QueryUnTracked().Where(tt => tt.Id == -1).Include(tt => tt.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToListAsync();
+ var normRow = await uow.MyTables.QueryUnTracked().Where(mm => mm.Id == -1).Include(xx => xx.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToListAsync();
  
- Assert.True(normRow.Count > 0, "");
+ Assert.IsNotEmpty(normRow);
 ```
 
 Validates EDM generation, filter parsing, and translation.
@@ -274,13 +274,13 @@ Validates EDM generation, filter parsing, and translation.
  var plan = uow.MyTables.BuildODataQueryPlan(bq, options2, new ODataPolicy(AllowExpand: true), true);
  var plan2 = uow.MyTables.ApplyODataExpandAsInclude(plan);
 
- Assert.True(plan2.Report.Where(tt => tt == "ExpandInnerFilterIgnored:MyTableRefs").Count() == 1, "We did not find $filter warning within AsInclude query"); 
+ Assert.AreEqual(1, plan2.Report.Count(zz => zz == "ExpandInnerFilterIgnored:MyTableRefs"), "We did not find $filter warning within AsInclude query"); 
 
  var res = await uow.MyTables.MaterializeODataAsync(plan2);
  //we received our MyTableRefs records inline (but unfiltered)
 
- Assert.True(res.InlineCount != null && res.InlineCount > 0 && res.Results != null &&  res.Results.FirstOrDefault() != null && res.Results.FirstOrDefault()!.MyTableRefs.Count > 0, 
-     "$expand as include failed to produce data for MyTableRefs") ;
+ Assert.IsTrue(res.InlineCount is > 0 && res.Results.FirstOrDefault() != null && res.Results.FirstOrDefault()!.MyTableRefs.Count > 0, 
+     "$expand as include failed to produce data for MyTableRefs");
 ```
 
 Validates expand handling and include translation.
@@ -293,23 +293,23 @@ Validates expand handling and include translation.
   var opts = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$select=Id");
   var plan3 = uow.MyTables.BuildODataQueryPlan(bq, opts, new ODataPolicy(AllowSelect: true), true);
   var shapedQuery3 = uow.MyTables.ApplyODataSelectExpand(plan3);
-  var res3 = await uow.MyTables.MaterializeODataShapedAsync(plan3,shapedQuery3);
+  var res3 = await uow.MyTables.MaterializeODataShapedAsync(plan3, shapedQuery3);
 
-  Assert.True(res3.Results != null && res3.Results.Count > 0, "Filtered and selected query failed");
+  Assert.IsNotEmpty(res3.Results, "Filtered and selected query failed");
 
   var json = System.Text.Json.JsonSerializer.Serialize(res3.Results[0]);
 
-  Assert.True(json.Contains("\"Id\""), $"$select=Id expected 'Id' in shaped JSON.\nJSON: {json}");
-  Assert.True(!json.Contains("LastChangedBy"), $"$select=Id should not include 'LastChangedBy'.\nJSON: {json}");
-  Assert.True(!json.Contains("MyTableRefs"), $"$select=Id should not include navigation 'MyTableRefs'.\nJSON: {json}");
+  Assert.Contains("\"Id\"", json, $"$select=Id expected 'Id' in shaped JSON.\nJSON: {json}");
+  Assert.DoesNotContain("LastChangedBy", json, $"$select=Id should not include 'LastChangedBy'.\nJSON: {json}");
+  Assert.DoesNotContain("MyTableRefs", json, $"$select=Id should not include navigation 'MyTableRefs'.\nJSON: {json}");
 
   //Inner filter test for shaped expansion
-  var opts4 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow,"$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
-  var plan4 = uow.MyTables.BuildODataQueryPlan(bq, opts, new ODataPolicy(AllowExpand: true), true);
+  var opts4 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
+  var plan4 = uow.MyTables.BuildODataQueryPlan(bq, opts4, new ODataPolicy(AllowExpand: true), true);
   var shapedQuery4 = uow.MyTables.ApplyODataSelectExpand(plan4);
   var res4 = await uow.MyTables.MaterializeODataShapedAsync(plan4, shapedQuery4);
 
-  Assert.True(res4.Results != null && res4.Results.Count > 0, "Expected at least one result from $filter=Id eq -1 with expanded MyTableRefs, but none were returned.");
+  Assert.IsNotEmpty(res4.Results, "Expected at least one result from $filter=Id eq -1 with expanded MyTableRefs, but none were returned.");
 ```
 
 Validates projection, shaping, and reduced payload.

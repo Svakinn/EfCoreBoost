@@ -11,7 +11,7 @@ The goals are:
 
 Output parameters exist per engine but do **not** behave uniformly.  
 EfCore.Boost cross-platform contract avoids them completely.  
-To be clear, you can use OUT / INOUT / OUTPUT parameters in code intentended for a specific provider.  
+To be clear, you can use OUT / INOUT / OUTPUT parameters in code intended for a specific provider.  
 However, if you do, **your .net code is no longer portable across database engines**.
 
 ---
@@ -27,7 +27,7 @@ DbRepo / EfCore.Boost exposes the following routine helpers in UoW:
 For side-effect-only routines:
 
 ```csharp 
-async Task<int> RunRoutineNoneQueryAsync(string schema, string routineName, List<DbParmInfo>? parameters = null);  
+async Task<int> RunRoutineNonQueryAsync(string schema, string routineName, List<DbParmInfo>? parameters = null);  
 ```  
 
 **Contract**
@@ -35,7 +35,7 @@ async Task<int> RunRoutineNoneQueryAsync(string schema, string routineName, List
 - Routine performs side effects (delete, cleanup, recalc, etc.).
 - Return value is `rowsAffected` or provider-specific `ExecuteNonQuery` count.
 - Routine must **not** use OUT/INOUT parameters.
-- Routine may optionally SELECT a trivial scalar or message, but DbRepo ignores it for `NoneQuery` helpers.
+- Routine may optionally SELECT a trivial scalar or message, but DbRepo ignores it for `NonQuery` helpers.
 
 ---
 
@@ -44,16 +44,19 @@ async Task<int> RunRoutineNoneQueryAsync(string schema, string routineName, List
 For a single scalar value:
 
 ```csharp 
-async Task<long?>   RunRoutineLongAsync   (string schema, string routineName, List<DbParmInfo>? parameters = null)  
-async Task<int?>    RunRoutineIntAsync    (string schema, string routineName, List<DbParmInfo>? parameters = null)  
-async Task<string?> RunRoutineStringAsync (string schema, string routineName, List<DbParmInfo>? parameters = null)
+async Task<long?>           RunRoutineLongAsync           (string schema, string routineName, List<DbParmInfo>? parameters = null)  
+async Task<int?>            RunRoutineIntAsync            (string schema, string routineName, List<DbParmInfo>? parameters = null)  
+async Task<string?>         RunRoutineStringAsync         (string schema, string routineName, List<DbParmInfo>? parameters = null)
+async Task<decimal?>        RunRoutineDecimalAsync        (string schema, string routineName, List<DbParmInfo>? parameters = null)
+async Task<DateTime?>       RunRoutineDateTimeAsync       (string schema, string routineName, List<DbParmInfo>? parameters = null)
+async Task<DateTimeOffset?> RunRoutineDateTimeOffsetAsync (string schema, string routineName, List<DbParmInfo>? parameters = null)
 ```  
 
 **Contract**
 
 - Routine returns exactly one scalar value.
 - Data is returned via **standard query semantics**:
-  - First column of first row from SELECT
+  - First column of the first row from SELECT
   - Or scalar-returning function (PostgreSQL)
 - No OUT / INOUT / OUTPUT parameters.
 
@@ -138,47 +141,49 @@ public async Task<List<long>> GetNextSequenceIds(int count)
 
 ### 1.4 Fully tabular routines
 
-For arbitrary row shapes mapped to EF Core models:
+For arbitrary row shapes mapped to EF Core models (Entities or Keyless View types):
 
 ```csharp 
-IQueryable<T> RunRoutineQuery<T>(string schema, string routineName, List<DbParmInfo>? parameters = null)  
+async Task<IList<T>> RunRoutineQueryAsync<T>(string schema, string routineName, List<DbParmInfo>? parameters = null)  
     where T : class;
 ```  
 
 **Contract**
 
 - Routine returns 0–N rows.
-- Columns must map to T (one of our entities).
+- Columns must map to T (one of our entities or [Keyless] view models).
 - Returned via SELECT.
 - No OUT / INOUT parameters.
 
 **Example usage:**
 
 ```csharp 
-public async Task<List<CurrentMenuItemsV>> GetCurrentMenuItemsForSession(long myId)
+public async Task<IList<CurrentMenuItemsV>> GetCurrentMenuItemsForSession(long sessionId)
 {
-    return await RunRoutineQuery<CurrentMenuItemsV>("my", "GetCurrentMenuItemsForSession", [ new("@SessionId", sessionId) ]).ToListAsync();
+    return await RunRoutineQueryAsync<CurrentMenuItemsV>("my", "GetCurrentMenuItemsForSession", [ new("@SessionId", sessionId) ]);
 }
 ```  
+
+> **Note:** If you need the raw `IQueryable<T>` for further composition (e.g., OData), use `SetUpRoutineQuery<T>(...)` instead.
 
 ---
 
 ## 2. OUT / INOUT / OUTPUT Parameters
 
-Output parameters exist, but are **not portable**:
+Output parameters exist but are **not portable**:
 
-| Engine                   | OUT semantics as real parameters? | Notes                                              |
-|--------------------------|------------------------------------|----------------------------------------------------|
-| SQL Server (procedures)  | ✅ Yes                             | @p OUTPUT                                         |
-| MySQL (procedures)       | ✅ Yes                             | OUT / INOUT act as bound parameters               |
-| PostgreSQL (functions)   | ❌ No                              | OUT becomes result columns, called via SELECT     |
-| PostgreSQL (procedures)  | ❌ No pure OUT                     | Only IN / INOUT, different client semantics       |
+| Engine                  | OUT semantics as real parameters? | Notes                                         |
+|-------------------------|-----------------------------------|-----------------------------------------------|
+| SQL Server (procedures) | ✅ Yes                             | @p OUTPUT                                     |
+| MySQL (procedures)      | ✅ Yes                             | OUT / INOUT act as bound parameters           |
+| PostgreSQL (functions)  | ❌ No                              | OUT becomes result columns, called via SELECT |
+| PostgreSQL (procedures) | ❌ No pure OUT                     | Only IN / INOUT, different client semantics   |
 
 ### DbRepo Rule
 
 OUT / INOUT / OUTPUT parameters:
 
-- Not part of cross-platform contract  
+- Not part of a cross-platform contract  
 - Must not be used for primary results  
 - Allowed only in provider-specific code outside DbRepo portability guarantees
 
@@ -217,9 +222,9 @@ CREATE PROCEDURE [my].[GetMaxIdByChanger](@Changer nvarchar(50)) AS ...
 
 ### PostgreSQL
 
-- Schema is real schema.
+- Schema is a real schema.
 - Implemented as a FUNCTION for scalar logic.
-- Function name is wrapped in double quotes.
+- The function name is wrapped in double quotes.
 
 ```SQL
 CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(Changer text) RETURNS bigint LANGUAGE plPgSQL AS $$ ...
@@ -243,9 +248,9 @@ DbRepo resolves this automatically.
 
 ## 4. Official EfCore.Boost Doctrine
 
-1 Tabular → SELECT → RunRoutineQuery or List helpers  
-2 Scalar → scalar SELECT / function return → RunRoutineScalar helpers  
-3 NonQuery → side effects → RunRoutineNoneQuery  
+1 Tabular → SELECT → RunRoutineQueryAsync or List helpers  
+2 Scalar → scalar SELECT / function return → RunRoutine (Long/Int/String/...) helpers  
+3 NonQuery → side effects → RunRoutineNonQuery  
 4 OUT / INOUT → Not allowed in portable routines
 
 Clean, predictable, portable.

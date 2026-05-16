@@ -27,11 +27,13 @@ Each method returns:
 So each test can do:
 
 ```csharp
-var (container, uow) = await PreparePgSqlContainer();
+var (container, uow, uow2, uowV) = await PreparePgSqlContainer();
 await using (container)
+using (uowV)
+using (uow2)
 using (uow)
 {
-    await BasicSmokeAsync(uow);
+    await BasicSmokeAsync(uow, uow2, uowV);
 }
 ```
 
@@ -62,10 +64,8 @@ We more or less build our own connection string to the test container and run ou
         {
             const string dbName = "TestDb";
             const string connName = "TestMy";
-            var myBuilder = new MySqlBuilder()
-                .WithImage("mysql:8.0")
-                .WithUsername("root")
-                .WithPassword("root")
+            var myBuilder = new MySqlBuilder("mysql:8.0")
+                .WithUsername("root").WithPassword("root")
                 .WithCommand("--default-authentication-plugin=mysql_native_password")
                 .Build();
             await myBuilder.StartAsync();
@@ -81,7 +81,7 @@ We more or less build our own connection string to the test container and run ou
             var uow = CreateUow(cfg, connName);
             await uow.ExecuteAdminDbSqlScriptAsync(await ReadSql("Sql/MySqlCreateDb.mysql"));
             var uow2 = CreateUow(cfg, connName);
-            await uow.ExecSqlScriptAsync(await ReadSql("Migrate/DbDeploy_MySql.mysql")); //Mysql does not handle any ddl in transactions
+            await uow.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_MySql.mysql")); //Mysql does not handle any ddl in transactions
             var uowV = CreateUowView(cfg, connName);
             return (myBuilder, uow, uow2, uowV);
         }

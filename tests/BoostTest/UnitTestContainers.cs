@@ -18,7 +18,6 @@ using EfCore.Boost.CFG;
 using Testcontainers.MsSql;
 using Testcontainers.MySql;
 using Testcontainers.PostgreSql;
-using EfCore.Boost.EDM;
 using BoostTest.Helpers;
 using TestDb;
 
@@ -123,7 +122,6 @@ namespace BoostTest
             }
         }
 
-        /**
         [TestMethod]
         public async Task Uow_MySql_Test()
         {
@@ -149,7 +147,6 @@ namespace BoostTest
                 await BasicSmokeSynchronous(uow, uow2, uowV);
             }
         }
-        **/
 
         /// <summary>
         ///  Spin up temporary SQL Server in Docker
@@ -206,7 +203,6 @@ namespace BoostTest
             return (uow, uow2, uowV);
         }
 
-        /***
         /// <summary>
         ///  Spin up temporary MySql Server in Docker
         ///  Note: we are sort fo cheeting on the usual connection string from appsettings.json
@@ -238,7 +234,6 @@ namespace BoostTest
             var uowV = CreateUowView(cfg, connName);
             return (myBuilder, uow, uow2, uowV);
         }
-        **/
 
         static async Task<string> ReadSql(string fileName)
         {
@@ -275,9 +270,8 @@ namespace BoostTest
             Npgsql.NpgsqlConnection.ClearAllPools();
             await uowMigrate.ExecSqlScriptAsync(await ReadSql("Migrations/DbDeploy_PgSql.pgsql")); // Note: The migration script itself contains transactions, so we do not run in transaction here
             // Force Npgsql to refresh type mappings ("citext", etc.) for this database
-            var dbConn = (Npgsql.NpgsqlConnection)uowMigrate.GetDbContext().Database.GetDbConnection();
-            if (dbConn.State != ConnectionState.Open)
-                await uowMigrate.GetDbContext().Database.OpenConnectionAsync();
+            // We are allowed to do some driver-specific oddities in this out-case (you don't usually migrate db and then continue to test it)
+            var dbConn = (Npgsql.NpgsqlConnection) await uowMigrate.EnsureDbConnectionOpenAsync();
             await dbConn.ReloadTypesAsync();
             Npgsql.NpgsqlConnection.ClearAllPools();
             var uow = CreateUow(cfg, connName);
@@ -287,7 +281,7 @@ namespace BoostTest
         }
 
         /// <summary>
-        /// Main smoke test, async routines only
+        /// Main smoke test, async routines only, run by PostgreSQL, MySQL and SqlServer
         /// </summary>
         /// <param name="uow"></param>
         /// <param name="uow2"></param>
@@ -389,7 +383,7 @@ namespace BoostTest
             var fId = await uow.GetMaxIdByChanger("Stefan");
             Assert.AreEqual(-2, fId, "Scalar routine did not return valid id");
             //
-            // Test transaction rollback, by insertin legal and then unlegal row that should trigger rollback of the whole transaction
+            // Test transaction rollback, by inserting good and then bad row that should trigger rollback of the whole transaction
             //
             var sameUniqueGuId = Guid.NewGuid();
             var rb = new DbTest.MyTable { LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "rollback", RowID = sameUniqueGuId };
@@ -421,7 +415,7 @@ namespace BoostTest
             var normRow = await uow.MyTables.QueryUnTracked().Where(mm => mm.Id == -1).Include(xx => xx.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToListAsync();
             Assert.IsNotEmpty(normRow);
             //
-            // Expand Odata test, remember to allow expanding with policy:
+            // Expand Odata test, generate ODateQueryOptions construct containing filter and expand, then apply it on the Repo to receive entity data
             //
             var bq = uow.MyTables.QueryUnTracked();
             var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
@@ -433,7 +427,7 @@ namespace BoostTest
             Assert.IsTrue(res.InlineCount is > 0 && res.Results.FirstOrDefault() != null && res.Results.FirstOrDefault()!.MyTableRefs.Count > 0,
                 "$expand as include failed to produce data for MyTableRefs");
             //
-            // Now shaped OData tests:
+            // Now shaped OData tests - no longer mapped entities
             //
             var opts = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$select=Id");
             var plan3 = uow.MyTables.BuildODataQueryPlan(bq, opts, new ODataPolicy(AllowSelect: true), true);
@@ -451,20 +445,16 @@ namespace BoostTest
             var res4 = await uow.MyTables.MaterializeODataShapedAsync(plan4, shapedQuery4);
             Assert.IsNotEmpty(res4.Results, "Expected at least one result from $filter=Id eq -1 with expanded MyTableRefs, but none were returned.");
             //
-            // Test UOW EDM generation
+            // Test generic UOW EDM generation by the UoW
             //
-            var xmlUow = EdmBuilder.BuildXmlModelFromUow(uow);
-            Assert.Contains("<EntitySet Name=\"MyTables\"", xmlUow, "XML model for UOW should contain EntitySet name MyTables");
-            Assert.Contains("<EntitySet Name=\"MyTableRefs\"", xmlUow, "XML model for UOW should contain EntitySet name MyTableRefs");
-            Assert.Contains("<EntityType Name=\"MyTable\"", xmlUow, "XML model for UOW should contain EntityType name MyTable");
-            Assert.Contains("<EntityType Name=\"MyTableRef\"", xmlUow, "XML model for UOW should contain EntityType name MyTableRef");
-
-            // Test generic UOW EDM generation (new simplified API)
-            var xmlUowGeneric = EdmBuilder.BuildXmlModelFromUow<UOWTestDb>();
+            using var uowGeneric = new UOWTestDb();
+            var xmlUowGeneric = uowGeneric.Metadata();
+            Assert.IsNotEmpty(xmlUowGeneric);
             Assert.Contains("<EntitySet Name=\"MyTables\"", xmlUowGeneric);
-
+            //
             // Test custom EDM configuration (functions/actions)
-            var xmlCustom = EdmBuilder.BuildXmlModelFromUow(uow, builder => {
+            //
+            var xmlCustom = uow.Metadata(builder => {
                 builder.EntityType<DbTest.MyTable>().Collection.Function("MyCustomFunction").Returns<string>();
             });
             Assert.Contains("<Function Name=\"MyCustomFunction\"", xmlCustom, "XML model should contain custom function");
