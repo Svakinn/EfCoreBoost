@@ -22,7 +22,7 @@ It validates that the **entire EfCore.Boost stack works end-to-end** on a real d
 - OData pipelines  
 
 If this test passes, the provider is considered functionally usable.  
-See [UnitTestContainers.cs](./UnitTestContainers.cs#L299-L451) for the actual test code.
+See [UnitTestContainers.cs](../../../main/tests/BoostTest/UnitTestContainers.cs#L157-L178) for the actual test code.
 
 ---
 
@@ -86,7 +86,7 @@ var viewItem = await uowV.MyTableRefViews.QueryUnTracked()
 Assert.IsNotNull(viewItem);
 Assert.IsTrue((viewItem.RowID != Guid.Empty), "RowID should not be empty");
 ```
-```
+
 
 This validates:
 
