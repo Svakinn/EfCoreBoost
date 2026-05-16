@@ -181,54 +181,12 @@ These scripts are not theoretical. They actually run.
 
 ### 6.1 Helper Script (shared logic)
 
-This script exists separately so multiple migration workflows can reuse common helpers.
+This script (`helpers.ps1`) contains common logic used by the migration pipelines to ensure a consistent environment before running `dotnet ef` commands.
 
-It currently:
+It provides the following functions:
 
-- selects which app connection is “active” (switching between DB flavors)
-- handles snapshot enabling / disabling per provider
-
-
-```powershell
-function Set-MigrationProvider {
-    param(
-        [Parameter(Mandatory = $true)][string]$ProjectDir,
-        [Parameter(Mandatory = $true)][ValidateSet("MsSQL","PgSQL","MySQL")][string]$Provider
-    )
-    if (-not (Test-Path $ProjectDir)) {
-        throw "Migration project folder not found at: $ProjectDir"
-    }
-    $projFolder = $ProjectDir
-    Write-Host "Migration project: $projFolder"
-    Write-Host "Activating migrations for provider: $Provider"
-    Write-Host ""
-    $providers = @("MsSQL","PgSQL","MySQL")
-    foreach ($p in $providers) {
-        $migDir = Join-Path $projFolder "Migrations\$p"
-        if (-not (Test-Path $migDir)) {
-            Write-Host "Skipping missing folder: $migDir"
-            continue
-        }
-        $enable = ($p -eq $Provider)
-        if ($enable) {
-            Write-Host "Preparing CLEAN migration folder for provider '$p' at $migDir"
-            Get-ChildItem -Path $migDir -Recurse -File |
-                Where-Object { $_.Extension -in '.cs', '.xcs' } |
-                Remove-Item -Force
-        }
-        else {
-            Write-Host "Disabling migrations under $migDir (provider '$p')"
-            Get-ChildItem -Path $migDir -Recurse -File |
-                Where-Object { $_.Extension -eq '.cs' } |
-                ForEach-Object {
-                    Rename-Item $_.FullName ($_.FullName + ".xcs") -Force
-                }
-        }
-    }
-    Write-Host ""
-    Write-Host "Done. Active migration provider: $Provider"
-}
-```
+- **Set-DefaultAppConnName**: Updates the `appsettings.json` in the migration project to set the `DefaultAppConnName`. This ensures that when EF Core tooling starts up, it picks the correct connection profile (and thus the correct database provider) as defined in the configuration.
+- **Set-MigrationProvider**: Manages the "snapshot hiding" strategy. It enables the migration folder for the target provider (MsSQL, PgSQL, or MySQL) and "disables" the others by renaming their `.cs` files to `.xcs`. This prevents EF Core from seeing multiple conflicting snapshots when generating new migrations.
 
 ---
 
@@ -328,7 +286,6 @@ foreach ($file in $existingFiles) {
     Get-Content $file | Add-Content -Path $deployPath
     @(
         ""
-        "GO"
         "/*** END $name ***/"
         ""
     ) | Add-Content -Path $deployPath

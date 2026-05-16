@@ -62,27 +62,60 @@ They are intentionally modeled using attributes instead of large fluent blocks, 
 <small>
 
 ```csharp
-[Index(nameof(ParentId), IsUnique = false)]
-[Index(nameof(MyInfo), IsUnique = false)]
-public class MyTableRef
-{
-    [DbAutoUid]
-    public long Id { get; set; }
+        [Index(nameof(RowID), IsUnique = true)]
+        [Index(nameof(LastChanged), IsUnique = false)]
+        public class MyTable
+        {
+            [DbAutoUid]
+            public long Id { get; set; }
+            [AutoIncrementConcurrency]
+            public long RowVersion { get; set; }
+            [DbGuid]
+            public Guid RowID { get; set; }
+            [StrCode]
+            public string Code { get; set; } = string.Empty;
+            [Title]
+            public string? Heading {  get; set; }
+            [Money]
+            public decimal Balance { get; set; }
+            [Status]
+            public int Status { get; set; }
+            [Percentage]
+            public decimal Discount { get; set; }
+            [LastChangedUtc]
+            public DateTimeOffset LastChanged { get; set; } = DateTimeOffset.UtcNow;
+            [CreatedUtc]
+            public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
+            [ExternalRef]
+            public string LastChangedBy { get; set; } = string.Empty;
 
-    [Required]
-    public long ParentId { get; set; }
+            public ICollection<MyTableRef> MyTableRefs { get; set; } = [];
+        }
 
-    [StrMed]
-    public string MyInfo { get; set; } = string.Empty;
+        [Index(nameof(ParentId), IsUnique = false)]
+        [Index(nameof(MyInfo), IsUnique = false)]
+        public class MyTableRef
+        {
+            [DbAutoUid]
+            public long Id { get; set; }
+            [AutoIncrement]
+            public long RowVersion { get; set; }
+            [Required]
+            public long ParentId { get; set; }
+            [Name]
+            public string MyInfo { get; set; } = string.Empty;
+            [Money]
+            public decimal Amount { get; set; }
+            [CreatedUtc]
+            public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
+            [LastChangedUtc]
+            public DateTimeOffset LastChanged { get; set; } = DateTimeOffset.UtcNow;
+            [ExternalRef]
+            public string LastChangedBy { get; set; } = string.Empty;
 
-    public DateTimeOffset LastChanged { get; set; }
-
-    [StrShort]
-    public string LastChangedBy { get; set; } = string.Empty;
-
-    [ForeignKey(nameof(ParentId))]
-    public MyTable? MyTable { get; set; }
-}
+            [ForeignKey(nameof(ParentId))]
+            public MyTable? MyTable { get; set; }
+        }
 ```
 </small>
 
@@ -116,23 +149,29 @@ The ```[DbAutoUid]``` marks the column Id as prmary key with identity:
 [ViewKey(nameof(RefId), nameof(MyId))]
 public class MyTableRefView
 {
+    [ExternalRef]
     public long RefId { get; set; }
     public long MyId { get; set; }
-
+    public long RowVersion { get; set; }
     public Guid RowID { get; set; }
-
-    public DateTimeOffset LastChanged { get; set; }
-
-    [StrShort]
-    public string LastChangedBy { get; set; } = string.Empty;
-
-    [StrMed]
+    [StrCode]
+    public string Code { get; set; } = string.Empty;
+    [Title]
+    public string? Heading { get; set; }
+    [LastChangedUtc]
+    public DateTimeOffset ParLastChanged { get; set; }
+    [ExternalRef]
+    public string ParLastChangedBy { get; set; } = string.Empty;
+    [Name]
     public string MyInfo { get; set; } = string.Empty;
-
-    public DateTimeOffset RefLastChanged { get; set; }
-
-    [StrShort]
-    public string RefLastChangedBy { get; set; } = string.Empty;
+    [Money]
+    public decimal Amount { get; set; }
+    [LastChangedUtc]
+    public DateTimeOffset LastChanged { get; set; }
+    [CreatedUtc]
+    public DateTimeOffset Created { get; set; }
+    [ExternalRef]
+    public string LastChangedBy { get; set; } = string.Empty;
 }
 ```
 </small>
@@ -176,8 +215,11 @@ The UOW is the public gateway to the database.
 ```csharp
 public EfRepo<MyTable> MyTables => new(Ctx, DbType);
 public EfRepo<MyTableRef> MyTableRefs => new(Ctx, DbType);
+```
 
-// Views are read-only, so we use a read-only repository for those
+And in `UOWTestView.cs` (read-only):
+
+```csharp
 public EfReadRepo<MyTableRefView> MyTableRefViews => new(Ctx, DbType);
 ```
 
@@ -328,13 +370,13 @@ Same rules apply as in the above example.
 
 ---
 
-### Parameterized view lookup
+### Parameterized view lookup (in `UOWTestView.cs`)
 
 ```csharp
 public async Task<List<MyTableRefView>> GetMyTableRefViewByMyIdAsync(long myId)
 {
     var paList = new List<DbParmInfo> { new("@MyId", myId) };
-    return await SetUpRoutineQuery<MyTableRefView>("my","GetMyTableRefViewByMyId", paList).ToListAsync();
+    return await SetUpRoutineQuery<MyTableRefView>("my", "GetMyTableRefViewByMyId", paList).ToListAsync();
 }
 ```
 
