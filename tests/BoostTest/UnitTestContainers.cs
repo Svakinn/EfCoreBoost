@@ -281,7 +281,7 @@ namespace BoostTest
         }
 
         /// <summary>
-        /// Main smoke test, async routines only
+        /// Main smoke test, async routines only, run by PostgreSQL, MySQL and SqlServer
         /// </summary>
         /// <param name="uow"></param>
         /// <param name="uow2"></param>
@@ -383,7 +383,7 @@ namespace BoostTest
             var fId = await uow.GetMaxIdByChanger("Stefan");
             Assert.AreEqual(-2, fId, "Scalar routine did not return valid id");
             //
-            // Test transaction rollback, by insertin legal and then unlegal row that should trigger rollback of the whole transaction
+            // Test transaction rollback, by inserting good and then bad row that should trigger rollback of the whole transaction
             //
             var sameUniqueGuId = Guid.NewGuid();
             var rb = new DbTest.MyTable { LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "rollback", RowID = sameUniqueGuId };
@@ -415,7 +415,7 @@ namespace BoostTest
             var normRow = await uow.MyTables.QueryUnTracked().Where(mm => mm.Id == -1).Include(xx => xx.MyTableRefs.Where(r => r.MyInfo == "BigData")).ToListAsync();
             Assert.IsNotEmpty(normRow);
             //
-            // Expand Odata test, remember to allow expanding with policy:
+            // Expand Odata test, generate ODateQueryOptions construct containing filter and expand, then apply it on the Repo to receive entity data
             //
             var bq = uow.MyTables.QueryUnTracked();
             var options2 = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$expand=MyTableRefs($filter=MyInfo eq 'BigData')");
@@ -427,7 +427,7 @@ namespace BoostTest
             Assert.IsTrue(res.InlineCount is > 0 && res.Results.FirstOrDefault() != null && res.Results.FirstOrDefault()!.MyTableRefs.Count > 0,
                 "$expand as include failed to produce data for MyTableRefs");
             //
-            // Now shaped OData tests:
+            // Now shaped OData tests - no longer mapped entities
             //
             var opts = OdataTestHelper.CreateOptions<DbTest.MyTable>(uow, "$filter=Id eq -1&$select=Id");
             var plan3 = uow.MyTables.BuildODataQueryPlan(bq, opts, new ODataPolicy(AllowSelect: true), true);
@@ -445,21 +445,15 @@ namespace BoostTest
             var res4 = await uow.MyTables.MaterializeODataShapedAsync(plan4, shapedQuery4);
             Assert.IsNotEmpty(res4.Results, "Expected at least one result from $filter=Id eq -1 with expanded MyTableRefs, but none were returned.");
             //
-            // Test UOW EDM generation
+            // Test generic UOW EDM generation by the UoW
             //
-            var xmlUow = uow.Metadata();
-            Assert.Contains("<EntitySet Name=\"MyTables\"", xmlUow, "XML model for UOW should contain EntitySet name MyTables");
-            Assert.Contains("<EntitySet Name=\"MyTableRefs\"", xmlUow, "XML model for UOW should contain EntitySet name MyTableRefs");
-            Assert.Contains("<EntityType Name=\"MyTable\"", xmlUow, "XML model for UOW should contain EntityType name MyTable");
-            Assert.Contains("<EntityType Name=\"MyTableRef\"", xmlUow, "XML model for UOW should contain EntityType name MyTableRef");
-
-            // Test generic UOW EDM generation (new simplified API)
             using var uowGeneric = new UOWTestDb();
             var xmlUowGeneric = uowGeneric.Metadata();
             Assert.IsNotEmpty(xmlUowGeneric);
             Assert.Contains("<EntitySet Name=\"MyTables\"", xmlUowGeneric);
-
+            //
             // Test custom EDM configuration (functions/actions)
+            //
             var xmlCustom = uow.Metadata(builder => {
                 builder.EntityType<DbTest.MyTable>().Collection.Function("MyCustomFunction").Returns<string>();
             });

@@ -11,7 +11,7 @@ The goals are:
 
 Output parameters exist per engine but do **not** behave uniformly.  
 EfCore.Boost cross-platform contract avoids them completely.  
-To be clear, you can use OUT / INOUT / OUTPUT parameters in code intentended for a specific provider.  
+To be clear, you can use OUT / INOUT / OUTPUT parameters in code intended for a specific provider.  
 However, if you do, **your .net code is no longer portable across database engines**.
 
 ---
@@ -56,7 +56,7 @@ async Task<DateTimeOffset?> RunRoutineDateTimeOffsetAsync (string schema, string
 
 - Routine returns exactly one scalar value.
 - Data is returned via **standard query semantics**:
-  - First column of first row from SELECT
+  - First column of the first row from SELECT
   - Or scalar-returning function (PostgreSQL)
 - No OUT / INOUT / OUTPUT parameters.
 
@@ -164,26 +164,26 @@ public async Task<IList<CurrentMenuItemsV>> GetCurrentMenuItemsForSession(long s
 }
 ```  
 
-> **Note:** If you need the raw `IQueryable<T>` for further composition (e.g. OData), use `SetUpRoutineQuery<T>(...)` instead.
+> **Note:** If you need the raw `IQueryable<T>` for further composition (e.g., OData), use `SetUpRoutineQuery<T>(...)` instead.
 
 ---
 
 ## 2. OUT / INOUT / OUTPUT Parameters
 
-Output parameters exist, but are **not portable**:
+Output parameters exist but are **not portable**:
 
-| Engine                   | OUT semantics as real parameters? | Notes                                              |
-|--------------------------|------------------------------------|----------------------------------------------------|
-| SQL Server (procedures)  | ✅ Yes                             | @p OUTPUT                                         |
-| MySQL (procedures)       | ✅ Yes                             | OUT / INOUT act as bound parameters               |
-| PostgreSQL (functions)   | ❌ No                              | OUT becomes result columns, called via SELECT     |
-| PostgreSQL (procedures)  | ❌ No pure OUT                     | Only IN / INOUT, different client semantics       |
+| Engine                  | OUT semantics as real parameters? | Notes                                         |
+|-------------------------|-----------------------------------|-----------------------------------------------|
+| SQL Server (procedures) | ✅ Yes                             | @p OUTPUT                                     |
+| MySQL (procedures)      | ✅ Yes                             | OUT / INOUT act as bound parameters           |
+| PostgreSQL (functions)  | ❌ No                              | OUT becomes result columns, called via SELECT |
+| PostgreSQL (procedures) | ❌ No pure OUT                     | Only IN / INOUT, different client semantics   |
 
 ### DbRepo Rule
 
 OUT / INOUT / OUTPUT parameters:
 
-- Not part of cross-platform contract  
+- Not part of a cross-platform contract  
 - Must not be used for primary results  
 - Allowed only in provider-specific code outside DbRepo portability guarantees
 
@@ -222,9 +222,9 @@ CREATE PROCEDURE [my].[GetMaxIdByChanger](@Changer nvarchar(50)) AS ...
 
 ### PostgreSQL
 
-- Schema is real schema.
+- Schema is a real schema.
 - Implemented as a FUNCTION for scalar logic.
-- Function name is wrapped in double quotes.
+- The function name is wrapped in double quotes.
 
 ```SQL
 CREATE OR REPLACE FUNCTION my."GetMaxIdByChanger"(Changer text) RETURNS bigint LANGUAGE plPgSQL AS $$ ...
