@@ -68,7 +68,7 @@ Because the database lifecycle itself is part of what is being validated, **each
 
 This makes the test intent explicit: we are testing how Boost, EF Core, and the database provider behave together, from startup to shut down.  
 See [TestContainers.md](./TestContainers.md) for more details on the Testcontainers setup.
-See this [test-code](../../../tests/BoostTest/UnitTestContainers.cs#L157-L178) to see how the test-container is spun up and the database is initialized for the smoke test.
+See this [test-code](../../../main/tests/BoostTest/UnitTestContainers.cs#L157-L178) to see how the test-container is spun up and the database is initialized for the smoke test.
 
 ### One test per database provider
 
@@ -98,7 +98,7 @@ The container-backed tests validate:
 
 In short: this is an **integration test suite by design**, and the tests double as executable documentation.
 
-See [UnitTestContainers.cs](../../../tests/BoostTest/UnitTestContainers.cs#L290-L473) for the actual test code.
+See [UnitTestContainers.cs](../../../main/tests/BoostTest/UnitTestContainers.cs#L290-L473) for the actual test code.
 And [SmokeTest.md](./SmokeTest.md) for more details about the smoke test.
 
 ### Requirements to run container-based tests
