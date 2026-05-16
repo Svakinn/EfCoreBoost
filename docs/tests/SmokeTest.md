@@ -22,7 +22,7 @@ It validates that the **entire EfCore.Boost stack works end-to-end** on a real d
 - OData pipelines  
 
 If this test passes, the provider is considered functionally usable.  
-See [UnitTestContainers.cs](../../../main/tests/BoostTest/UnitTestContainers.cs#L157-L178) for the actual test code.
+See [UnitTestContainers.cs](../../../main/tests/BoostTest/UnitTestContainers.cs#L290-L473) for the actual test code.
 
 ---
 
@@ -112,7 +112,7 @@ This validates:
 - parameter binding  
 - resultset materialization  
 
-Although implementations differ (stored procedure vs function), the C# call remains identical.
+Although implementations differ (stored procedure vs. function), the C# call remains identical.
 
 ---
 
@@ -214,7 +214,7 @@ var rb2 = new DbTest.MyTable { LastChanged = DateTime.UtcNow, LastChangedBy = "r
 
 Inside transaction:
 
-- first insert succeeds  
+- the first insert succeeds  
 - second insert violates constraint  
 
 ```csharp
