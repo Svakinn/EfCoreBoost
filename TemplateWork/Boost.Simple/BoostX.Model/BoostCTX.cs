@@ -90,7 +90,7 @@ public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(op
         /// Gets or sets the UTC timestamp when the record was last changed.
         /// </summary>
         [LastChangedUtc]
-        public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
+        public DateTime LastChangedUtc { get; set; } = DateTime.UtcNow;
     }
 
     /// <summary>

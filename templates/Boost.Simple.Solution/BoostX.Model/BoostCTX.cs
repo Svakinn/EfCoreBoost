@@ -9,6 +9,7 @@ namespace BoostX.Model;
 /// Defines the data model and configures EF Core conventions.
 /// </summary>
 public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(options)
+public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(options)
 {
     /// <summary>
     /// The default database schema name used by this context.
@@ -90,7 +91,7 @@ public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(op
         /// Gets or sets the UTC timestamp when the record was last changed.
         /// </summary>
         [LastChangedUtc]
-        public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
+        public DateTime LastChangedUtc { get; set; } = DateTime.UtcNow;
     }
 
     /// <summary>

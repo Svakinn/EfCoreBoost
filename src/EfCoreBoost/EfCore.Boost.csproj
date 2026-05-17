@@ -18,7 +18,8 @@
         Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.    </Description>
     <PackageReleaseNotes>
 UoW no longer by default allows access to the dbcontxt.  It is optional, but not default.
-EDM-builder now part of the UoW (uow.GetModel())
+EDM-builder now part of the UoW (uow.GetModel()) 
+Postgres DateTime mapping reverted to Timstamp with timezone (like the driver default)
     </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-framework;dotnet;ef-core-migrations;EntityFrameworkCore</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
