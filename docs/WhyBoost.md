@@ -68,7 +68,7 @@ Common differences include:
   SQL Server and PostgreSQL support schemas differently, while MySQL treats schemas more like databases.
 
 - **Date and time handling**  
-  Types such as `datetime`, `datetimeoffset`, and `timestamptz` behave differently across providers.
+  Types such as `datetime`, `datetimeoffset`, and `timestamptz` behave differently across providers. EfCore.Boost recommends storing point-in-time values as UTC using `DateTime` for cross-provider consistency. SQL Server's `datetimeoffset` preserves offsets, but PostgreSQL and MySQL do not; therefore, normalizing persisted values to UTC is preferred.
 
 - **Strings and lengths**  
   SQL Server distinguishes between fixed and max-length types, PostgreSQL uses `text` more freely, and MySQL has stricter limits. **EfCore.Boost encourages Case-Insensitive (CI) designs across all providers to ensure consistent behavior in lookups and comparisons.**

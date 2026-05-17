@@ -315,24 +315,25 @@ EfCore.Boost treats views as proper data access surfaces, not awkward EF hacks.
 
 EfCore.Boost standardizes timestamp behavior across engines:
 
-- Normalizes EF mappings so semantics match
-- Encourages UTC everywhere
-- Prevents “server timezone surprise”
-- Produces stable auditing and logging
+- Normalizes EF mappings so semantics match.
+- Encourages UTC everywhere for cross-provider consistency.
+- Persisted point-in-time values should normally use `DateTime` with UTC semantics.
+- Application code should generate these values using `DateTime.UtcNow` and avoid storing local server time.
+- Prevents “server timezone surprise” and produces stable auditing and logging.
+
+`DateTimeOffset` may be useful at API boundaries where incoming values include an offset, but it is not a fully portable persistence abstraction. For this reason, EfCore.Boost recommends normalizing persisted `DateTimeOffset` values to UTC as well.
 
 ## SQL Server
-Uses `datetime2`, works correctly with UTC.
+Uses `datetime2`, which works correctly with UTC. SQL Server can preserve original offsets using `datetimeoffset`, but other providers do not preserve offset information in the same way.
 
 ## PostgreSQL
 EfCore.Boost standardizes to:
 
 ```
-timestamp without time zone
+timestamp with time zone
 ```
 
-and expects the client /application to store UTC explicitly.
-
-This avoids confusing mixed interpretation of `timestamp with time zone` and ensures predictable comparison behavior.
+and expects the application to store UTC explicitly.
 
 ## MySQL — Session Timezone Enforcement
 
@@ -353,9 +354,10 @@ This guarantees:
 
 EfCore.Boost strongly encourages:
 
-- Store timestamps in UTC
-- Convert only at UI boundaries
-- Avoid server localization behavior
+- Store point-in-time values as UTC using `DateTime`.
+- Normalize any `DateTimeOffset` values to UTC before persistence.
+- Convert to local time or specific timezones only at UI boundaries.
+- If the original offset must be preserved for business reasons, store it explicitly in a separate column.
 
 This produces deterministic results everywhere.
 
@@ -364,6 +366,8 @@ This produces deterministic results everywhere.
 # String & Text Handling
 
 Cross–database string rules are not uniform. EfCore.Boost smooths differences while preserving power.
+
+EfCore.Boost strongly encourages the use of **Case-Insensitive collations** to avoid inconsistencies in string comparison or key lookups. While this is not strictly enforced for MySQL and SQL Server, it is strongly recommended for consistent cross-provider behavior. PostgreSQL maps to `citext` which naturally avoids this problem.
 
 ## Provider Baseline
 
@@ -387,9 +391,6 @@ PostgreSQL:
 - indexable
 - stable search semantics
 - reduces logic complexity
-
-EfCore.Boost strongly encourages the use of **Case-Insensitive collations** to avoid inconsistencies in string comparison or key lookups.
-While this is not strictly enforced for MySQL and SQL Server, it is strongly recommended for consistent cross-provider behavior.
 
 ### Recommended Collations & Database Generation
 
@@ -419,7 +420,7 @@ The recommended collation for MySQL is the modern Unicode 9.0+ based case-insens
 - **ci (Case Insensitive):** Consistent with Boost's case-insensitive design.
 
 #### PostgreSQL
-PostgreSQL achieves this naturally by mapping strings to `citext`. This provides case-insensitive behavior without requiring specific database-level collations for string comparisons.
+PostgreSQL achieves this naturally by mapping strings to `citext` and dates to `timestamp with time zone`. This provides case-insensitive behavior and correct UTC handling.
 
 EfCore.Boost encourages **case-insensitive designs**, especially for:
 
@@ -745,7 +746,7 @@ public class ErrorLog
 {
     [DbAutoUid]
     public long Id { get; set; }
-    public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
+    public DateTime LastChangedUtc { get; set; } = DateTime.UtcNow;
     public long? SessionId { get; set; }
     public int Context { get; set; }
     [StrMed]
@@ -971,14 +972,15 @@ Boost standardizes timestamp handling to avoid provider-specific ambiguity.
 
 Recommended usage:
 
-- Use `DateTimeOffset` for persisted timestamps.
+- Use `DateTime` for persisted timestamps.
 - Store all timestamps in UTC.
+- Normalize `DateTimeOffset` to UTC if used for persistence.
 - Convert to local time only at UI boundaries.
 
 Boost ensures:
 
 - SQL Server uses `datetime2`
-- PostgreSQL uses `timestamp without time zone`
+- PostgreSQL uses `timestamp with time zone`
 - MySQL sessions are forced to UTC
 
 Boost does not rely on database-local timezone interpretation.
@@ -1037,7 +1039,7 @@ public class ErrorLog
 {
     [DbAutoUid]
     public long Id { get; set; }
-    public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
+    public DateTime LastChangedUtc { get; set; } = DateTime.UtcNow;
     public long? SessionId { get; set; }
     public int Context { get; set; }
     [Title]
@@ -1079,7 +1081,7 @@ public class ErrorLog
     [DbAutoUid]
     public long Id { get; set; }
     [LastChangedUtc]
-    public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
+    public DateTime LastChangedUtc { get; set; } = DateTime.UtcNow;
     [ExternalRef]
     public long? SessionId { get; set; }  //Note: this point s to sessio-info record not current session record
     [ExternalRef]

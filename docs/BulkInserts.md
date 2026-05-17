@@ -83,7 +83,7 @@ public class ErrorLog
     [DbAutoUid]
     public long Id { get; set; }
 
-    public DateTimeOffset LastChangedUtc { get; set; } = DateTimeOffset.UtcNow;
+    public DateTime LastChangedUtc { get; set; } = DateTime.UtcNow;
 
     public long? SessionId { get; set; }
 
@@ -155,7 +155,7 @@ public class BufferedLogPersister
         {
             ErrorMsg = message,
             ErrorDetails = details,
-            LastChangedUtc = DateTimeOffset.UtcNow,
+            LastChangedUtc = DateTime.UtcNow,
             Tenant = tenant
         });
     }

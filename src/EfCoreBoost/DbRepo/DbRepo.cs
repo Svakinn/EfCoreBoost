@@ -1739,7 +1739,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     protected static object? PrepareValue(object? value)
     {
         if (value is DateTime dt)
-            return DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+            return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
         if (value is DateTimeOffset)
             return value;
         var type = value?.GetType();
@@ -1749,7 +1749,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var underlyingType = Nullable.GetUnderlyingType(type!) ?? type;
         if (underlyingType == typeof(DateTime))
         {
-            return DateTime.SpecifyKind((DateTime)value!, DateTimeKind.Unspecified);
+            return DateTime.SpecifyKind((DateTime)value!, DateTimeKind.Utc);
         }
         return value;
     }
@@ -1819,7 +1819,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         if (t == typeof(float)) return NpgsqlDbType.Real;
         if (t == typeof(string)) return NpgsqlDbType.Text;
         if (t == typeof(Guid)) return NpgsqlDbType.Uuid;
-        if (t == typeof(DateTime)) return NpgsqlDbType.Timestamp;
+        if (t == typeof(DateTime)) return NpgsqlDbType.TimestampTz;
         if (t == typeof(DateTimeOffset)) return NpgsqlDbType.TimestampTz;
         if (t == typeof(byte[])) return NpgsqlDbType.Bytea;
         if (t == typeof(TimeSpan)) return NpgsqlDbType.Interval;

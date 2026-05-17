@@ -1388,30 +1388,46 @@ namespace EfCore.Boost.UOW
             return str[..maxLen];
         }
 
+
+        private static DateTime ToPgTimestamptz(DateTime dt)
+        {
+            return dt.Kind switch
+            {
+                DateTimeKind.Utc => dt,
+                DateTimeKind.Local => dt.ToUniversalTime(),
+                DateTimeKind.Unspecified => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+                _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc)
+            };
+        }
+
         /// <summary>
-        /// PostgreSQL timestamp columns may be configured as 'without time zone'. When saving UTC DateTime values into such columns,
-        /// we normalize DateTimeKind to "Unspecified" to avoid provider conversion issues.
+        /// PostgreSQL timestamp columns may be configured as 'with time zone'. When saving DateTime values into such columns,
+        /// we ensure they are treated as UTC.
         /// </summary>
         protected virtual void NormalizeDateTimeValues()
         {
-            if (this.DbType != DatabaseType.PostgreSql)
+            if (DbType != DatabaseType.PostgreSql)
                 return;
-            var entries = this.Ctx.ChangeTracker.Entries()
-                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
-            foreach (var entry in entries)
+
+            Ctx.ChangeTracker.DetectChanges();
+
+            foreach (var entry in Ctx.ChangeTracker.Entries())
             {
                 foreach (var prop in entry.Properties)
                 {
-                    if (prop.Metadata.ClrType == typeof(DateTime) && prop.CurrentValue is DateTime dt)
+                    if (prop.Metadata.ClrType != typeof(DateTime) && prop.Metadata.ClrType != typeof(DateTime?))
+                        continue;
+
+                    if (prop.CurrentValue is DateTime cur)
                     {
-                        if (dt.Kind == DateTimeKind.Utc)
-                            prop.CurrentValue = DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+                        var fixedValue = ToPgTimestamptz(cur);
+                        prop.CurrentValue = fixedValue;
+                        prop.Metadata.PropertyInfo?.SetValue(entry.Entity, fixedValue);
                     }
-                    else
-                    if (prop.Metadata.ClrType == typeof(DateTime?) && prop.CurrentValue is DateTime { Kind: DateTimeKind.Utc } dtN) prop.CurrentValue = (DateTime?)DateTime.SpecifyKind(dtN, DateTimeKind.Unspecified);
                 }
             }
         }
+
 
         /// <summary>
         /// In case string values exceed the max length defined in a model, truncate them before saving so we don't get exceptions from the database for this issue

@@ -13,7 +13,7 @@ BEGIN
 		set @FoundId = SCOPE_IDENTITY();
   end
 	-- Recheck hostname after 6 months
-  else if (@processed = 1 and @lCh + 180 > SYSUTCDATETIME()) begin
+  else if (@processed = 1 and DATEADD(day, 180, @lCh) > SYSUTCDATETIME()) begin
     update [BoostSchemaX].[IpInfo] set Processed = 0 where Id = @FoundId;
   end
   SELECT @FoundId AS IpId;

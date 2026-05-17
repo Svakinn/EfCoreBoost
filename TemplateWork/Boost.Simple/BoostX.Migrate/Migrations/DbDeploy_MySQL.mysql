@@ -1,6 +1,6 @@
 ﻿/*
     Database deploy script (MySQL)
-    Generated: 2026-04-13 22:49:33
+    Generated: 2026-05-17 16:12:24
     ConnName: BoostXMy
 */
 
@@ -35,7 +35,7 @@ CREATE INDEX `IX_BoostSchemaX_IpInfo_LastChangedUtc` ON `BoostSchemaX_IpInfo` (`
 CREATE INDEX `IX_BoostSchemaX_IpInfo_Processed` ON `BoostSchemaX_IpInfo` (`Processed`);
 
 INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20260413224931_InitBoostCTX', '8.0.24');
+VALUES ('20260517161221_InitBoostCTX', '8.0.26');
 
 COMMIT;
 
@@ -57,7 +57,7 @@ BEGIN
   IF FoundId IS NULL THEN
     INSERT INTO BoostSchemaX_IpInfo (IpNo, LastChangedUtc, Processed) VALUES (IpNo, UTC_TIMESTAMP(), FALSE);
     SET FoundId = LAST_INSERT_ID();
-  ELSEIF processed = TRUE AND DATE_ADD(lch, INTERVAL 180 DAY) > UTC_TIMESTAMP() THEN
+  ELSEIF processed = TRUE AND DATE_ADD(lch, INTERVAL 180 DAY) < UTC_TIMESTAMP()  THEN
     -- Recheck hostname after 6 months
     UPDATE BoostSchemaX_IpInfo SET Processed = FALSE WHERE Id = FoundId;
   END IF;

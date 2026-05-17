@@ -179,7 +179,7 @@ From there:
 - Routines are invoked consistently across databases
 - On **save**, EfCore.Boost corrects common provider quirks such as:
     - invalid or overflowing string lengths
-    - date and timestamp inconsistencies
+    - date and timestamp inconsistencies by encouraging UTC storage using `DateTime`
 
 Your model expresses **intent**.  
 EfCore.Boost applies **provider-correct behavior**.
