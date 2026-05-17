@@ -71,7 +71,7 @@ Common differences include:
   Types such as `datetime`, `datetimeoffset`, and `timestamptz` behave differently across providers.
 
 - **Strings and lengths**  
-  SQL Server distinguishes between fixed and max-length types, PostgreSQL uses `text` more freely, and MySQL has stricter limits.
+  SQL Server distinguishes between fixed and max-length types, PostgreSQL uses `text` more freely, and MySQL has stricter limits. **EfCore.Boost encourages Case-Insensitive (CI) designs across all providers to ensure consistent behavior in lookups and comparisons.**
 
 - **Identifiers (GUIDs)**  
   Each provider uses different types and generation strategies (`uniqueidentifier`, `uuid`, `char/binary`).
@@ -505,7 +505,7 @@ With EfCore.Boost:
 
 - the model remains consistent
 - patterns are easy to recognize
-- new code follows existing structure naturally
+- the new code follows the existing structure naturally
 
 This improves long-term maintainability and reduces the cost of onboarding and refactoring.
 
@@ -543,58 +543,4 @@ By centralizing provider-specific behavior into these shared helpers, EfCore.Boo
 ---
 
 <a id="link-10"></a>
-## 10. Access is controlled through purpose-specific Unit of Work boundaries
 
-**Typical EF Core challenge:**  
-DbContext is widely exposed and all DbSets are accessible from anywhere.
-
-**EfCore.Boost approach:**  
-Access is restricted through purpose-specific Unit of Work boundaries.
-
-In standard EF Core usage, DbContext is often injected directly into services and components. This gives broad access to the entire database model, allowing any part of the application to query or modify any part of the database.
-
-Over time, this leads to:
-
-- unclear ownership of data access
-- unintended coupling between unrelated parts of the system
-- inconsistent use of transactions and data patterns
-
----
-
-### Purpose-specific access
-
-EfCore.Boost introduces the option of multiple Unit of Work types on top of a shared DbContext.
-
-Each Unit of Work exposes only the repositories required for a specific purpose.
-
-For example:
-
-- **Read-only UOW** → exposes query operations only
-- **Write-enabled UOW** → allows controlled mutations
-- **Specialized UOW** → supports imports, logging, or administrative tasks
-
-This ensures that each part of the application only has access to what it actually needs.
-
----
-
-### Controlled surface area
-
-Instead of exposing the full database model, each Unit of Work defines a controlled surface area.
-
-This means:
-
-- application components only access what they need
-- data access patterns remain consistent
-- unintended coupling is reduced
-- accidental writes in read scenarios are prevented
-
----
-
-### Why this matters
-
-The database model can remain complete and expressive, while application access stays focused and intentional.
-
-Consumers interact with a Unit of Work tailored to their responsibility, rather than raw DbSets.
-
-The DbContext can represent the full database.  
-The application does not need to see all of it.
