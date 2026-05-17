@@ -42,5 +42,17 @@
     <None Update="BoostX.Migrate\SQL\MsSql-1.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <Content Update="BoostX.Test\Migrations\DbDeploy_MsSQL.sql">
+      <Link>Migrations\DbDeploy_MsSQL.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="BoostX.Test\Migrations\DbDeploy_MySQL.mysql">
+      <Link>Migrations\DbDeploy_MySQL.mysql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="BoostX.Test\Migrations\DbDeploy_PgSQL.pgsql">
+      <Link>Migrations\DbDeploy_PgSQL.pgsql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>
