@@ -83,9 +83,9 @@ They are intentionally modeled using attributes instead of large fluent blocks, 
             [Percentage]
             public decimal Discount { get; set; }
             [LastChangedUtc]
-            public DateTimeOffset LastChanged { get; set; } = DateTimeOffset.UtcNow;
+            public DateTime LastChanged { get; set; } = DateTime.UtcNow;
             [CreatedUtc]
-            public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
+            public DateTime Created { get; set; } = DateTime.UtcNow;
             [ExternalRef]
             public string LastChangedBy { get; set; } = string.Empty;
 
@@ -107,9 +107,9 @@ They are intentionally modeled using attributes instead of large fluent blocks, 
             [Money]
             public decimal Amount { get; set; }
             [CreatedUtc]
-            public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
+            public DateTime Created { get; set; } = DateTime.UtcNow;
             [LastChangedUtc]
-            public DateTimeOffset LastChanged { get; set; } = DateTimeOffset.UtcNow;
+            public DateTime LastChanged { get; set; } = DateTime.UtcNow;
             [ExternalRef]
             public string LastChangedBy { get; set; } = string.Empty;
 
@@ -159,7 +159,7 @@ public class MyTableRefView
     [Title]
     public string? Heading { get; set; }
     [LastChangedUtc]
-    public DateTimeOffset ParLastChanged { get; set; }
+    public DateTime ParLastChanged { get; set; }
     [ExternalRef]
     public string ParLastChangedBy { get; set; } = string.Empty;
     [Name]
@@ -167,9 +167,9 @@ public class MyTableRefView
     [Money]
     public decimal Amount { get; set; }
     [LastChangedUtc]
-    public DateTimeOffset LastChanged { get; set; }
+    public DateTime LastChanged { get; set; }
     [CreatedUtc]
-    public DateTimeOffset Created { get; set; }
+    public DateTime Created { get; set; }
     [ExternalRef]
     public string LastChangedBy { get; set; } = string.Empty;
 }

@@ -58,7 +58,7 @@ Confirms that:
 Next we add a related row via navigation property:
 
 ```csharp
-var refRow = new DbTest.MyTableRef { MyInfo = "ref", LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "Philip" };
+var refRow = new DbTest.MyTableRef { MyInfo = "ref", LastChanged = DateTime.UtcNow, LastChangedBy = "Philip" };
 myRow.MyTableRefs.Add(refRow);
 await uow.SaveChangesAsync();
 ```
@@ -128,8 +128,8 @@ This section validates several tightly related behaviors:
 ### Bulk insert with explicit identities
 
 ```csharp
-var tt = new DbTest.MyTable { Id = 10, LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "gorm" };
-var tt2 = new DbTest.MyTable { Id = 11, LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "gorm2" };
+var tt = new DbTest.MyTable { Id = 10, LastChanged = DateTime.UtcNow, LastChangedBy = "gorm" };
+var tt2 = new DbTest.MyTable { Id = 11, LastChanged = DateTime.UtcNow, LastChangedBy = "gorm2" };
 ```
 
 We deliberately use fixed identity values so later delete and verification steps are deterministic.
@@ -151,7 +151,7 @@ Important notes:
 ### Verify identity/sequence continuity
 
 ```csharp
-uow.MyTables.Add(new DbTest.MyTable() { LastChanged = DateTimeOffset.UtcNow, LastChangedBy = "swarm", RowID = Guid.NewGuid() });
+uow.MyTables.Add(new DbTest.MyTable() { LastChanged = DateTime.UtcNow, LastChangedBy = "swarm", RowID = Guid.NewGuid() });
 await uow.SaveChangesAndNewAsync();
 ```
 

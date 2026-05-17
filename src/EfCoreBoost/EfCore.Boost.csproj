@@ -19,12 +19,9 @@
         NOTE: MySQL not supported in this preview, revert to the .NET9 version if you need MySQL/MariaDB
     </Description>
     <PackageReleaseNotes>
-Bugfixes for routine calls (SetUpRoutineQuery, all providers). 
-Added the following routine calls:
-        RunRoutineQueryAsync
-        RunRoutineDecimalAsync
-        RunRoutineDateTimeAsync
-        RunRoutineDateTimeOffsetAsync
+UoW no longer by default allows access to the dbcontxt.  It is optional, but not default.
+EDM-builder now part of the UoW (uow.GetModel()) 
+Postgres DateTime mapping reverted to Timstamp with timezone (like the driver default)
     </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-framework;dotnet;ef-core-migrations;EntityFrameworkCore</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
@@ -44,16 +41,17 @@ Added the following routine calls:
 	  <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
-    <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
-    <PackageReference Include="Microsoft.OData.Core" Version="8.4.3" />
-    <PackageReference Include="Microsoft.OData.Edm" Version="8.4.3" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.7" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.26" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.26" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.26" />
+      <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
+      <PackageReference Include="Microsoft.OData.Core" Version="8.4.3" />
+      <PackageReference Include="Microsoft.OData.Edm" Version="8.4.3" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+      <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
   </ItemGroup>
   <Target Name="BuildDesignProject" BeforeTargets="Pack">
   <MSBuild Projects="..\EfCore.Boost.Design\EfCore.Boost.Design.csproj"

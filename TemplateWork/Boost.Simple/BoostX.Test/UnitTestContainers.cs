@@ -274,7 +274,7 @@ namespace BoostX.Test
             //
             var myRow = await uow.IpInfos.QueryTracked().FirstOrDefaultAsync();
             Assert.IsNotNull(myRow); //do we have our seeded data?
-            var nRow = new BoostCTX.IpInfo() { IpNo = "129.272.223.13", HostName = "The Grand Hoster", Processed = true, LastChangedUtc = DateTimeOffset.UtcNow};
+            var nRow = new BoostCTX.IpInfo() { IpNo = "129.272.223.13", HostName = "The Grand Hoster", Processed = true, LastChangedUtc = DateTime.UtcNow};
             uow.IpInfos.Add(nRow);
             await uow.SaveChangesAsync(); //Wa can add refs to the previous row
             //
@@ -295,8 +295,8 @@ namespace BoostX.Test
             //
             // Bulk- insert & delete tests
             //
-            var tt = new BoostCTX.IpInfo {  LastChangedUtc = DateTimeOffset.UtcNow, HostName = "Host one", Processed = true, IpNo = "127.33.3.3" };
-            var tt2 = new BoostCTX.IpInfo { LastChangedUtc = DateTimeOffset.UtcNow, HostName = "Second host", Processed = true, IpNo = "130.242.226.133"};
+            var tt = new BoostCTX.IpInfo {  LastChangedUtc = DateTime.UtcNow, HostName = "Host one", Processed = true, IpNo = "127.33.3.3" };
+            var tt2 = new BoostCTX.IpInfo { LastChangedUtc = DateTime.UtcNow, HostName = "Second host", Processed = true, IpNo = "130.242.226.133"};
             await uow.RunInTransactionAsync(async ct =>
             {
                 await uow.IpInfos.BulkInsertAsync([tt, tt2], false, ct);

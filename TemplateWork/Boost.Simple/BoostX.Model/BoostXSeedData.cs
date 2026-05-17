@@ -13,7 +13,7 @@ public partial class BoostCTX
     private static void OnModelData(ModelBuilder modelBuilder)
     {
         // For auto-generated id's we use negative values to avoid conflicts with none-seeded data
-        DateTimeOffset eD = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        DateTime eD = new(1970, 1, 1);
         modelBuilder.Entity<IpInfo>().HasData(
             new IpInfo() { Id = -1, HostName = "Localhost", IpNo = "127.0.0.1", LastChangedUtc = eD, Processed = true }
             );

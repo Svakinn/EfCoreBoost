@@ -10,7 +10,7 @@ namespace EfCore.Boost.Model
         /// Call this in every model builder, this maps columns and sets appropriate db-types as needed for each database flavor.
         /// For MySql schema will be built into the table name (since not supported by Mysql)
         /// For Postgres we switch from using nvarchar(x) to citext
-        /// For Postgres we also need to unify usage of DateTime -> DateTime will be "timestamp without time zone"
+        /// For Postgres we also need to unify usage of DateTime -> DateTime will be "timestamp with time zone"
         /// </summary>
         /// <param name="modelBuilder"></param>
         /// <param name="ctx"></param>
@@ -59,7 +59,7 @@ namespace EfCore.Boost.Model
                 foreach (var property in entityType.GetProperties())
                 {
                     if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
-                        property.SetColumnType("timestamp without time zone");
+                        property.SetColumnType("timestamp with time zone");
                 }
             }
         }

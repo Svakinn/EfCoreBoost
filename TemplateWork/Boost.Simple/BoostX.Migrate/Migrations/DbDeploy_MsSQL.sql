@@ -1,6 +1,6 @@
 ﻿/*
     Database deploy script (MsSQL)
-    Generated: 2026-04-25 12:57:19
+    Generated: 2026-05-17 16:12:33
     ConnName: BoostXMs
 */
 
@@ -27,7 +27,7 @@ CREATE TABLE [BoostSchemaX].[IpInfo] (
     [IpNo] nvarchar(50) NOT NULL,
     [HostName] nvarchar(512) NULL,
     [Processed] bit NOT NULL,
-    [LastChangedUtc] datetimeoffset NOT NULL,
+    [LastChangedUtc] datetime2 NOT NULL,
     CONSTRAINT [PK_IpInfo] PRIMARY KEY ([Id])
 );
 DECLARE @description AS sql_variant;
@@ -38,7 +38,7 @@ GO
 IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'HostName', N'IpNo', N'LastChangedUtc', N'Processed') AND [object_id] = OBJECT_ID(N'[BoostSchemaX].[IpInfo]'))
     SET IDENTITY_INSERT [BoostSchemaX].[IpInfo] ON;
 INSERT INTO [BoostSchemaX].[IpInfo] ([Id], [HostName], [IpNo], [LastChangedUtc], [Processed])
-VALUES (CAST(-1 AS bigint), N'Localhost', N'127.0.0.1', '1970-01-01T00:00:00.0000000+00:00', CAST(1 AS bit));
+VALUES (CAST(-1 AS bigint), N'Localhost', N'127.0.0.1', '1970-01-01T00:00:00.0000000', CAST(1 AS bit));
 IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'HostName', N'IpNo', N'LastChangedUtc', N'Processed') AND [object_id] = OBJECT_ID(N'[BoostSchemaX].[IpInfo]'))
     SET IDENTITY_INSERT [BoostSchemaX].[IpInfo] OFF;
 GO
@@ -53,7 +53,7 @@ CREATE INDEX [IX_IpInfo_Processed] ON [BoostSchemaX].[IpInfo] ([Processed]);
 GO
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20260425125716_InitBoostCTX', N'8.0.26');
+VALUES (N'20260517161230_InitBoostCTX', N'8.0.26');
 GO
 
 COMMIT;
@@ -81,7 +81,7 @@ BEGIN
 		set @FoundId = SCOPE_IDENTITY();
   end
 	-- Recheck hostname after 6 months
-  else if (@processed = 1 and @lCh + 180 > SYSUTCDATETIME()) begin
+  else if (@processed = 1 and DATEADD(day, 180, @lCh) > SYSUTCDATETIME()) begin
     update [BoostSchemaX].[IpInfo] set Processed = 0 where Id = @FoundId;
   end
   SELECT @FoundId AS IpId;

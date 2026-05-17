@@ -24,7 +24,7 @@ namespace TestDb
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyEfBoostConventions(this, "my");
-            OnModelData(modelBuilder); //Data Seeder: TestDbData.cs
+            OnModelData(modelBuilder, this); //Data Seeder: TestDbData.cs
         }
 
         [Index(nameof(RowID), IsUnique = true)]
@@ -48,9 +48,9 @@ namespace TestDb
             [Percentage]
             public decimal Discount { get; set; }
             [LastChangedUtc]
-            public DateTimeOffset LastChanged { get; set; } = DateTimeOffset.UtcNow;
+            public DateTime LastChanged { get; set; } = DateTime.UtcNow;
             [CreatedUtc]
-            public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
+            public DateTime Created { get; set; } = DateTime.UtcNow;
             [ExternalRef]
             public string LastChangedBy { get; set; } = string.Empty;
 
@@ -72,9 +72,9 @@ namespace TestDb
             [Money]
             public decimal Amount { get; set; }
             [CreatedUtc]
-            public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
+            public DateTime Created { get; set; } = DateTime.UtcNow;
             [LastChangedUtc]
-            public DateTimeOffset LastChanged { get; set; } = DateTimeOffset.UtcNow;
+            public DateTime LastChanged { get; set; } = DateTime.UtcNow;
             [ExternalRef]
             public string LastChangedBy { get; set; } = string.Empty;
 
@@ -95,7 +95,7 @@ namespace TestDb
             [Title]
             public string? Heading { get; set; }
             [LastChangedUtc]
-            public DateTimeOffset ParLastChanged { get; set; }
+            public DateTime ParLastChanged { get; set; }
             [ExternalRef]
             public string ParLastChangedBy { get; set; } = string.Empty;
             [Name]
@@ -103,9 +103,9 @@ namespace TestDb
             [Money]
             public decimal Amount { get; set; }
             [LastChangedUtc]
-            public DateTimeOffset LastChanged { get; set; }
+            public DateTime LastChanged { get; set; }
             [CreatedUtc]
-            public DateTimeOffset Created { get; set; }
+            public DateTime Created { get; set; }
             [ExternalRef]
             public string LastChangedBy { get; set; } = string.Empty;
         }
