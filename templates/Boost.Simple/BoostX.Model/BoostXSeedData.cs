@@ -13,7 +13,7 @@ public partial class BoostCTX
     private static void OnModelData(ModelBuilder modelBuilder)
     {
         // For auto-generated id's we use negative values to avoid conflicts with none-seeded data
-        DateTime eD = new(1970, 1, 1);
+        DateTime eD = new DateTime(1970, 1, 1).ToUniversalTime();  //Note that HasDate is not routed through the UOW and dates thus not pruned for postgres that required UTC dates
         modelBuilder.Entity<IpInfo>().HasData(
             new IpInfo() { Id = -1, HostName = "Localhost", IpNo = "127.0.0.1", LastChangedUtc = eD, Processed = true }
         );

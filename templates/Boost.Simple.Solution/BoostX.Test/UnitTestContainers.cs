@@ -134,7 +134,7 @@ namespace BoostX.Test
         {
             const string dbName = "BoostXDb";
             const string connName = "BoostXMs";
-            var msBuilder = new MsSqlBuilder().WithImage("mcr.microsoft.com/mssql/server:2022-latest").WithPassword("MyPassword123!").Build();
+            var msBuilder = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").WithPassword("MyPassword123!").Build();
             await msBuilder.StartAsync();
             var newConnString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(msBuilder.GetConnectionString()) { InitialCatalog = dbName };
             var overrides = new Dictionary<string, string?>
@@ -189,8 +189,7 @@ namespace BoostX.Test
         {
             const string dbName = "BoostXDb";
             const string connName = "BoostXMy";
-            var myBuilder = new MySqlBuilder()
-                .WithImage("mysql:8.0")
+            var myBuilder = new MySqlBuilder("mysql:8.0")
                 .WithUsername("root")
                 .WithPassword("root")
                 .WithCommand("--default-authentication-plugin=mysql_native_password")
@@ -228,8 +227,7 @@ namespace BoostX.Test
         {
             const string dbName = "BoostXDb";
             const string connName = "BoostXPg";
-            var pgBuilder = new PostgreSqlBuilder()
-                .WithImage("postgres:16.3")
+            var pgBuilder = new PostgreSqlBuilder("postgres:16.3")
                 .WithUsername("postgres")
                 .WithPassword("postgres")
                 .WithDatabase("postgres")
@@ -250,9 +248,7 @@ namespace BoostX.Test
             Npgsql.NpgsqlConnection.ClearAllPools();
             await uowMigrate.ExecSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Migrations/DbDeploy_PgSql.pgsql")));
             // Force Npgsql to refresh type mappings ("citext", etc.) for this database
-            var dbConn = (Npgsql.NpgsqlConnection)uowMigrate.GetDbContext().Database.GetDbConnection();
-            if (dbConn.State != ConnectionState.Open)
-                await uowMigrate.GetDbContext().Database.OpenConnectionAsync();
+            var dbConn = (Npgsql.NpgsqlConnection) await uowMigrate.EnsureDbConnectionOpenAsync();
             await dbConn.ReloadTypesAsync();
             Npgsql.NpgsqlConnection.ClearAllPools();
             var uow = CreateUow(cfg, connName);
@@ -285,6 +281,11 @@ namespace BoostX.Test
             //
             var id = await uow.GetIpId("127.0.3.3");
             Assert.IsNotNull(id, "GetIpId failed");
+            //
+            //Test view lookup via SP
+            //
+            var viewRow = await uow.GetIpInfoViewByIdAsync(-1);
+            Assert.IsNotNull(viewRow, "View row lookup failed");
             //
             // Bulk- insert & delete tests
             //

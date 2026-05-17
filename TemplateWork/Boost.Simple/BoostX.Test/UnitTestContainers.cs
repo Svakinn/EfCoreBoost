@@ -247,13 +247,10 @@ namespace BoostX.Test
             await uowMigrate.ExecuteAdminDbSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SQL/PgSqlCreateDb.pgsql")));
             Npgsql.NpgsqlConnection.ClearAllPools();
             await uowMigrate.ExecSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Migrations/DbDeploy_PgSql.pgsql")));
-            //ToDo: reactivate once we have matching Boost version for this
-            /*
             // Force Npgsql to refresh type mappings ("citext", etc.) for this database
             var dbConn = (Npgsql.NpgsqlConnection) await uowMigrate.EnsureDbConnectionOpenAsync();
             await dbConn.ReloadTypesAsync();
             Npgsql.NpgsqlConnection.ClearAllPools();
-            */
             var uow = CreateUow(cfg, connName);
             await ImportAsync(uow); //Import data from CSV files
             return (pgBuilder, uow);
