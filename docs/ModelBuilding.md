@@ -131,8 +131,8 @@ Instead, prefer Boost conventions and intent-based attributes/fluent APIs where 
 | `[Column(TypeName = "text")]` | `text` differs between providers | `[Text]` |
 | `.HasColumnType("money")` | SQL Server-specific money type | `[Money]` |
 | `.HasColumnType("decimal(19,4)")` | Hard-coded provider SQL type syntax | `[Money]` or precision intent convention |
-| `.HasDefaultValueSql("getutcdate()")` | SQL Server-specific SQL function | Prefer explicit app values or provider-neutral conventions |
-| `.HasDefaultValueSql("now()")` | PostgreSQL/MySQL-specific SQL function | Prefer explicit app values or provider-neutral conventions |
+| `.HasDefaultValueSql("getutcdate()")` | SQL Server-specific SQL function | `[DbDefaultCurrentUtc]` |
+| `.HasDefaultValueSql("now()")` | PostgreSQL/MySQL-specific SQL function | `[DbDefaultCurrentUtc]` |
 | `.HasComputedColumnSql(...)` | SQL syntax differs heavily by provider | Prefer provider-specific migration scripts |
 | `.UseIdentityColumn()` | SQL Server identity strategy | `[DbAutoUid]` |
 | `.UseIdentityAlwaysColumn()` | PostgreSQL-specific identity strategy | `[DbAutoUid]` |
@@ -388,6 +388,39 @@ PostgreSQL:
 - stable search semantics
 - reduces logic complexity
 
+EfCore.Boost strongly encourages the use of **Case-Insensitive collations** to avoid inconsistencies in string comparison or key lookups.
+While this is not strictly enforced for MySQL and SQL Server, it is strongly recommended for consistent cross-provider behavior.
+
+### Recommended Collations & Database Generation
+
+For optimal cross-provider compatibility, EfCore.Boost project templates use database-level collation strategies that ensure Case-Insensitivity (CI) and support for modern character sets (UTF-8).
+
+#### SQL Server
+The recommended strategy for SQL Server is to use a modern, UTF-8 enabled, Case-Insensitive, Accent-Sensitive collation. 
+
+**Preferred Collation:** `Latin1_General_100_CI_AS_SC_UTF8`
+- **CI (Case Insensitive):** Matches `A` and `a`.
+- **AS (Accent Sensitive):** Distinguishes `a` from `á`.
+- **SC (Supplementary Characters):** Full support for emoji and supplementary characters.
+- **UTF8:** Native UTF-8 storage (SQL Server 2019+), excellent for cross-language data.
+
+Our templates typically use a fallback strategy during database creation:
+1. `Latin1_General_100_CI_AS_SC_UTF8` (Modern)
+2. `Icelandic_100_CI_AS` (Regional fallback)
+3. `Latin1_General_100_CI_AS` (Legacy fallback)
+
+#### MySQL
+The recommended collation for MySQL is the modern Unicode 9.0+ based case-insensitive collation.
+
+**Preferred Collation:** `utf8mb4_0900_sci`
+- **utf8mb4:** Full Unicode support (including emoji).
+- **0900:** Based on Unicode 9.0.0 collation algorithm.
+- **ai (Accent Sensitive):** 
+- **ci (Case Insensitive):** Consistent with Boost's case-insensitive design.
+
+#### PostgreSQL
+PostgreSQL achieves this naturally by mapping strings to `citext`. This provides case-insensitive behavior without requiring specific database-level collations for string comparisons.
+
 EfCore.Boost encourages **case-insensitive designs**, especially for:
 
 - indexed columns
@@ -395,8 +428,12 @@ EfCore.Boost encourages **case-insensitive designs**, especially for:
 - identifiers
 - user-facing strings
 
-EfCore.Boost does not force case-insensitive collations on SQL Server or MySQL, but strongly recommends it.
-PostgreSQL achieves it indirectly through citext.
+**Preferred settings:**  
+ENCODING = 'UTF8'  
+LOCALE_PROVIDER = icu  
+ICU_LOCALE = 'en-US';  
+
+*Applications requiring language-specific sorting behavior may choose provider-specific collations or ICU locales appropriate for their region or language.*
 
 ---
 
@@ -606,6 +643,34 @@ They often cause:
 
 EfCore.Boost disables cascade deletes globally unless explicitly chosen.
 
+### Explicit Control with Attributes
+
+You can enable or disable cascade delete for specific relationships using purpose-built attributes on navigation properties.
+
+```csharp
+public class Order
+{
+    [DbAutoUid]
+    public long Id { get; set; }
+
+    // Explicitly enable cascade delete: when Order is deleted, Items are also deleted
+    [CascadeDelete]
+    public List<OrderItem> Items { get; set; } = new();
+}
+```
+
+### Fluent API Configuration
+
+Alternatively, you can configure the cascade behavior using the Fluent API during model building.
+
+```csharp
+modelBuilder.Entity<Order>()
+    .HasMany(x => x.Items)
+    .WithOne(x => x.Order)
+    .HasForeignKey(x => x.OrderId)
+    .HasCascadeDelete(); // Enables cascade delete for this relation
+```
+
 Policy:
 
 > Delete semantics must be intentional, not accidental.
@@ -754,6 +819,8 @@ Key advantages:
 - Pure read model with clear semantics  
 - Works equally well whether backed by a real DB view or routine result  
 
+> **Note on View Mapping:** For read-only views, string length (`[StrCode]`, `[StrShort]`, etc.) and decimal precision (`[Money]`, `[Percent]`, etc.) attributes are technically optional. EF Core mapping is more forgiving for reads than for writes. While these attributes are not strictly required for data retrieval, they are still recommended for **semantic clarity** and to maintain consistency with the rest of your domain model.
+
 ---
 
 ## Custom Attributes
@@ -798,10 +865,10 @@ For this reason, Boost standardizes precision for `decimal` only.
 
 These override the **default cascade policy** documented earlier and are intended for local exceptions only.
 
-| Attribute | Applies to | Purpose |
-|---|---|---|
-| `NoCascadeDelete` | Navigation / relationship | Explicitly disables cascade delete for a specific relationship. |
-| `CascadeDelete` | Navigation / relationship | Explicitly enables cascade delete for a specific relationship. |
+| Attribute | Applies to | Purpose | Fluent Style |
+|---|---|---|---|
+| `NoCascadeDelete` | Navigation / relationship | Explicitly disables cascade delete for a specific relationship. | `.HasNoCascadeDelete()` |
+| `CascadeDelete` | Navigation / relationship | Explicitly enables cascade delete for a specific relationship. | `.HasCascadeDelete()` |
 
 ---
 

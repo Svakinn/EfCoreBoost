@@ -6,7 +6,7 @@ DECLARE
   v_dbname text := 'TestDb';
   v_sql    text;
 BEGIN
-  IF NOT EXISTS (SELECT FROM pg_database WHERE datname = v_dbname) THEN
+  IF NOT EXISTS (SELECT FROM pg_database    WHERE datname = v_dbname) THEN
     v_sql := format(
       'CREATE DATABASE %I
          WITH ENCODING = ''UTF8''
