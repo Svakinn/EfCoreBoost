@@ -1,6 +1,6 @@
 ﻿/*
     Database deploy script (MsSQL)
-    Generated: 2026-05-17 16:14:31
+    Generated: 2026-05-18 00:31:46
     ConnName: TestMs
 */
 
@@ -17,10 +17,7 @@ END;
 GO
 
 BEGIN TRANSACTION;
-GO
-
 IF SCHEMA_ID(N'my') IS NULL EXEC(N'CREATE SCHEMA [my];');
-GO
 
 CREATE TABLE [my].[MyTable] (
     [Id] bigint NOT NULL IDENTITY,
@@ -36,7 +33,6 @@ CREATE TABLE [my].[MyTable] (
     [LastChangedBy] nvarchar(256) NOT NULL,
     CONSTRAINT [PK_MyTable] PRIMARY KEY ([Id])
 );
-GO
 
 CREATE TABLE [my].[MyTableRef] (
     [Id] bigint NOT NULL IDENTITY,
@@ -50,42 +46,34 @@ CREATE TABLE [my].[MyTableRef] (
     CONSTRAINT [PK_MyTableRef] PRIMARY KEY ([Id]),
     CONSTRAINT [FK_MyTableRef_MyTable_ParentId] FOREIGN KEY ([ParentId]) REFERENCES [my].[MyTable] ([Id]) ON DELETE NO ACTION
 );
-GO
 
 IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Balance', N'Code', N'Created', N'Discount', N'Heading', N'LastChanged', N'LastChangedBy', N'RowID', N'RowVersion', N'Status') AND [object_id] = OBJECT_ID(N'[my].[MyTable]'))
     SET IDENTITY_INSERT [my].[MyTable] ON;
 INSERT INTO [my].[MyTable] ([Id], [Balance], [Code], [Created], [Discount], [Heading], [LastChanged], [LastChangedBy], [RowID], [RowVersion], [Status])
-VALUES (CAST(-2 AS bigint), 200.0, N'Mn', '2026-05-17T16:14:27.8216449Z', 0.0, N'Mando', '2026-05-17T16:14:27.8216449Z', N'Stefan', '2a84c911-13a1-4655-a027-bf7c1d2b282c', CAST(0 AS bigint), 2),
-(CAST(-1 AS bigint), 350.0, N'BD', '2026-05-17T16:14:27.8216449Z', 5.0, N'Baldo', '2026-05-17T16:14:27.8216449Z', N'Baldr', '1b9b941c-ba72-4f31-9f9d-fc88315c3a16', CAST(0 AS bigint), 1);
+VALUES (CAST(-2 AS bigint), 200.0, N'Mn', '2026-05-18T00:31:42.8482331Z', 0.0, N'Mando', '2026-05-18T00:31:42.8482331Z', N'Stefan', '222a4bbf-55ae-487b-aac3-30826a4ef31e', CAST(0 AS bigint), 2),
+(CAST(-1 AS bigint), 350.0, N'BD', '2026-05-18T00:31:42.8482331Z', 5.0, N'Baldo', '2026-05-18T00:31:42.8482331Z', N'Baldr', 'd310637d-1cee-43b9-b452-b1da27f2e431', CAST(0 AS bigint), 1);
 IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Balance', N'Code', N'Created', N'Discount', N'Heading', N'LastChanged', N'LastChangedBy', N'RowID', N'RowVersion', N'Status') AND [object_id] = OBJECT_ID(N'[my].[MyTable]'))
     SET IDENTITY_INSERT [my].[MyTable] OFF;
-GO
 
 IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Amount', N'Created', N'LastChanged', N'LastChangedBy', N'MyInfo', N'ParentId', N'RowVersion') AND [object_id] = OBJECT_ID(N'[my].[MyTableRef]'))
     SET IDENTITY_INSERT [my].[MyTableRef] ON;
 INSERT INTO [my].[MyTableRef] ([Id], [Amount], [Created], [LastChanged], [LastChangedBy], [MyInfo], [ParentId], [RowVersion])
-VALUES (CAST(-3 AS bigint), 200.0, '2026-05-17T16:14:27.8216449Z', '2026-05-17T16:14:27.8216449Z', N'Stefan', N'OtherData', CAST(-2 AS bigint), CAST(0 AS bigint)),
-(CAST(-2 AS bigint), 50.0, '2026-05-17T16:14:27.8216449Z', '2026-05-17T16:14:27.8216449Z', N'Baldr', N'BiggerData', CAST(-1 AS bigint), CAST(0 AS bigint)),
-(CAST(-1 AS bigint), 300.0, '2026-05-17T16:14:27.8216449Z', '2026-05-17T16:14:27.8216449Z', N'Baldr', N'BigData', CAST(-1 AS bigint), CAST(0 AS bigint));
+VALUES (CAST(-3 AS bigint), 200.0, '2026-05-18T00:31:42.8482331Z', '2026-05-18T00:31:42.8482331Z', N'Stefan', N'OtherData', CAST(-2 AS bigint), CAST(0 AS bigint)),
+(CAST(-2 AS bigint), 50.0, '2026-05-18T00:31:42.8482331Z', '2026-05-18T00:31:42.8482331Z', N'Baldr', N'BiggerData', CAST(-1 AS bigint), CAST(0 AS bigint)),
+(CAST(-1 AS bigint), 300.0, '2026-05-18T00:31:42.8482331Z', '2026-05-18T00:31:42.8482331Z', N'Baldr', N'BigData', CAST(-1 AS bigint), CAST(0 AS bigint));
 IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Amount', N'Created', N'LastChanged', N'LastChangedBy', N'MyInfo', N'ParentId', N'RowVersion') AND [object_id] = OBJECT_ID(N'[my].[MyTableRef]'))
     SET IDENTITY_INSERT [my].[MyTableRef] OFF;
-GO
 
 CREATE INDEX [IX_MyTable_LastChanged] ON [my].[MyTable] ([LastChanged]);
-GO
 
 CREATE UNIQUE INDEX [IX_MyTable_RowID] ON [my].[MyTable] ([RowID]);
-GO
 
 CREATE INDEX [IX_MyTableRef_MyInfo] ON [my].[MyTableRef] ([MyInfo]);
-GO
 
 CREATE INDEX [IX_MyTableRef_ParentId] ON [my].[MyTableRef] ([ParentId]);
-GO
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20260517161428_InitDbTest', N'8.0.26');
-GO
+VALUES (N'20260518003143_InitDbTest', N'10.0.8');
 
 COMMIT;
 GO

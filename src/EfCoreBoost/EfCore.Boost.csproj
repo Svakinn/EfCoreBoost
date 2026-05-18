@@ -8,7 +8,7 @@
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>10.0.3-preview</Version>
+    <Version>10.0.4-preview</Version>
     <Authors>Sveinn S. Erlendsson</Authors> 
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
@@ -41,17 +41,17 @@ Postgres DateTime mapping reverted to Timstamp with timezone (like the driver de
 	  <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.26" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.26" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.26" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.8" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.8" />
       <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
       <PackageReference Include="Microsoft.OData.Core" Version="8.4.3" />
       <PackageReference Include="Microsoft.OData.Edm" Version="8.4.3" />
-      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
       <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
-      <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.8" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.8" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.8" />
   </ItemGroup>
   <Target Name="BuildDesignProject" BeforeTargets="Pack">
   <MSBuild Projects="..\EfCore.Boost.Design\EfCore.Boost.Design.csproj"
