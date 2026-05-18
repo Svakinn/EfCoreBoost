@@ -8,7 +8,7 @@
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>8.0.4</Version>
+    <sVersion>8.0.5</sVersion>
     <Authors>Sveinn S. Erlendsson</Authors> 
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
