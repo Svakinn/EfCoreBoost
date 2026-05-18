@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>9.0.3</Version>
+    <Version>9.0.4</Version>
     <Authors>Sveinn S. Erlendsson</Authors> 
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
@@ -39,17 +39,17 @@ Postgres DateTime mapping reverted to Timstamp with timezone (like the driver de
 	  <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.26" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.26" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.26" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.16" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.16" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.16" />
       <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
       <PackageReference Include="Microsoft.OData.Core" Version="8.4.3" />
       <PackageReference Include="Microsoft.OData.Edm" Version="8.4.3" />
-      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
-      <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
-      <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+      <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.16" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.16" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.16" />
   </ItemGroup>
   <Target Name="BuildDesignProject" BeforeTargets="Pack">
   <MSBuild Projects="..\EfCore.Boost.Design\EfCore.Boost.Design.csproj"
@@ -57,13 +57,13 @@ Postgres DateTime mapping reverted to Timstamp with timezone (like the driver de
            Properties="Configuration=$(Configuration)" />
 </Target>
   <ItemGroup>
-  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.dll"
+  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net9.0\EfCore.Boost.Design.dll"
         Pack="true"
-        PackagePath="lib\net8.0\" />
-  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.xml"
+        PackagePath="lib\net9.0\" />
+  <None Include="..\EfCore.Boost.Design\bin\$(Configuration)\net9.0\EfCore.Boost.Design.xml"
         Pack="true"
-        PackagePath="lib\net8.0\"
-        Condition="Exists('..\EfCore.Boost.Design\bin\$(Configuration)\net8.0\EfCore.Boost.Design.xml')" />
+        PackagePath="lib\net9.0\"
+        Condition="Exists('..\EfCore.Boost.Design\bin\$(Configuration)\net9.0\EfCore.Boost.Design.xml')" />
 </ItemGroup>
   <ItemGroup>
 	  <ProjectReference Include="..\BoostAnalyzer\BoostAnalyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all"  />

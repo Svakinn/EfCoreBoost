@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="EfCore.Boost" Version="9.0.4" />
+      <PackageReference Include="EfCore.Boost" Version="9.0.3" />
     </ItemGroup>
 
 </Project>
