@@ -8,7 +8,7 @@
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <Version>10.0.4-preview</Version>
+    <Version>10.0.4-preview-b</Version>
     <Authors>Sveinn S. Erlendsson</Authors> 
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
@@ -17,6 +17,7 @@
         EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core, plus utilities for routines, bulk operations, and OData suport.
         Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.    
         NOTE: MySQL not supported in this preview, revert to the .NET9 version if you need MySQL/MariaDB
+        NOTE: 10.0.4-preview accidentaly referenced Polemo (MySQL), thus this 10.0.4-preview-b version
     </Description>
     <PackageReleaseNotes>
 UoW no longer by default allows access to the dbcontxt.  It is optional, but not default.
@@ -48,7 +49,6 @@ Postgres DateTime mapping reverted to Timstamp with timezone (like the driver de
       <PackageReference Include="Microsoft.OData.Core" Version="8.4.3" />
       <PackageReference Include="Microsoft.OData.Edm" Version="8.4.3" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
-      <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.8" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.8" />
       <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.8" />
