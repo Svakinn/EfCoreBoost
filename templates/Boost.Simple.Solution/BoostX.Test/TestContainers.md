@@ -43,8 +43,8 @@ Every provider follows the same overall ritual:
 
 1. Start a DB server container
 2. Build two connection strings:
-   - **admin/create** connection (for creating the test DB or running bootstrap SQL)
-   - **app/test** connection (pointing at the actual `TestDb`)
+    - **admin/create** connection (for creating the test DB or running bootstrap SQL)
+    - **app/test** connection (pointing at the actual `TestDb`)
 3. Build an `IConfiguration` by overlaying in-memory connection overrides on top of `AppSettings.json`
 4. Create a UOW for ´create/admin´, run the create-db script
 5. Create a UOW for ´normal/app´, run the provider migration script
@@ -98,4 +98,3 @@ Test for all providers follow the same pattern:
 - create database via admin connection
 - apply migrations
 - return a ready UOW
-

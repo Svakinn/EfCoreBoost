@@ -51,8 +51,8 @@ public class BoostXUow(IConfiguration cfg, string connectionName) : UowFactory<B
     /// <returns>The IpInfoView if found; otherwise, null.</returns>
     public async Task<IpInfoView?> GetIpInfoViewByIdAsync(long ipId)
     {
-        return await SetUpRoutineQuery<IpInfoView>(BoostCTX.DefaultSchemaName, "GetIpViewByIpId", [new DbParmInfo("@IpId", ipId)]).FirstOrDefaultAsync();
+        var rr = await RunRoutineQueryAsync<IpInfoView>(BoostCTX.DefaultSchemaName, "GetIpViewByIpId", [new DbParmInfo("@IpId", ipId)]);
+        return rr.FirstOrDefault();
     }
     #endregion
-
 }

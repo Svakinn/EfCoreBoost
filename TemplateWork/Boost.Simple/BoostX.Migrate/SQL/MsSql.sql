@@ -34,4 +34,3 @@ BEGIN
   WHERE v.Id = @IpId;
 END
 GO
-

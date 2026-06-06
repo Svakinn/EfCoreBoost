@@ -10,7 +10,7 @@ BEGIN
   IF FoundId IS NULL THEN
     INSERT INTO BoostSchemaX_IpInfo (IpNo, LastChangedUtc, Processed) VALUES (IpNo, UTC_TIMESTAMP(), FALSE);
     SET FoundId = LAST_INSERT_ID();
-  ELSEIF processed = TRUE AND DATE_ADD(lch, INTERVAL 180 DAY) > UTC_TIMESTAMP() THEN
+  ELSEIF processed = TRUE AND DATE_ADD(lch, INTERVAL 180 DAY) < UTC_TIMESTAMP()  THEN
     -- Recheck hostname after 6 months
     UPDATE BoostSchemaX_IpInfo SET Processed = FALSE WHERE Id = FoundId;
   END IF;

@@ -9,7 +9,6 @@ namespace BoostX.Model;
 /// Defines the data model and configures EF Core conventions.
 /// </summary>
 public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(options)
-public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(options)
 {
     /// <summary>
     /// The default database schema name used by this context.
@@ -109,13 +108,7 @@ public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(op
         /// Gets or sets the IP number.
         /// </summary>
         public string IpNo { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the host name.
-        /// </summary>
-        public string? HostName { get; set; }
     }
-
     #endregion
 }
 
