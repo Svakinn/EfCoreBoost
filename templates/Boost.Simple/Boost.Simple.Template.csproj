@@ -5,8 +5,7 @@
     <Title>EfCore.Boost Simple Template</Title>
     <Authors>Sveinn S. Erlendsson</Authors>
       <Description>
-          Minimal EfCore.Boost multi-project template with Model and Migrate projects, designed to provide a clean, production-oriented starting point. Includes a simple IpInfo entity, one view, and two routines to demonstrate core patterns.  
-          NOTE: MySQL not supported in this preview, revert to the .NET9 version if you need MySQL/MariaDB
+          Minimal EfCore.Boost multi-project template with Model and Migrate projects, designed to provide a clean, production-oriented starting point. Includes a simple IpInfo entity, one view, and two routines to demonstrate core patterns.
       </Description>
       <PackageTags>
           dotnet-new;template;efcore;entity-framework;database;orm;
@@ -21,7 +20,7 @@
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost/tree/main/templates/Boost.Simple</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>
-        Update to EfCore.Boost 10.0.1-preview
+        Update to EfCore.Boost 10.0.4-preview
         Scripts for migration upgrade path (upgrade from one deployment version to another).
         NOTE: MySQL not supported in this preview, revert to the .NET9 version if you need MySQL/MariaDB
     </PackageReleaseNotes>
@@ -33,7 +32,7 @@
     <!-- Prevent the SDK from trying to compile the template source files -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <NoWarn>$(NoWarn);NU5110;NU5111;NU5128</NoWarn>
-    <Version>10.0.1-preview</Version>
+    <Version>10.0.4-preview</Version>
   </PropertyGroup>
   <ItemGroup>
       <None Include="LICENSE" Pack="true" PackagePath="" />

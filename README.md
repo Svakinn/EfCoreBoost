@@ -27,7 +27,7 @@ The table below highlights common architectural and operational challenges in EF
 
 | #                         | Area                                       | Typical EF Core Challenge                                      | EfCore.Boost Approach                                                     |
 |---------------------------|--------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------|
-| 1 | Structure | DbContext is used everywhere, exposing the entire database | [Clear Unit of Work boundaries and structured data access](./docs/WhyBoost.md#link-1)                   |
+| 1 | Data Access Boundaries | Direct DbContext usage can expose too much of the database surface area across an application. | [EfCore.Boost allows applications to expose only the repositories, entities, routines, and operations intended for each part of the system.](./docs/WhyBoost.md#link-1)                   |
 | 2   | Multi-Provider | Behavior differs across SQL Server, PostgreSQL, and MySQL | [Provider-aware conventions and consistent mappings](./docs/WhyBoost.md#link-2)                         |
 | 3   | Migrations | Managing migrations across environments and providers is fragile | [Controlled and streamlined migration workflows with script generation](./docs/WhyBoost.md#link-3)      |
 | 4   | Bulk Operations | High-volume inserts and updates require custom solutions | [Built-in patterns for efficient bulk handling](./docs/WhyBoost.md#link-4)                              |
@@ -36,7 +36,7 @@ The table below highlights common architectural and operational challenges in EF
 | 7   | Transactions | Complex transactions require manual coordination across EF operations, bulk work, routines, retries, and provider differences. | [Structured Unit of Work transactions with coordinated execution, rollback safety, and retry-aware handling.](./docs/WhyBoost.md#link-7)                         |
 | 8   | Maintainability | Different parts of the system use different data access patterns | [Enforced conventions and predictable structure](./docs/WhyBoost.md#link-8)                             |
 | 9   | Model Definition | Fluent configuration becomes complex and fragmented | [Attribute-driven conventions simplify and clarify model definitions](./docs/WhyBoost.md#link-9)        |
-| 10 | Controlled Data Access | DbContext is widely exposed and all DbSets are accessible from anywhere | [Access is restricted through purpose-specific Unit of Work boundaries](./docs/WhyBoost.md#link-10)      |
+
 
 *Click on the approaches above for more details.*
 

@@ -1,14 +1,14 @@
 
-/*  Since each test run expexts same seed data each time, we are better off dropping and */
-/* recreating objecs each time the test is run.                                                 */ 
-/* This bit is responsible from dropping the objects.                                           */
-/* It must be performed under connection to testb, not as master, thus being seporated script.  */
+/* Since each test run expects the same seed data each time (like for the test-containers),     */
+/* we are better off dropping and  recreating objects each time the test is run.                */
+/* This bit is responsible for dropping the objects.                                            */
+/* It must be performed under connection to testb, not as master, thus being a separated script.*/
 DECLARE @AzureUserName sysname = N'BoostXUsr';
 DECLARE @DbName        sysname = N'BoostXDb';
 
 -- Task 1 make sure user exists and is linked to the db:
 BEGIN TRY
-IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @AzureUserName)    
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @AzureUserName)
 BEGIN
     PRINT N'Creating user [' + @AzureUserName + N'] from EXTERNAL PROVIDER...';
     EXEC(N'CREATE USER [' + @AzureUserName + N'] FROM EXTERNAL PROVIDER;');
@@ -24,9 +24,9 @@ IF NOT EXISTS (
 )
 BEGIN
     PRINT N'Adding [' + @AzureUserName + N'] to db_owner...';
-    EXEC(N'ALTER ROLE db_owner ADD MEMBER [' + @AzureUserName + N'];');
+EXEC(N'ALTER ROLE db_owner ADD MEMBER [' + @AzureUserName + N'];');
 END;
 END TRY
 BEGIN CATCH
-  PRINT N'User [' + @AzureUserName + N'] is already db_owner.';
+PRINT N'User [' + @AzureUserName + N'] is already db_owner.';
 END CATCH;

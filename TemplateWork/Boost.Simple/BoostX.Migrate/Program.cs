@@ -170,21 +170,6 @@ namespace BoostX.Migrate
                 Console.WriteLine("Database check complete. Target database needs to be created.");
                 return;
             }
-            Console.WriteLine("Checking for pending migrations...");
-            var pendingMigrations = await uow.GetDbContext().Database.GetPendingMigrationsAsync();
-            int count = 0;
-            foreach (var migration in pendingMigrations)
-            {
-                Console.WriteLine($" - Pending: {migration}");
-                count++;
-            }
-            if (count == 0)
-                Console.WriteLine("Database is up to date.");
-            else
-            {
-                Console.WriteLine($"Database schema is not up to date. Found {count} pending migration(s).");
-                Console.WriteLine("Please run the schema initialization process.");
-            }
         }
 
         /// <summary>

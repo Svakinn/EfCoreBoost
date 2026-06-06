@@ -1,6 +1,6 @@
 ﻿/*
     Database deploy script (PgSQL)
-    Generated: 2026-05-18 00:31:22
+    Generated: 2026-05-17 16:14:54
     ConnName: TestPg
 */
 
@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
 );
 
 START TRANSACTION;
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'my') THEN
@@ -52,16 +53,16 @@ CREATE TABLE my."MyTableRef" (
 );
 
 INSERT INTO my."MyTable" ("Id", "Balance", "Code", "Created", "Discount", "Heading", "LastChanged", "LastChangedBy", "RowID", "RowVersion", "Status")
-VALUES (-2, 200.0, 'Mn', TIMESTAMPTZ '2026-05-18T00:31:18.603042Z', 0.0, 'Mando', TIMESTAMPTZ '2026-05-18T00:31:18.603042Z', 'Stefan', '428c00da-c89d-44ba-89d8-4da05717ce11', 0, 2);
+VALUES (-2, 200.0, 'Mn', TIMESTAMPTZ '2026-05-17T16:14:50.725033Z', 0.0, 'Mando', TIMESTAMPTZ '2026-05-17T16:14:50.725033Z', 'Stefan', '8c8eb799-a5ce-4cdc-9060-ab761c8496dd', 0, 2);
 INSERT INTO my."MyTable" ("Id", "Balance", "Code", "Created", "Discount", "Heading", "LastChanged", "LastChangedBy", "RowID", "RowVersion", "Status")
-VALUES (-1, 350.0, 'BD', TIMESTAMPTZ '2026-05-18T00:31:18.603042Z', 5.0, 'Baldo', TIMESTAMPTZ '2026-05-18T00:31:18.603042Z', 'Baldr', 'e4657162-1ff4-4989-a705-0a605f30ff8e', 0, 1);
+VALUES (-1, 350.0, 'BD', TIMESTAMPTZ '2026-05-17T16:14:50.725033Z', 5.0, 'Baldo', TIMESTAMPTZ '2026-05-17T16:14:50.725033Z', 'Baldr', '71e6cc23-ffcf-4781-acf7-8f6afaed2b87', 0, 1);
 
 INSERT INTO my."MyTableRef" ("Id", "Amount", "Created", "LastChanged", "LastChangedBy", "MyInfo", "ParentId", "RowVersion")
-VALUES (-3, 200.0, TIMESTAMPTZ '2026-05-18T00:31:18.603042Z', TIMESTAMPTZ '2026-05-18T00:31:18.603042Z', 'Stefan', 'OtherData', -2, 0);
+VALUES (-3, 200.0, TIMESTAMPTZ '2026-05-17T16:14:50.725033Z', TIMESTAMPTZ '2026-05-17T16:14:50.725033Z', 'Stefan', 'OtherData', -2, 0);
 INSERT INTO my."MyTableRef" ("Id", "Amount", "Created", "LastChanged", "LastChangedBy", "MyInfo", "ParentId", "RowVersion")
-VALUES (-2, 50.0, TIMESTAMPTZ '2026-05-18T00:31:18.603042Z', TIMESTAMPTZ '2026-05-18T00:31:18.603042Z', 'Baldr', 'BiggerData', -1, 0);
+VALUES (-2, 50.0, TIMESTAMPTZ '2026-05-17T16:14:50.725033Z', TIMESTAMPTZ '2026-05-17T16:14:50.725033Z', 'Baldr', 'BiggerData', -1, 0);
 INSERT INTO my."MyTableRef" ("Id", "Amount", "Created", "LastChanged", "LastChangedBy", "MyInfo", "ParentId", "RowVersion")
-VALUES (-1, 300.0, TIMESTAMPTZ '2026-05-18T00:31:18.603042Z', TIMESTAMPTZ '2026-05-18T00:31:18.603042Z', 'Baldr', 'BigData', -1, 0);
+VALUES (-1, 300.0, TIMESTAMPTZ '2026-05-17T16:14:50.725033Z', TIMESTAMPTZ '2026-05-17T16:14:50.725033Z', 'Baldr', 'BigData', -1, 0);
 
 CREATE INDEX "IX_MyTable_LastChanged" ON my."MyTable" ("LastChanged");
 
@@ -85,7 +86,7 @@ SELECT setval(
     false);
 
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260518003119_InitDbTest', '10.0.8');
+VALUES ('20260517161450_InitDbTest', '8.0.26');
 
 COMMIT;
 

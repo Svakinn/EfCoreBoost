@@ -5,7 +5,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Boost.Migrate</RootNamespace>
+        <RootNamespace>BoostX.Migrate</RootNamespace>
         <ApplicationIcon>icon64.ico</ApplicationIcon>
     </PropertyGroup>
 
@@ -18,7 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BoostX.Model\BoostX.Model.csproj" />
+      <ProjectReference Include="..\BoostX.Model\BoostX.Model.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,8 +1,8 @@
 
-/*  Since each test run expexts same seed data each time, we are better off dropping and */
-/* recreating objecs each time the test is run.                                                 */ 
-/* This bit is responsible from dropping the objects.                                           */
-/* It must be performed under connection to testb, not as master, thus being seporated script.  */
+/* Since each test run expects the same seed data each time (like for the test-containers),     */
+/* we are better off dropping and  recreating objects each time the test is run.                */                                      
+/* This bit is responsible for dropping the objects.                                            */
+/* It must be performed under connection to testb, not as master, thus being a separated script.*/
 DECLARE @AzureUserName sysname = N'BoostXUsr';
 DECLARE @DbName        sysname = N'BoostXDb';
 

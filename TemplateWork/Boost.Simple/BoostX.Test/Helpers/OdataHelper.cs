@@ -40,7 +40,7 @@ namespace BoostX.Test.Helpers
             throw new InvalidOperationException($"EDM entity set not found for '{clrName}'. Ensure TEntity is exposed as a DbSet and included in EDM.");
         }
 
-        public static ODataQueryOptions<TEntity> CreateOptions<TEntity>(BoostXUow uow, string queryString, string routePrefix = "odata")
+        public static ODataQueryOptions<TEntity> CreateOptions<TEntity>(BoostXUow uow, string queryString, string routePrefix = "odata") where TEntity : class
         {
             var model = uow.GetModel();
             var sp = BuildAspNetODataServices(model, routePrefix);

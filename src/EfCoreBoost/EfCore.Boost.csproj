@@ -15,10 +15,7 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>
         EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core, plus utilities for routines, bulk operations, and OData suport.
-        Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.    
-        NOTE: MySQL not supported in this preview, revert to the .NET9 version if you need MySQL/MariaDB
-        NOTE: 10.0.4-preview accidentaly referenced Polemo (MySQL), thus this 10.0.4-preview-b version
-    </Description>
+        Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.    </Description>
     <PackageReleaseNotes>
 UoW no longer by default allows access to the dbcontxt.  It is optional, but not default.
 EDM-builder now part of the UoW (uow.GetModel()) 

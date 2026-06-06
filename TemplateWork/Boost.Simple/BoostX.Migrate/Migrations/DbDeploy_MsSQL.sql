@@ -1,5 +1,5 @@
 ﻿/*
-    Database deploy script (MsSQL)
+    Database deploy script for (MsSQL)
     Generated: 2026-05-17 20:40:48
     ConnName: BoostXMs
 */
@@ -60,7 +60,6 @@ COMMIT;
 GO
 
 
-GO
 /*** END InitBoostCTX.sql ***/
 
 
