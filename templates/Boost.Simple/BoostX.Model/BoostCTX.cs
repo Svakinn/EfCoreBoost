@@ -109,6 +109,7 @@ public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(op
         /// </summary>
         public string IpNo { get; set; } = string.Empty;
     }
+
     #endregion
 }
 
