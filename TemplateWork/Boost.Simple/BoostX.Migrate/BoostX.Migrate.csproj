@@ -10,7 +10,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="EfCore.Boost" Version="10.0.3-preview" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
