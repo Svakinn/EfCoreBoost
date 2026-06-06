@@ -248,9 +248,7 @@ namespace BoostX.Test
             Npgsql.NpgsqlConnection.ClearAllPools();
             await uowMigrate.ExecSqlScriptAsync(await ReadSql(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Migrations/DbDeploy_PgSql.pgsql")));
             // Force Npgsql to refresh type mappings ("citext", etc.) for this database
-            var dbConn = (Npgsql.NpgsqlConnection)uowMigrate.GetDbContext().Database.GetDbConnection();
-            if (dbConn.State != ConnectionState.Open)
-                await uowMigrate.GetDbContext().Database.OpenConnectionAsync();
+            var dbConn = (Npgsql.NpgsqlConnection) await uowMigrate.EnsureDbConnectionOpenAsync();
             await dbConn.ReloadTypesAsync();
             Npgsql.NpgsqlConnection.ClearAllPools();
             var uow = CreateUow(cfg, connName);

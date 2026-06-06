@@ -1,14 +1,12 @@
-/* This is an example on how you could run script to create the test db on azure named TestDb with master user named svasure-tester */
-/* It is NOT run by the test, you need to have this DB up and running before running the tests  */
+/* This is NOT run by the test, you need to have this DB up and running before running the tests  */
 DECLARE @AzureUserName sysname = N'BoostXUsr';  -- AAD app or user display name
 DECLARE @DbName        sysname = N'BoostXDb';
-
 DECLARE @PreferredCollation           sysname = N'Latin1_General_100_CI_AS_SC_UTF8'; -- UTF-8, good across Europe & US
 DECLARE @Collation                    sysname;
 declare @dbNamePre                    sysname = '[' + @DbName + '].';
 
 BEGIN TRY
-/* creata our desired db-user if missing */
+/* create our desired db-user if missing */
 IF NOT EXISTS (
     SELECT 1 FROM sys.database_principals WHERE name = @AzureUserName
 )
@@ -47,7 +45,7 @@ BEGIN CATCH
     PRINT N'Provision: master AAD user/role skipped/failed: ' + ERROR_MESSAGE();
 END CATCH;
 
-/* Pick best available collation */
+/* Pick the best available collation */
 IF EXISTS (SELECT 1 FROM sys.fn_helpcollations() WHERE name = @PreferredCollation)
     SET @Collation = @PreferredCollation;
 print 'Collation '+@Collation+' selected.'

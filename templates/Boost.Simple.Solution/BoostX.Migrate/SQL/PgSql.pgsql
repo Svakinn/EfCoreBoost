@@ -11,13 +11,14 @@ BEGIN
     SELECT i."Id", i."Processed", i."LastChangedUtc"
     INTO found_id, processed, lch
     FROM "BoostSchemaX"."IpInfo" i
-    WHERE i."IpNo" = ipno;
+    WHERE i."IpNo" = ipno
+    LIMIT 1;
     IF found_id IS NULL THEN
         -- Insert new record
         INSERT INTO "BoostSchemaX"."IpInfo" ("IpNo", "LastChangedUtc", "Processed")
-        VALUES (ipno, NOW() AT TIME ZONE 'UTC', false)
+        VALUES (ipno, CURRENT_TIMESTAMP AT TIME ZONE 'UTC', false)
         RETURNING "Id" INTO found_id;
-    ELSIF processed AND lch + INTERVAL '180 days' > NOW() AT TIME ZONE 'UTC' THEN
+    ELSIF processed AND lch + INTERVAL '180 days' < CURRENT_TIMESTAMP AT TIME ZONE 'UTC' THEN
         -- Recheck hostname after 6 months
         UPDATE "BoostSchemaX"."IpInfo" SET "Processed" = false WHERE "Id" = found_id;
     END IF;

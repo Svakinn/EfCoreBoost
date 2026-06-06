@@ -1,5 +1,5 @@
 ﻿/*
-    Database deploy script (PgSQL)
+    Database deploy script for (PgSQL)
     Generated: 2026-05-17 20:47:52
     ConnName: BoostXPg
 */
@@ -109,4 +109,3 @@ CREATE VIEW "BoostSchemaX"."IpInfoView" AS
  $$;
 
 /*** END PgSQL.pgsql ***/
-

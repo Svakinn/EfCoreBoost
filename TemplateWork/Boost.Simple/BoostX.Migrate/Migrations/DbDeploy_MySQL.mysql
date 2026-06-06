@@ -1,5 +1,5 @@
 ﻿/*
-    Database deploy script (MySQL)
+    Database deploy script for (MySQL)
     Generated: 2026-05-17 20:41:04
     ConnName: BoostXMy
 */
@@ -80,9 +80,6 @@ BEGIN
   WHERE v.Id = IpId;
 END$$
 DELIMITER ;
-
-
-
 
 /*** END MySQL.mysql ***/
 

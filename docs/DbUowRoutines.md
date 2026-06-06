@@ -11,7 +11,7 @@ The goals are:
 
 Output parameters exist per engine but do **not** behave uniformly.  
 EfCore.Boost cross-platform contract avoids them completely.  
-To be clear, you can use OUT / INOUT / OUTPUT parameters in code intentended for a specific provider.  
+To be clear, you can use OUT / INOUT / OUTPUT parameters in code intended for a specific provider.  
 However, if you do, **your .net code is no longer portable across database engines**.
 
 ---
@@ -164,20 +164,20 @@ public async Task<IList<CurrentMenuItemsV>> GetCurrentMenuItemsForSession(long s
 }
 ```  
 
-> **Note:** If you need the raw `IQueryable<T>` for further composition (e.g. OData), use `SetUpRoutineQuery<T>(...)` instead.
+> **Note:** If you need the raw `IQueryable<T>` for further composition (e.g., OData), use `SetUpRoutineQuery<T>(...)` instead.
 
 ---
 
 ## 2. OUT / INOUT / OUTPUT Parameters
 
-Output parameters exist, but are **not portable**:
+Output parameters exist but are **not portable**:
 
-| Engine                   | OUT semantics as real parameters? | Notes                                              |
-|--------------------------|------------------------------------|----------------------------------------------------|
-| SQL Server (procedures)  | ✅ Yes                             | @p OUTPUT                                         |
-| MySQL (procedures)       | ✅ Yes                             | OUT / INOUT act as bound parameters               |
-| PostgreSQL (functions)   | ❌ No                              | OUT becomes result columns, called via SELECT     |
-| PostgreSQL (procedures)  | ❌ No pure OUT                     | Only IN / INOUT, different client semantics       |
+| Engine                  | OUT semantics as real parameters? | Notes                                         |
+|-------------------------|-----------------------------------|-----------------------------------------------|
+| SQL Server (procedures) | ✅ Yes                             | @p OUTPUT                                     |
+| MySQL (procedures)      | ✅ Yes                             | OUT / INOUT act as bound parameters           |
+| PostgreSQL (functions)  | ❌ No                              | OUT becomes result columns, called via SELECT |
+| PostgreSQL (procedures) | ❌ No pure OUT                     | Only IN / INOUT, different client semantics   |
 
 ### DbRepo Rule
 

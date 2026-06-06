@@ -365,7 +365,7 @@ namespace EfCore.Boost.UOW
         /// <param name="parameters"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        IList<T> RunRoutineQuerySynchronized<T>(string schema, string routineName, List<DbParmInfo>? parameters = null) where T : class;
+        List<T> RunRoutineQuerySynchronized<T>(string schema, string routineName, List<DbParmInfo>? parameters = null) where T : class;
 
         /// <summary>
         /// Execute a stored procedure that returns a list of Entities of a particular type T
@@ -376,7 +376,7 @@ namespace EfCore.Boost.UOW
         /// <param name="ct"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        Task<IList<T>> RunRoutineQueryAsync<T>(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)  where T : class;
+        Task<List<T>> RunRoutineQueryAsync<T>(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)  where T : class;
     }
 
     public interface IDbUow : IDbReadUow {
@@ -671,10 +671,10 @@ namespace EfCore.Boost.UOW
             var uowType = this.GetType();
             var repoProps = uowType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.PropertyType.IsGenericType &&
-                            (p.PropertyType.GetGenericTypeDefinition() == typeof(EfCore.Boost.DbRepo.EfRepo<>) ||
-                             p.PropertyType.GetGenericTypeDefinition() == typeof(EfCore.Boost.DbRepo.EfReadRepo<>) ||
-                             p.PropertyType.GetGenericTypeDefinition() == typeof(EfCore.Boost.DbRepo.EfLongIdRepo<>) ||
-                             p.PropertyType.GetGenericTypeDefinition() == typeof(EfCore.Boost.DbRepo.EfLongIdReadRepo<>)));
+                            (p.PropertyType.GetGenericTypeDefinition() == typeof(EfRepo<>) ||
+                             p.PropertyType.GetGenericTypeDefinition() == typeof(EfReadRepo<>) ||
+                             p.PropertyType.GetGenericTypeDefinition() == typeof(EfLongIdRepo<>) ||
+                             p.PropertyType.GetGenericTypeDefinition() == typeof(EfLongIdReadRepo<>)));
 
             var types = repoProps.Select(p => new KeyValuePair<string, Type>(p.Name, p.PropertyType.GetGenericArguments()[0]));
             return BuildEdmModelInternal(types, configure);
@@ -1469,13 +1469,12 @@ namespace EfCore.Boost.UOW
             return Ctx.Set<T>().FromSqlRaw(call.Text, dbParams).AsNoTracking();
         }
 
-        public IList<T> RunRoutineQuerySynchronized<T>(string schema, string routineName, List<DbParmInfo>? parameters = null) where T : class
+        public List<T> RunRoutineQuerySynchronized<T>(string schema, string routineName, List<DbParmInfo>? parameters = null) where T : class
         {
             return SetUpRoutineQuery<T>(schema, routineName, parameters).ToList();
         }
 
-
-        public async Task<IList<T>> RunRoutineQueryAsync<T>(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default) where T : class
+        public async Task<List<T>> RunRoutineQueryAsync<T>(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default) where T : class
         {
             return await SetUpRoutineQuery<T>(schema, routineName, parameters).ToListAsync(ct);
         }

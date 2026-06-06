@@ -1,7 +1,7 @@
 DECLARE @DbName sysname = N'BoostXDb';
-DECLARE @PreferredCollation sysname = N'Latin1_General_100_CI_AS_SC_UTF8'; -- Prefer UTF-8 collation (SQL Server 2019+) excelent for cross language collation
-DECLARE @FallBackCollation sysname =  N'Icelandic_100_CI_AS'; --Not excelent chouse for all Europe - replace this with jour own culture ?
-DECLARE @EmergencyFallBackCollation sysname =  N'Latin1_General_100_CI_AS'; --Just in case - very poor colation score. For icelandic i.e. Æ and Þ are messy
+DECLARE @PreferredCollation sysname = N'Latin1_General_100_CI_AS_SC_UTF8'; -- Prefer UTF-8 collation (SQL Server 2019+) excellent for cross-language collation
+DECLARE @FallBackCollation sysname =  N'Icelandic_100_CI_AS'; --Not a perfect choice for all Europe - replace this with your own local culture?
+DECLARE @EmergencyFallBackCollation sysname =  N'Latin1_General_100_CI_AS'; --Old generic fallback, but with poor collation support
 DECLARE @Collation sysname;
 IF EXISTS (SELECT 1 FROM sys.fn_helpcollations() WHERE name = @PreferredCollation)
 BEGIN
@@ -36,7 +36,7 @@ BEGIN
         --     FILEGROWTH = 64MB
         -- );
     ';
-    EXEC (@Sql);
+EXEC (@Sql);
 END
 ELSE
 BEGIN

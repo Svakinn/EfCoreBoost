@@ -88,19 +88,23 @@ Both paths use the same underlying mechanisms.
 ---
 
 ## Exposing OData: Controllers and Metadata
-To expose an OData service, you must first define an Entity Data Model (EDM). EfCore.Boost provides the `EdmBuilder` utility to automate this process while maintaining strict control over what is exposed.
+To expose an OData service, you must first define an Entity Data Model (EDM). EfCore.Boost generates this automatically from your Unit of Work (UOW) while maintaining strict control over what is exposed.
 
-### The EdmBuilder Entry Point (Recommended approach)
+### OData Metadata from Unit of Work
 
-`EdmBuilder` is the central point for generating OData models. The **primary and recommended** path is UOW-based generation, as it ensures your OData surface perfectly matches your exposed repositories.
+The standard and recommended path is UOW-based generation, as it ensures your OData surface perfectly matches your exposed repositories.
 
 #### 1. Build from Unit of Work
 
-If your Unit of Work owns its `DbContext` (which is standard in EfCore.Boost), you can build the model without providing the context separately:
+If your Unit of Work owns its `DbContext` (which is standard in EfCore.Boost), you can get the model directly from the UOW instance or build it using a generic parameter:
 
 ```csharp
-// Simplest entry point
-var edm = EdmBuilder.BuildEdmModelFromUow<YourUow>();
+// Get the model from a UOW instance
+using var uow = new YourUow();
+var edm = uow.GetModel();
+
+// Or get XML metadata (CSDL) directly
+var xml = uow.Metadata();
 ```
 
 This strategy:
@@ -113,7 +117,8 @@ This strategy:
 If you need to add custom OData functions or actions, use the configuration callback. This allows you to extend the model during construction:
 
 ```csharp
-var edm = EdmBuilder.BuildEdmModelFromUow<YourUow>(builder => 
+using var uow = new YourUow();
+var edm = uow.GetModel(builder => 
 {
     // Add a custom function
     builder.EntityType<User>()
@@ -128,30 +133,24 @@ var edm = EdmBuilder.BuildEdmModelFromUow<YourUow>(builder =>
 });
 ```
 
-### Other Strategies
-
-1.  **`BuildEdmModelFromContext(DbContext)`**:
-    Exposes all eligible `DbSet<T>` properties found in the database context. Useful for rapid prototyping or internal-only tools.
-2.  **`BuildEdmModelFromTypes(params Type[] types)`**:
-    Allows manual selection of specific entity types.
-
 ### Scoping via UOW-Driven EDM
 
-By default, we recommend using `BuildEdmModelFromUow`. A single `DbContext` might contain a large number of entity sets, but you may want to surface only a specific subset of them for a particular API or business context.
+By default, we recommend using the UOW-driven metadata. A single `DbContext` might contain a large number of entity sets, but you may want to surface only a specific subset of them for a particular API or business context.
 
 Using the Unit of Work as the source for the EDM allows you to:
 - **Defined Surface Area**: The OData metadata reflects exactly the repositories defined in the UOW.
 - **Flexibility**: You can have multiple UOWs operating on the same `DbContext`, each surfacing a different part of the database.
 - **Clean Metadata**: Clients only see the entities intended for their specific use case.
-- **Context Resolution**: The builder uses the UOW's internal context to handle primary keys and EF metadata automatically.
+- **Context Resolution**: The UOW handles primary keys and EF metadata automatically using its internal context.
 
 ### Integration Example
 
-Here is how you typically configure OData in your application using `EdmBuilder`:
+Here is how you typically configure OData in your application:
 
 ```csharp
 // 1. Build the EDM model from your Unit of Work
-var edm = EdmBuilder.BuildEdmModelFromUow<YourUow>();
+using var uow = new YourUow();
+var edm = uow.GetModel();
 
 // 2. Register OData services
 builder.Services
