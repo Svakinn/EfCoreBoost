@@ -12,7 +12,6 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-
 using EfCore.Boost.CFG;
 using Testcontainers.MsSql;
 using Testcontainers.MySql;
@@ -87,7 +86,7 @@ namespace BoostX.Test
             }
         }
 
-        /** Disabled until MSQL-Driver is ready for .net10
+        /*Mysql
         [TestMethod]
         public async Task Uow_MySql_Test()
         {
@@ -181,7 +180,7 @@ namespace BoostX.Test
             return (uow);
         }
 
-        /** Disabled until MSQL-Driver is ready for .net10
+        /*Mysql
         /// <summary>
         ///  Spin up temporary MySql Server in Docker
         ///  Note: we are sort of cheating on the usual connection string from appsettings.json

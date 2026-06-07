@@ -1216,10 +1216,10 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var guidPlan = PrepareDbGuidBulkPlan(items);
         if (this.DbType == DatabaseType.SqlServer)
             this.MsBulkInsertSynchronized(items, trans, guidPlan.OmitColumnNames, includeIdentityValues);
-        else //if (DbType == DatabaseType.PostgreSql)
+        else if (DbType == DatabaseType.PostgreSql)
             this.PgBulkInsertSynchronized(items, trans, guidPlan.OmitColumnNames, includeIdentityValues);
-        //else //Assume mysql
-        //    this.MyBulkInsertSynchronized(items, trans, guidPlan.OmitColumnNames, includeIdentityValues);
+        else //Assume mysql
+            this.MyBulkInsertSynchronized(items, trans, guidPlan.OmitColumnNames, includeIdentityValues);
     }
 
     protected sealed record DbGuidBulkPlan(HashSet<string> OmitColumnNames);
@@ -1335,10 +1335,10 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         var guidPlan = PrepareDbGuidBulkPlan(items);
         if (this.DbType == DatabaseType.SqlServer)
             await this.MsBulkInsertAsync(items, trans, guidPlan.OmitColumnNames, includeIdentityValues, ct);
-        else //if (DbType == DatabaseType.PostgreSql)
+        else if (DbType == DatabaseType.PostgreSql)
             await this.PgBulkInsertAsync(items, trans, guidPlan.OmitColumnNames, includeIdentityValues, ct);
-        //else //Assume mysql
-        //    await this.MyBulkInsertAsync(items, trans, guidPlan.OmitColumnNames, includeIdentityValues, ct);
+        else //Assume mysql
+            await this.MyBulkInsertAsync(items, trans, guidPlan.OmitColumnNames, includeIdentityValues, ct);
     }
 
     protected sealed record BulkColPlan(
@@ -1413,8 +1413,8 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
             {
                 DatabaseType.SqlServer =>
                     p.FindAnnotation("SqlServer:ValueGenerationStrategy")?.Value?.ToString() == "IdentityColumn" ? p.GetColumnName(storeObjName) : null,
-                //DatabaseType.MySql =>
-                //    p.FindAnnotation("MySql:ValueGenerationStrategy")?.Value?.ToString() == "IdentityColumn" ? p.GetColumnName(storeObjName) : null,
+                DatabaseType.MySql =>
+                    p.FindAnnotation("MySql:ValueGenerationStrategy")?.Value?.ToString() == "IdentityColumn" ? p.GetColumnName(storeObjName) : null,
                 DatabaseType.PostgreSql =>
                     p.FindAnnotation("Npgsql:ValueGenerationStrategy")?.Value?.ToString() is "IdentityAlwaysColumn" or "IdentityByDefaultColumn" or "SerialColumn"  ? p.GetColumnName(storeObjName) : null,
                 _ => null
@@ -1551,7 +1551,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     protected void MyBulkInsertSynchronized(List<T> items, DbTransaction trans, HashSet<string> omitCols, bool includeIdentityValues = false)
     {
         if (items.Count == 0) return;
-        //if (DbType != DatabaseType.MySql)
+        if (DbType != DatabaseType.MySql)
             throw new NotSupportedException("MySQL bulk insert only valid for MySQL.");
         if (trans.Connection!.GetType().FullName?.Contains("MySql", StringComparison.OrdinalIgnoreCase) != true)
             throw new InvalidOperationException("Bulk insert requires MySQL connection");
@@ -1603,7 +1603,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     protected async Task MyBulkInsertAsync(List<T> items, DbTransaction trans, HashSet<string> omitCols, bool includeIdentityValues = false, CancellationToken ct = default)
     {
         if (items.Count == 0) return;
-        //if (DbType != DatabaseType.MySql)
+        if (DbType != DatabaseType.MySql)
             throw new NotSupportedException("MySQL bulk insert only valid for MySQL.");
         if (trans.Connection!.GetType().FullName?.Contains("MySql", StringComparison.OrdinalIgnoreCase) != true)
             throw new InvalidOperationException("Bulk insert requires MySQL connection");
@@ -1850,7 +1850,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     {
         DatabaseType.SqlServer => $"[{name}]",
         DatabaseType.PostgreSql => $"\"{name}\"",
-        //DatabaseType.MySql => $"`{name}`",
+        DatabaseType.MySql => $"`{name}`",
         _ => name
     };
 
@@ -1863,7 +1863,7 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
         {
             DatabaseType.SqlServer => $"[{schema ?? "dbo"}].[{table}]",
             DatabaseType.PostgreSql => $"\"{schema ?? "public"}\".\"{table}\"",
-            //DatabaseType.MySql => string.IsNullOrWhiteSpace(schema) ? table : $"`{schema}`_`{table}`",
+            DatabaseType.MySql => string.IsNullOrWhiteSpace(schema) ? table : $"`{schema}`_`{table}`",
             _ => throw new NotSupportedException($"Unsupported DB type: {DbType}")
         };
         return fullName;

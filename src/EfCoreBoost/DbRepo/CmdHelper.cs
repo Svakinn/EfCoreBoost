@@ -9,7 +9,7 @@ namespace EfCore.Boost.DbRepo
         /// <summary>
         /// Carries connection and command
         /// The important part is that when disposed, the connection is not destroyed (being the DbContext connection)
-        /// However the Command is destroyed.
+        /// However, the Command is destroyed.
         /// I.e. using var oc = CmdHelper.OpenCmdSynchronized(Ctx)  is quite safe to use "using"
         /// </summary>
         internal readonly struct Opened(DbConnection conn, DbCommand cmd) : IDisposable, IAsyncDisposable
@@ -57,7 +57,7 @@ namespace EfCore.Boost.DbRepo
         }
 
         /// <summary>
-        /// Gives us proper command on properly open connection on our DbContext
+        /// Gives us a proper command on properly open connection on our DbContext
         /// If transaction is active on the connection, that one gets hoked to our command
         /// </summary>
         /// <param name="ctx"></param>
@@ -78,7 +78,7 @@ namespace EfCore.Boost.DbRepo
         }
 
         /// <summary>
-        /// Returns the DbContexts connection, properly opened when needed
+        /// Returns the DbContexts connection properly opened when needed
         /// This is important since we want to make sure on-connected triggers from EF fire appropriately
         /// </summary>
         /// <param name="ctx"></param>

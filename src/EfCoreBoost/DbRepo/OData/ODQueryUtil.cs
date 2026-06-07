@@ -17,7 +17,7 @@ namespace EfCore.Boost.DbRepo.OData
         internal static bool IsOrderByAllowed(string? rawOrderBy, string[] allowed)
         {
             if (string.IsNullOrWhiteSpace(rawOrderBy)) return true;
-            if (allowed == null || allowed.Length == 0) return true;
+            if (allowed.Length == 0) return true;
 
             var set = new HashSet<string>(allowed.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()), StringComparer.OrdinalIgnoreCase);
             if (set.Count == 0) return true;
@@ -35,7 +35,6 @@ namespace EfCore.Boost.DbRepo.OData
 
         internal static void ExtractIncludePaths(IEnumerable<SelectItem> items, HashSet<string> includes, HashSet<string>? allowedSet, int maxDepth, List<string> report, string? prefix = null, int depth = 0)
         {
-            if (items == null) return;
             if (depth >= maxDepth) { AddReport(report, "ExpandIgnored.MaxDepth"); return; }
 
             foreach (var si in items)
@@ -52,8 +51,12 @@ namespace EfCore.Boost.DbRepo.OData
                 includes.Add(full);
 
                 var nested = ex.SelectAndExpand?.SelectedItems;
-                if (nested != null && nested.Any())
-                    ExtractIncludePaths(nested, includes, allowedSet, maxDepth, report, full, depth + 1);
+                if (nested != null)
+                {
+                    var selectItems = nested as SelectItem[] ?? nested.ToArray();
+                    if (selectItems.Any())
+                        ExtractIncludePaths(selectItems, includes, allowedSet, maxDepth, report, full, depth + 1);
+                }
             }
         }
 
@@ -63,9 +66,7 @@ namespace EfCore.Boost.DbRepo.OData
             // Conservative by design; you can relax later if needed.
             var sae = ex.SelectAndExpand;
             if (sae == null) return false;
-            foreach (var si in sae.SelectedItems)
-                if (si is not PathSelectItem) return true;
-            return false;
+            return sae.SelectedItems.Any(si => si is not PathSelectItem);
         }
 
         internal static List<string> GetNavSegments(ODataExpandPath? path)
@@ -118,8 +119,8 @@ namespace EfCore.Boost.DbRepo.OData
             var includes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             ExtractIncludePaths(clause.SelectedItems, includes, allowedSet, maxDepth, report);
             // ExtractIncludePaths only adds allowed paths and reports for disallowed.
-            // We consider it "allowed" if there is no disallowed expand request that caused a report entry.
-            // Minimal rule: if any expand requested but none allowed -> not allowed.
+            // We consider it "allowed" if there is no disallowed expanded request that caused a report entry.
+            // Minimal rule: if any expanding is requested but none allowed -> not allowed.
             if (includes.Count == 0) return false;
             return true;
         }
