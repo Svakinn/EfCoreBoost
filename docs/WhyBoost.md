@@ -391,7 +391,7 @@ EfCore.Boost simplifies this by exposing structured transaction execution direct
 The application defines the block of work.
 The Unit of Work manages the transaction lifecycle.
 
-For exampel a typical EfCore.Boost transaction block might look like this:
+For example, a typical EfCore transaction block might look like this:
 ```csharp
 var strategy = db.Database.CreateExecutionStrategy();
 await strategy.ExecuteAsync(async () =>
@@ -399,9 +399,10 @@ await strategy.ExecuteAsync(async () =>
     await using var tx = await db.Database.BeginTransactionAsync(ct);
     try
     {
-        // repository work
-        // routine calls
-        // bulk operations
+        // db-repository work
+        // low level routine calls via ADO, hand-bound to the db-transaction
+        // low level bulk inserts, hand-bound to the db-transaction
+        // normal EF operations
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
     }
@@ -418,8 +419,8 @@ But with EfCore.Boost like this:
 ```csharp
 await uow.RunInTransactionAsync(async ct =>
 {
-    // repository work
-    // routine calls
+    // uow-repository work
+    // uow-routine calls
     await uow.LogEntries.BulkInsertAsync(items, ct);
     await uow.SaveChangesAsync(ct);
 }, ct);
