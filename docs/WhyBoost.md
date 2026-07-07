@@ -391,7 +391,7 @@ EfCore.Boost simplifies this by exposing structured transaction execution direct
 The application defines the block of work.
 The Unit of Work manages the transaction lifecycle.
 
-For example, a typical EfCore transaction block might look like this:
+For example, an EfCore transaction block might look like this:
 ```csharp
 var strategy = db.Database.CreateExecutionStrategy();
 await strategy.ExecuteAsync(async () =>
@@ -399,11 +399,10 @@ await strategy.ExecuteAsync(async () =>
     await using var tx = await db.Database.BeginTransactionAsync(ct);
     try
     {
-        // db-repository work
-        // low level routine calls via ADO, hand-bound to the db-transaction
-        // low level bulk inserts, hand-bound to the db-transaction
-        // normal EF operations
+        // normal EF db-context operations (Queries & Updates)
         await db.SaveChangesAsync(ct);
+        // low level routine calls via ADO-command, hand-bound to the db-transaction
+        // low level provider-speciffic, bulk-inserts, hand-bound to the db-transaction
         await tx.CommitAsync(ct);
     }
     catch
@@ -419,10 +418,10 @@ But with EfCore.Boost like this:
 ```csharp
 await uow.RunInTransactionAsync(async ct =>
 {
-    // uow-repository work
-    // uow-routine calls
-    await uow.LogEntries.BulkInsertAsync(items, ct);
+    // normal uow operations (Queries & Updates)
     await uow.SaveChangesAsync(ct);
+    await uow.RunMyRoutineAsync(prop1, prop2); // povider invariant routine call i.e. calculating and saving prop1 & prop2 via Store Procedure, to the database
+    await uow.LogEntries.BulkInsertAsync(logList, ct); // simple bulk insert for the LogEntries entity to db, via current transaction
 }, ct);
 ```
 
@@ -432,7 +431,7 @@ This provides:
 - automatic rollback when an exception escapes the block
 - coordinated transactions across repositories, routines, and bulk operations
 - protection against accidental nested transactions on the same Unit of Work
-- retry-aware execution through EF Core execution strategies
+- retry-aware execution through EF Core execution strategies (Azure)
 - cleaner transactional boundaries in application code
 
 This allows bulk operations and routine calls to participate in the same transaction as ordinary EF operations.
