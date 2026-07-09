@@ -78,16 +78,6 @@ Naming convention:
 
 ---
 
-## Construction Model
-
-Concrete UOWs declare how to securely create their DbContext using a provided secure factory.
-
-Example:
-
-```csharp
-public partial class UOWTestDb(IConfiguration cfg, string cfgName) : UowFactory<DbTest>(cfg, cfgName){}
-```
-
 ### Key Characteristics
 
 - Constructor receives:
@@ -324,46 +314,161 @@ See: [Configs.md](./Configs.md)
 
 ---
 
-## Example UOW
+## Construction & Dependency Injection
 
-### Definition
+A concrete UOW inherits from `UowFactory<TContext>`. It defines the
+repositories and routines that make up the application's database API.
 
-```csharp
-public partial class UOWLogs(IConfiguration cfg) : UowFactory<DbLogs>(cfg, "Logs") 
+In most applications, UOWs are created through a small factory that
+integrates with dependency injection.
+
+The example below demonstrates the typical structure of a concrete UOW:
+
+-   It derives from `UowFactory<DbLogs>`.
+-   It exposes repositories through properties.
+-   It exposes routines through typed helper methods.
+-   It hides the underlying `DbContext` behind a controlled API.
+
+### Example UOW class definition
+
+``` csharp
+public partial class UOWLogs(IConfiguration cfg) : UowFactory<DbLogs>(cfg, "Logs")
 {
     public IAsyncRepo<LoginLog> LoginLogs => new EfRepo<LoginLog>(Ctx!, DbType);
     public IAsyncRepo<SessionLog> SessionLogs => new EfRepo<SessionLog>(Ctx!, DbType);
 
     // Example tabular routine exposure
     public IQueryable<MyViewData> GetMyViewData(long sessionId) =>
-        RunRoutineQuery<MyViewData>("my", "GetMyViewData", [ new("@SessionId", sessionId) ]);
+        RunRoutineQuery<MyViewData>("my", "GetMyViewData", [new("@SessionId", sessionId)]);
 }
 ```
 
-### Usage
+### Understanding the UOW class
 
-```csharp
+The example above illustrates the typical structure of a concrete UOW.
+
+A UOW derives from `UowFactory<TContext>`, which creates and manages the
+underlying `DbContext` based on the configured connection.
+
+The constructor specifies the logical connection name (`"Logs"`),
+allowing EfCore.Boost to resolve the correct provider and connection
+string from configuration.
+
+Repositories are exposed as properties (`LoginLogs` and `SessionLogs`),
+defining the tables and views that the application may access.
+
+Likewise, database routines are wrapped in strongly typed methods
+(`GetMyViewData`), giving the application a clean API without exposing
+provider-specific details. In this example, `MyViewData` is mapped as a
+typed model and returned through `RunRoutineQuery`, allowing the
+application to consume the routine just like any other strongly typed
+query.
+
+In most applications, the UOW becomes the only public entry point to the
+database.
+
+### Creating UOW instances
+
+A UOW can always be created directly:
+
+``` csharp
 using var uow = new UOWLogs(configuration);
-// Repository usage
-var recent = await uow.LoginLogs.QueryTracked().OrderByDescending(x => x.CreatedUtc)
-    .Take(20).ToListAsync();
-// Tabular routine
-var viewData = await uow.GetMyViewData(sessionId).ToListAsync();
 ```
 
-The UOW defines the playground.  
-Code plays safely inside it.
+This approach is perfectly suitable for:
 
-## Thread Safety
+-   Unit tests
+-   Console applications
+-   Small utilities
+-   One-off scripts
 
-A UOW instance is **not concurrency-safe**. This is a direct consequence of EF Core’s `DbContext`,
-which is not thread-safe and does not support concurrent operations.
+For ASP.NET Core and other dependency-injection-based applications, a
+factory is usually more convenient.
 
-Do **not** use the same UOW instance from multiple parallel operations
-(e.g. `Task.WhenAll`, background tasks, or overlapping async calls).
+A common pattern is to include a small `UowFactory` implementation in
+the model project:
 
-If you need parallelism, create a separate UOW instance per operation.
-Using multiple UOW instances at the same time is quite safe.
+``` csharp
+public interface IUowLogsFactory
+{
+    UOWLogs Create(string? connectionName = null);
+}
+
+public sealed class UowLogsFactory(IConfiguration cfg) : IUowLogsFactory
+{
+    public UOWLogs Create(string? connectionName = null) =>
+        new UOWLogs( cfg, string.IsNullOrWhiteSpace(connectionName) ? cfg["DefaultAppConnName"]! : connectionName);
+}
+```
+
+The factory can now be injected wherever a UOW is needed.
+
+For example, in `Program.cs`:
+
+``` csharp
+builder.Services.AddSingleton<IUowLogsFactory, UowLogsFactory>();
+```
+
+Because the factory only stores configuration, it is safe to register as
+a singleton. Each call to `Create()` constructs a fresh UOW and
+underlying `DbContext`.
+
+A typical service can then create a UOW for each operation:
+
+``` csharp
+public sealed class LogService(IUowLogsFactory factory)
+{
+    public async Task<List<LoginLog>> GetRecentAsync()
+    {
+        using var uow = factory.Create();
+        return await uow.LoginLogs.QueryUnTracked()
+            .OrderByDescending(x => x.CreatedUtc)
+            .Take(20).ToListAsync();
+    }
+}
+```
+
+Alternatively, if a service performs multiple operations against the
+same database during its lifetime, the UOW can be created lazily and
+reused within that service instance:
+
+``` csharp
+public sealed class LogService(IUowLogsFactory factory)
+{
+    private readonly IUowLogsFactory _factory = factory;
+    private UOWLogs? _uowLogs;
+
+    private UOWLogs Uow => _uowLogs ??= _factory.Create();
+
+    // Member functions use Uow...
+}
+```
+
+> **Note:** A UOW is not thread-safe because the underlying `DbContext`
+> is not thread-safe. Do not share the same UOW instance across
+> concurrent operations.
+
+---
+
+### Optional: Direct DbContext Access
+
+By default, EfCore.Boost hides the underlying `DbContext`. This encourages all database access to flow through the repositories and routines exposed by the UOW.
+
+For advanced scenarios where direct EF Core access is required, a concrete UOW can opt in by overriding `AllowDbContextAccess`:
+
+```csharp
+public partial class UOWLogs(IConfiguration cfg) : UowFactory<DbLogs>(cfg, "Logs")
+{
+    protected override bool AllowDbContextAccess => true;
+}
+```
+
+The `DbContext` can then be obtained through:
+
+```csharp
+var db = await uow.GetDbContext();
+```
+Direct `DbContext` access should generally be reserved for advanced scenarios where the repository or routine API is not sufficient.
 
 ---
 
