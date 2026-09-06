@@ -470,6 +470,46 @@ namespace BoostTest
             Assert.IsNotNull(modelFromGetModel.EntityContainer.FindEntitySet("MyTables"), "GetModel() should contain MyTables");
             Assert.IsNotNull(modelFromGetModel.EntityContainer.FindEntitySet("MyTableRefs"), "GetModel() should contain MyTableRefs");
             Assert.IsNull(modelFromGetModel.EntityContainer.FindEntitySet("MyTableRefViews"), "GetModel() should NOT contain MyTableRefViews");
+
+            //
+            // ChangeTracker Tests
+            //
+            await uow.SaveChangesAndNewAsync();
+            Assert.IsFalse(uow.HasChanges(), "UOW should not have changes initially");
+            var trackRow = await uow.MyTables.QueryTracked().FirstAsync(x => x.Id == -1);
+            trackRow.Heading = "Changed Heading";
+            Assert.IsTrue(uow.HasChanges(), "UOW should have changes after modification");
+            Assert.IsTrue(uow.MyTables.HasChanges(), "Repo should have changes after modification");
+
+            var changes = uow.MyTables.Changes();
+            Assert.AreEqual(1, changes.Modified.Count, "Repo should have one modified entity");
+            var detailed = uow.MyTables.DetailedChanges();
+            Assert.AreEqual(1, detailed.Count);
+            Assert.AreEqual(EntityState.Modified, detailed[0].State);
+            Assert.IsTrue(detailed[0].Properties.Any(p => p.PropertyName == "Heading"), "Detailed changes should contain Heading");
+
+            // Test RejectChanges on entity
+            uow.MyTables.RejectChanges(trackRow);
+            Assert.IsFalse(uow.MyTables.HasChanges(), "Repo should not have changes after RejectChanges");
+            Assert.AreEqual("Baldo", trackRow.Heading, "Property should be restored to original value after RejectChanges");
+
+            // Ensure rejected change is not saved
+            trackRow.Heading = "Rejected Change";
+            uow.MyTables.RejectChanges(trackRow);
+            await uow.SaveChangesAsync();
+            var checkRow = await uow.MyTables.RowByKeyUnTrackedAsync(-1);
+            Assert.AreEqual("Baldo", checkRow!.Heading, "Rejected change should not be saved to DB");
+
+            // Test UOW level summary and reject all
+            var newRow = new DbTest.MyTable { Heading = "New", LastChangedBy = "Junie" };
+            uow.MyTables.Add(newRow);
+            trackRow.Heading = "Modified Again";
+            var summary = uow.ChangeSummary();
+            Assert.AreEqual(1, summary.Added, "Summary should show 1 added");
+            Assert.AreEqual(1, summary.Modified, "Summary should show 1 modified");
+
+            uow.RejectAllChanges();
+            Assert.IsFalse(uow.HasChanges(), "UOW should have no changes after RejectAllChanges");
        }
 
         /// <summary>
@@ -636,6 +676,46 @@ namespace BoostTest
             var shapedQuery4 = uow.MyTables.ApplyODataSelectExpand(plan4);
             var res4 = uow.MyTables.MaterializeODataShapedSynchronized(plan4, shapedQuery4);
             Assert.IsNotEmpty(res4.Results, "Expected at least one result from $filter=Id eq -1 with expanded MyTableRefs, but none were returned.");
+
+            //
+            // ChangeTracker Tests
+            //
+            uow.SaveChangesAndNewSynchronized();
+            Assert.IsFalse(uow.HasChanges(), "UOW should not have changes initially");
+            var trackRow = uow.MyTables.QueryTracked().First(x => x.Id == -1);
+            trackRow.Heading = "Changed Heading";
+            Assert.IsTrue(uow.HasChanges(), "UOW should have changes after modification");
+            Assert.IsTrue(uow.MyTables.HasChanges(), "Repo should have changes after modification");
+
+            var changes = uow.MyTables.Changes();
+            Assert.AreEqual(1, changes.Modified.Count, "Repo should have one modified entity");
+            var detailed = uow.MyTables.DetailedChanges();
+            Assert.AreEqual(1, detailed.Count);
+            Assert.AreEqual(EntityState.Modified, detailed[0].State);
+            Assert.IsTrue(detailed[0].Properties.Any(p => p.PropertyName == "Heading"), "Detailed changes should contain Heading");
+
+            // Test RejectChanges on entity
+            uow.MyTables.RejectChanges(trackRow);
+            Assert.IsFalse(uow.MyTables.HasChanges(), "Repo should not have changes after RejectChanges");
+            Assert.AreEqual("Baldo", trackRow.Heading, "Property should be restored to original value after RejectChanges");
+
+            // Ensure rejected change is not saved
+            trackRow.Heading = "Rejected Change";
+            uow.MyTables.RejectChanges(trackRow);
+            uow.SaveChangesSynchronized();
+            var checkRow = uow.MyTables.RowByKeyUnTrackedSynchronized(-1);
+            Assert.AreEqual("Baldo", checkRow!.Heading, "Rejected change should not be saved to DB");
+
+            // Test UOW level summary and reject all
+            var newRow = new DbTest.MyTable { Heading = "New", LastChangedBy = "Junie" };
+            uow.MyTables.Add(newRow);
+            trackRow.Heading = "Modified Again";
+            var summary = uow.ChangeSummary();
+            Assert.AreEqual(1, summary.Added, "Summary should show 1 added");
+            Assert.AreEqual(1, summary.Modified, "Summary should show 1 modified");
+
+            uow.RejectAllChanges();
+            Assert.IsFalse(uow.HasChanges(), "UOW should have no changes after RejectAllChanges");
             return Task.CompletedTask;
         }
     }

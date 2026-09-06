@@ -8,7 +8,7 @@
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <sVersion>8.0.5</sVersion>
+    <sVersion>8.0.6</sVersion>
     <Authors>Sveinn S. Erlendsson</Authors> 
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
@@ -17,9 +17,11 @@
         EfCore.Boost adds a provider-aware Unit of Work + Repository layer on top of EF Core, plus utilities for routines, bulk operations, and OData suport.
         Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.    </Description>
     <PackageReleaseNotes>
-UoW no longer by default allows access to the dbcontxt.  It is optional, but not default.
-EDM-builder now part of the UoW (uow.GetModel()) 
-Postgres DateTime mapping reverted to Timstamp with timezone (like the driver default)
+Better support for change tracking. 
+HasChanges() method on the UOW and the Ropositories.
+ChangeSummary() method on the UOW to get detailed information on all changes trackeed.
+ClearTracking() and RejectAllChanges() on UOW and each Repository.
+On Repository we now have methods like DetailedChanges(), Changes(), LoadedEntities() and TrackedEntities(), Detach(T), ReloadAsync() etc.
     </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-framework;dotnet;ef-core-migrations;EntityFrameworkCore</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  

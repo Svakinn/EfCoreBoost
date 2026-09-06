@@ -1,4 +1,4 @@
-﻿# DbRepo  
+﻿# DbRepo
 ## Repository Layer for EfCore.Boost
 
 `DbRepo` is the **repository layer** of EfCore.Boost.  
@@ -24,7 +24,7 @@ Repositories are always accessed through a **Unit of Work**, which decides which
 
 EfCore.Boost has two main repository families:
 
-### ✔ ReadRepo  
+### ✔ ReadRepo
 Used for:
 - views
 - read-only entity sets
@@ -48,6 +48,7 @@ Used for:
 Provides everything from ReadRepo, plus:
 - tracked access
 - add / update / delete operations
+- inspection and control of tracked entities and pending changes
 - bulk delete by primary key
 - bulk insert
 
@@ -167,7 +168,7 @@ This is your **default** read strategy.
 
 ---
 
-### 🔷 RowTracked & RowUnTracked  
+### 🔷 RowTracked & RowUnTracked
 *(why these exist, and yes this matches EF Core mental model)*
 
 EfCore.Boost provides:
@@ -185,10 +186,10 @@ var user = await uow.Users.RowTrackedAsync(u => u.Email == email, ct);
 So yes:
 ✔ These exist to support the familiar EF Core mental model,  
 but expressed with **clearer intent and safer defaults**.
-Instead of First, Single, FirstOrdefault  we supply Row- methods that behave like FirstOrDefault - no exeptions thrown.  
+Instead of First, Single, FirstOrdefault  we supply Row- methods that behave like FirstOrDefault - no exeptions thrown.
 
 If you still insist on using the First- or Single' pattern throwing errors, you can still use the IQueryable result for that though.  
-I.e.  
+I.e.
 ```csharp 
 var user = await uow.Users.QueryUntracked().Where(tt => Id == 20).SingleAsync(ct);   //Thrhows error when 2 rows with same Id
 ```
@@ -222,13 +223,13 @@ But repo helpers are valuable when you want:
 ✔ clear naming  
 ✔ consistent handling  
 ✔ optional built-in limits / filters  
-✔ more readable intent  
+✔ more readable intent
 
 ```csharp
 var users = await uow.Users.QueryUnTrackedAsync(u => u.IsActive, ct);
 ```
 
-Same result, clearer meaning:  
+Same result, clearer meaning:
 > “Give me a read-only, list of matching users.”
 
 Both are allowed. Use what keeps your code base consistent and expressive.
@@ -272,7 +273,7 @@ EfCore.Boost deliberately does **not** expose raw `DbSet` access for OData. Inst
 EfCore.Boost currently supports two OData usage paths:
 
 - `<T>.FilterODataAsync`
-A convenience method for the most common use case: applying client filters, paging, and optional count on top of a query boundary you define.
+  A convenience method for the most common use case: applying client filters, paging, and optional count on top of a query boundary you define.
 - `<T>.Plan-first OData pipeline` For more advanced scenarios, use BuildODataQueryPlan and explicitly choose how the request is executed (typed results, expand-as-include, or shaped responses).
 
 Both paths enforce the same safety principles: OData is always applied on top of a query you own, and client freedom is governed by `ODataPolicy` options.
@@ -329,7 +330,189 @@ See more details about OData handling  in
 
 ---
 
-## Bulk Insert  
+## Change Tracking
+
+EF Core's change tracker belongs to the `DbContext`, and therefore to the current Unit of Work. It remembers entities loaded by tracked queries and records whether each tracked entity is `Unchanged`, `Added`, `Modified`, or `Deleted`.
+
+```csharp
+var customer = await uow.Customers.RowTrackedAsync(c => c.Id == customerId, ct);
+customer!.Name = "Updated name";
+
+if (uow.Customers.HasChanges())
+    await uow.SaveChangesAsync(ct);
+```
+
+A repository only reports tracked entities of its own entity type. Changes in other repositories using the same Unit of Work are not included in repository-level results. Unit-of-Work-wide inspection can be used when changes across all entity types are required.
+
+### Tracked and untracked queries
+
+Only entities associated with the current `DbContext` appear in these APIs:
+
+- `QueryTracked()` and the tracked row helpers load entities into the change tracker.
+- `QueryUnTracked()` and the untracked row helpers do not.
+- `BulkInsertAsync`, `DeleteWhereAsync`, `ExecuteUpdate`, `ExecuteDelete`, and raw SQL bypass normal change tracking.
+- Changes made by another `DbContext`, process, or database client are not visible to the current tracker.
+
+Consequently, an entity returned by `QueryUnTracked()` does not appear in `LoadedEntities()`, `TrackedEntities()`, or `Changes()` unless it is later attached.
+
+### Change detection
+
+Changing a normal CLR property does not necessarily change its EF state immediately. EF Core discovers snapshot-based property changes when change detection runs.
+
+```csharp
+customer.Name = "Updated name";
+```
+
+EfCore.Boost runs `DetectChanges()` once inside methods that depend on accurate states:
+
+- `HasChanges()`
+- `Changes()`
+- `DetailedChanges()`
+- all `RejectChanges(...)` methods
+
+`LoadedEntities()`, `TrackedEntities()`, `Detach(...)`, and `DetachAll()` do not require change detection merely to inspect or remove known tracker entries.
+
+### Loaded and tracked entities
+
+`LoadedEntities()` returns a snapshot of the repository entities currently represented by `DbSet.Local`:
+
+```csharp
+IReadOnlyList<Customer> loaded = uow.Customers.LoadedEntities();
+```
+
+It includes `Unchanged`, `Added`, and `Modified` entities, but excludes entities marked `Deleted`.
+
+`TrackedEntities()` includes all tracked entities of the type, including deleted entities:
+
+```csharp
+IReadOnlyList<Customer> tracked = uow.Customers.TrackedEntities();
+```
+
+Neither method queries the database. "Loaded" means loaded into this particular context; it does not mean that the entire table or the complete result of some logical dataset has been loaded.
+
+| Method | Unchanged | Added | Modified | Deleted | Runs DetectChanges |
+|---|---:|---:|---:|---:|---:|
+| `LoadedEntities()` | Yes | Yes | Yes | No | No |
+| `TrackedEntities()` | Yes | Yes | Yes | Yes | No |
+| `Changes()` | No | Yes | Yes | Yes | Yes |
+
+### Inspecting pending changes
+
+`HasChanges()` answers whether this repository has at least one pending insert, update, or delete:
+
+```csharp
+if (uow.Customers.HasChanges())
+{
+    // This repository has pending work.
+}
+```
+
+`Changes()` returns separate snapshot lists:
+
+```csharp
+var changes = uow.Customers.Changes();
+foreach (var customer in changes.Added) { /* pending insert */ }
+foreach (var customer in changes.Modified) { /* pending update */ }
+foreach (var customer in changes.Deleted) { /* pending delete */ }
+Console.WriteLine(changes.Count);
+Console.WriteLine(changes.HasChanges);
+```
+
+The lists are snapshots. Later changes to the tracker do not alter an already returned `RepositoryChanges<T>` instance.
+
+`DetailedChanges()` additionally identifies the affected scalar properties:
+
+```csharp
+var detailed = uow.Customers.DetailedChanges();
+
+foreach (var entityChange in detailed)
+{
+    Console.WriteLine(entityChange.State);
+    foreach (var property in entityChange.Properties)
+        Console.WriteLine($"{property.PropertyName}: {property.OriginalValue} -> {property.CurrentValue}");
+}
+```
+
+For a `Modified` entity, only properties marked modified are returned. For `Added` and `Deleted` entities, all mapped scalar properties are returned.
+
+After a normal successful `SaveChanges`, added and modified entries become `Unchanged`, while deleted entries are detached. Inspect or record pending changes before saving if they are needed for auditing, synchronization events, or logging.
+
+### Rejecting changes
+
+Reject changes for one entity:
+
+```csharp
+bool rejected = uow.Customers.RejectChanges(customer);
+```
+
+Or reject a collection while running change detection only once:
+
+```csharp
+int rejected = uow.Customers.RejectChanges(customers);
+```
+
+Reject every pending change for the repository entity type:
+
+```csharp
+int rejected = uow.Customers.RejectAllChanges();
+```
+
+The operation depends on the tracked state:
+
+| State | Result |
+|---|---|
+| `Modified` | Original tracked scalar values are restored; state becomes `Unchanged` |
+| `Added` | Entity is detached because no stored original row exists |
+| `Deleted` | Original tracked scalar values are restored; state becomes `Unchanged` |
+| `Unchanged` or `Detached` | No action; not included in the returned count |
+
+`RejectChanges` restores mapped scalar values. It does not promise to reconstruct an arbitrary navigation graph or reverse every relationship and collection mutation. Complex aggregate changes should be explicitly reloaded or handled according to the aggregate's own rules.
+
+### Detaching entities
+
+Detach one entity without affecting its database row:
+
+```csharp
+uow.Customers.Detach(customer);
+```
+
+Detach every tracked entity of the repository type:
+
+```csharp
+int detached = uow.Customers.DetachAll();
+```
+
+Detaching does not revert CLR property values. It only makes the current `DbContext` stop tracking the object, so later `SaveChanges` calls will not persist its changes. `DetachAll()` affects only this repository's entity type; it does not clear other repositories from the Unit of Work.
+
+### Reloading database values
+
+Use `ReloadAsync()` when the desired source of truth is the database rather than the original tracker snapshot:
+
+```csharp
+await uow.Customers.ReloadAsync(customer, ct);
+```
+
+This discards local scalar changes and replaces tracked values with the latest database values. If the row no longer exists, EF Core detaches the entity.
+
+### Explicit update helpers
+
+For detached entities or APIs that intentionally submit complete rows, the repository provides two explicit update paths:
+
+```csharp
+uow.Customers.MarkModified(customer);
+```
+
+`MarkModified` attaches only the supplied entity when necessary and marks all of its mapped columns as modified. It does not walk the navigation graph or call `DetectChanges()`.
+
+```csharp
+uow.Customers.UpdateAllCols(customer);
+```
+
+`UpdateAllCols` uses EF Core's graph-aware `DbSet.Update` behavior. EF walks reachable entities and may mark them `Modified` or `Added`, producing much wider updates than `MarkModified`. Use it only when graph updating is intentional.
+
+---
+
+## Bulk Insert
 *(high-throughput throughput when you need to push high-volume data)*
 
 Bulk insert exists because there comes a moment in every growing system where normal EF insert loops start crying softly in the corner.
@@ -365,7 +548,7 @@ Why this matters in real systems:
 ✔ significantly lower CPU  
 ✔ dramatically better throughput  
 ✔ respects identity handling when required  
-✔ participates in existing transactions when present  
+✔ participates in existing transactions when present
 
 And yes, in practice:
 
@@ -373,7 +556,7 @@ And yes, in practice:
 
 Full details, behavior guarantees, tuning guidance and caveats:
 
-📄 [`BulkInserts.md`](./BulkInserts.md) 
+📄 [`BulkInserts.md`](./BulkInserts.md)
 
 ---
 
@@ -394,18 +577,18 @@ It gives every entity (and view):
 
 Repositories live inside a **Unit of Work**, meaning:
 
-- access boundaries are explicit  
-- read-only vs. read/write semantics are enforced  
-- structure replaces “direct DbContext chaos”  
+- access boundaries are explicit
+- read-only vs. read/write semantics are enforced
+- structure replaces “direct DbContext chaos”
 
 You still write EF-like queries.  
 You still get the power of LINQ.  
 But now you get:
 
-- better clarity  
-- fewer mistakes  
-- more performance headroom  
-- a design that scales from small systems to serious enterprise workloads  
+- better clarity
+- fewer mistakes
+- more performance headroom
+- a design that scales from small systems to serious enterprise workloads
 
 EfCore.Boost keeps DbContext behind a thoughtful API,  
 so your application code feels safer, cleaner, and more purposeful.
