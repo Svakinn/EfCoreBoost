@@ -8,7 +8,8 @@
     <!-- NuGet basics -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>EfCore.Boost</PackageId>
-    <sVersion>8.0.6</sVersion>
+    <Version>8.0.5</Version>
+    <IsPackable>true</IsPackable>
     <Authors>Sveinn S. Erlendsson</Authors> 
     <PackageProjectUrl>https://github.com/Svakinn/EfCoreBoost</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost</RepositoryUrl>
@@ -41,12 +42,12 @@ On Repository we now have methods like DetailedChanges(), Changes(), LoadedEntit
 	  <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.26" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.26" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.30" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.30" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.26" />
-      <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
-      <PackageReference Include="Microsoft.OData.Core" Version="8.4.3" />
-      <PackageReference Include="Microsoft.OData.Edm" Version="8.4.3" />
+      <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.5.0" />
+      <PackageReference Include="Microsoft.OData.Core" Version="8.4.4" />
+      <PackageReference Include="Microsoft.OData.Edm" Version="8.4.4" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
       <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
