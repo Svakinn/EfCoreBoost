@@ -167,7 +167,6 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     base.OnModelCreating(modelBuilder);
     modelBuilder.ApplyEfBoostConventions(this, "log"); 
-    OnModelData(modelBuilder);
 }
 ```
 > *(In the example above, "log" is the default database-schema for your models)*
@@ -223,23 +222,24 @@ Database-specific behavior is handled once, centrally, instead of leaking into y
 
 EfCore.Boost is released in parallel package lines for different .NET / EF Core generations:
 
-| Package Version | Target Framework | EF Core Version | Notes                                                                      |
-|-----------------|------------------|-----------------|----------------------------------------------------------------------------|
-| 8.x             | .NET 8           | EF Core 8       | Stable package line for .NET 8 projects                                    |
-| 9.x             | .NET 9           | EF Core 9       | Package line for .NET 9 projects                                           |
-| 10.x            | .NET 10          | EF Core 10      | Package line for .NET 10 projects, **pre-release**. **No MySql support !** |
+| Package Version | Target Framework | EF Core Version | Notes                                                       |
+|-----------------|------------------|-----------------|-------------------------------------------------------------|
+| 8.x             | .NET 8           | EF Core 8       | Stable package line for .NET 8 projects                     |
+| 9.x             | .NET 9           | EF Core 9       | Package line for .NET 9 projects                            |
+| 10.x            | .NET 10          | EF Core 10      | Package line for .NET 10 projects |
 
 Choose the package version that matches your target framework and EF Core version.
 
 Example:
 
 ```bash
-dotnet add package EfCore.Boost --version 8.0.1
-```
+dotnet add package EfCore.Boost --version 8.0.4
 or
-```bash
-dotnet add package EfCore.Boost --version 9.0.1
+dotnet add package EfCore.Boost --version 9.0.4
+or
+dotnet add package EfCore.Boost --version 10.0.4
 ```
+
 ---
 
 ## 🚀 Quick Start
@@ -249,15 +249,11 @@ dotnet add package EfCore.Boost --version 9.0.1
 The easiest way to get started with EfCore.Boost is to use the solution template:
 
 ```bash
-dotnet new install EfCore.Boost.Template.Simple.Solution@8.0.1
+dotnet new install EfCore.Boost.Template.Simple.Solution@8.0.4
 dotnet new boostsimplesolution -n YourProjectName
 ```
-for .net 8 projects, or
-```bash
-dotnet new install EfCore.Boost.Template.Simple.Solution@9.0.1
-dotnet new boostsimplesolution -n YourProjectName --Schema YourSchemaName --Context YourDbContextName
-```
-For .net9 or .net10 projects.  
+for .net 8 projects, or replace with @9.0.4 or @10.0.4 for .net 9 or 10 projects.
+
 Specify **--Schema** or **--Context** f you want to customize the default schema name or your db context name.
 
 This generates a ready-to-use solution with:
@@ -286,7 +282,26 @@ Yes. EfCore.Boost sits above EF Core. EF remains your ORM.
 ---
 
 ### Do we still write LINQ?
-Yes. Repositories expose IQueryable. Nothing exotic required.
+Yes. Repositories expose `IQueryable`, so you write standard LINQ. EfCore.Boost requires every query to explicitly declare whether it is tracked or untracked by starting with either `QueryTracked()` or `QueryUnTracked()`. This eliminates accidental tracking caused by EF Core's default tracking behavior.
+
+**Standard EF Core:**
+```csharp
+var exchRow = await myContext.CurrencyRates
+    .AsNoTracking()
+    .Where(cc => cc.Code == res.Currency && cc.StartDate <= endDate)
+    .OrderByDescending(cc => cc.StartDate)
+    .FirstOrDefaultAsync(ct);
+```
+
+**With EfCore.Boost:**
+```csharp
+var exchRow = await myUow.CurrencyRates
+    .QueryUnTracked()
+    .Where(cc => cc.Code == res.Currency && cc.StartDate <= endDate)
+    .OrderByDescending(cc => cc.StartDate)
+    .FirstOrDefaultAsync(ct);
+```
+Apart from explicitly choosing tracked or untracked queries, the LINQ syntax is almost identical because `QueryTracked()` and `QueryUnTracked()` return an `IQueryable`.
 
 ---
 

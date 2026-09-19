@@ -575,10 +575,107 @@ public interface IRepo<T> : IReadRepo<T> where T : class
     /// <param name="entities"></param>
     void UpdateAllCols(T entities);
 
+    /// <summary>
+    /// Returns entities of this repository currently loaded and tracked by the DbContext.
+    /// Entities marked as Deleted are excluded, matching DbSet.Local behavior.
+    /// This does not query the database or run change detection.
+    /// </summary>
+    IReadOnlyList<T> LoadedEntities();
+
+    /// <summary>
+    /// Returns all entities of this repository currently tracked by the DbContext,
+    /// including entities marked as Deleted. This does not query the database or run change detection.
+    /// </summary>
+    IReadOnlyList<T> TrackedEntities();
+
+    /// <summary>
+    /// Determines whether this repository has Added, Modified, or Deleted entities.
+    /// Runs change detection once before inspecting entity states.
+    /// </summary>
+    bool HasChanges();
+
+    /// <summary>
+    /// Returns snapshot lists of pending Added, Modified, and Deleted entities.
+    /// Runs change detection once before inspecting entity states.
+    /// </summary>
+    RepositoryChanges<T> Changes();
+
+    /// <summary>
+    /// Returns pending changes with affected scalar properties and their original and current values.
+    /// For Modified entities only modified properties are returned; for Added and Deleted entities
+    /// all mapped scalar properties are returned.
+    /// </summary>
+    IReadOnlyList<EntityChange<T>> DetailedChanges();
+
+    /// <summary>
+    /// Rejects pending changes for one entity. Modified scalar values are restored from their
+    /// original tracked values, Added entities are detached, and Deleted entities become Unchanged.
+    /// </summary>
+    /// <returns>True when a pending change was rejected; otherwise false.</returns>
+    bool RejectChanges(T entity);
+
+    /// <summary>
+    /// Rejects pending changes for the supplied entities. Change detection runs once for the
+    /// entire collection rather than once per entity.
+    /// </summary>
+    /// <returns>The number of entities whose pending changes were rejected.</returns>
+    int RejectChanges(IEnumerable<T> entities);
+
+    /// <summary>
+    /// Rejects all pending changes for this repository's tracked entity type.
+    /// </summary>
+    /// <returns>The number of entities whose pending changes were rejected.</returns>
+    int RejectAllChanges();
+
+    /// <summary>
+    /// Stops tracking an entity without changing or deleting its database row.
+    /// Current CLR property values remain on the object, but the DbContext will no longer save them.
+    /// </summary>
+    void Detach(T entity);
+
+    /// <summary>
+    /// Stops tracking every entity of this repository's entity type.
+    /// Other entity types in the same DbContext remain tracked.
+    /// </summary>
+    /// <returns>The number of entities detached.</returns>
+    int DetachAll();
+
+    /// <summary>
+    /// Replaces tracked scalar values with the latest database values, discarding local scalar changes.
+    /// If the row no longer exists, EF Core detaches the entity.
+    /// </summary>
+    Task ReloadAsync(T entity, CancellationToken ct = default);
+
     //Odata methods ... todo
 
 
 }
+
+/// <summary>Snapshot of pending changes for one repository entity type.</summary>
+public sealed record RepositoryChanges<T>(
+    IReadOnlyList<T> Added,
+    IReadOnlyList<T> Modified,
+    IReadOnlyList<T> Deleted) where T : class
+{
+    /// <summary>Total number of Added, Modified, and Deleted entities.</summary>
+    public int Count => Added.Count + Modified.Count + Deleted.Count;
+
+    /// <summary>True when the snapshot contains at least one pending change.</summary>
+    public bool HasChanges => Count > 0;
+}
+
+/// <summary>Describes a changed scalar property's original and current tracked values.</summary>
+public sealed record PropertyChange(
+    string PropertyName,
+    object? OriginalValue,
+    object? CurrentValue);
+
+/// <summary>Describes one pending entity change and its affected scalar properties.</summary>
+public sealed record EntityChange<T>(
+    T Entity,
+    EntityState State,
+    IReadOnlyList<PropertyChange> Properties
+    ) where T : class;
 
 public interface ILongIdRepo<T> : IRepo<T> where T : class
 {
@@ -1845,6 +1942,151 @@ public partial class EfRepo<T>(DbContext dbContext, DatabaseType dbType) : EfRea
     /// Walks nav-graph, marks everything Modified, may trigger wide updates
     /// </summary>
     public void UpdateAllCols(T entities) => DbSet.Update(entities);
+
+    /// <inheritdoc />
+    public IReadOnlyList<T> LoadedEntities() => DbSet.Local.ToList();
+
+    /// <inheritdoc />
+    public IReadOnlyList<T> TrackedEntities() => Ctx.ChangeTracker
+        .Entries<T>()
+        .Where(entry => entry.State != EntityState.Detached)
+        .Select(entry => entry.Entity)
+        .ToList();
+
+    /// <inheritdoc />
+    public bool HasChanges()
+    {
+        Ctx.ChangeTracker.DetectChanges();
+        return Ctx.ChangeTracker.Entries<T>().Any(entry => entry.State is
+            EntityState.Added or EntityState.Modified or EntityState.Deleted);
+    }
+
+    /// <inheritdoc />
+    public RepositoryChanges<T> Changes()
+    {
+        Ctx.ChangeTracker.DetectChanges();
+
+        var entries = Ctx.ChangeTracker
+            .Entries<T>()
+            .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            .ToList();
+
+        return new RepositoryChanges<T>(
+            entries.Where(entry => entry.State == EntityState.Added).Select(entry => entry.Entity).ToList(),
+            entries.Where(entry => entry.State == EntityState.Modified).Select(entry => entry.Entity).ToList(),
+            entries.Where(entry => entry.State == EntityState.Deleted).Select(entry => entry.Entity).ToList());
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<EntityChange<T>> DetailedChanges()
+    {
+        Ctx.ChangeTracker.DetectChanges();
+
+        return Ctx.ChangeTracker
+            .Entries<T>()
+            .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            .Select(entry => new EntityChange<T>(
+                entry.Entity,
+                entry.State,
+                entry.Properties
+                    .Where(property => entry.State != EntityState.Modified || property.IsModified)
+                    .Select(property => new PropertyChange(
+                        property.Metadata.Name,
+                        property.OriginalValue,
+                        property.CurrentValue))
+                    .ToList()))
+            .ToList();
+    }
+
+    /// <inheritdoc />
+    public bool RejectChanges(T entity)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        Ctx.ChangeTracker.DetectChanges();
+        return RejectEntryChanges(Ctx.Entry(entity));
+    }
+
+    /// <inheritdoc />
+    public int RejectChanges(IEnumerable<T> entities)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+        // The caller may pass DbSet.Local, which changes when Added entities are detached.
+        var entityList = entities
+            .Distinct<T>(ReferenceEqualityComparer.Instance)
+            .ToList();
+        Ctx.ChangeTracker.DetectChanges();
+        var rejected = 0;
+        foreach (var entity in entityList)
+        {
+            if (RejectEntryChanges(Ctx.Entry(entity)))
+                rejected++;
+        }
+        return rejected;
+    }
+
+    /// <inheritdoc />
+    public int RejectAllChanges()
+    {
+        Ctx.ChangeTracker.DetectChanges();
+
+        // Detaching Added entries mutates the tracker, so materialize before changing states.
+        var entries = Ctx.ChangeTracker
+            .Entries<T>()
+            .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            .ToList();
+
+        var rejected = 0;
+        foreach (var entry in entries)
+        {
+            if (RejectEntryChanges(entry))
+                rejected++;
+        }
+
+        return rejected;
+    }
+
+    /// <inheritdoc />
+    public void Detach(T entity)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        Ctx.Entry(entity).State = EntityState.Detached;
+    }
+
+    /// <inheritdoc />
+    public int DetachAll()
+    {
+        var entries = Ctx.ChangeTracker.Entries<T>().ToList();
+        foreach (var entry in entries)
+            entry.State = EntityState.Detached;
+        return entries.Count;
+    }
+
+    /// <inheritdoc />
+    public Task ReloadAsync(T entity, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        return Ctx.Entry(entity).ReloadAsync(ct);
+    }
+
+    private static bool RejectEntryChanges(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<T> entry)
+    {
+        switch (entry.State)
+        {
+            case EntityState.Modified:
+                entry.CurrentValues.SetValues(entry.OriginalValues);
+                entry.State = EntityState.Unchanged;
+                return true;
+            case EntityState.Added:
+                entry.State = EntityState.Detached;
+                return true;
+            case EntityState.Deleted:
+                entry.CurrentValues.SetValues(entry.OriginalValues);
+                entry.State = EntityState.Unchanged;
+                return true;
+            default:
+                return false;
+        }
+    }
 
     protected string Quote(string name) => DbType switch
     {

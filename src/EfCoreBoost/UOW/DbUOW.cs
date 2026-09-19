@@ -407,6 +407,49 @@ namespace EfCore.Boost.UOW
         void SaveChangesAndNewSynchronized();
 
         /// <summary>
+        /// Determines whether the current Unit of Work contains any Added, Modified,
+        /// or Deleted entities. Runs change detection before inspecting the tracker.
+        /// </summary>
+        bool HasChanges();
+
+        /// <summary>
+        /// Returns counts of all pending Added, Modified, and Deleted entities across
+        /// the current Unit of Work. Runs change detection before creating the snapshot.
+        /// </summary>
+        UowChangeSummary ChangeSummary();
+
+        /// <summary>
+        /// Returns a snapshot of all pending entity changes across the current Unit of Work,
+        /// including an entity type, state, and affected scalar properties.
+        /// </summary>
+        IReadOnlyList<UowEntityChange> Changes();
+
+        /// <summary>
+        /// Returns all entities currently tracked by the Unit of Work, including Unchanged
+        /// and Deleted entities. Does not query the database or run change detection.
+        /// </summary>
+        IReadOnlyList<object> TrackedEntities();
+
+        /// <summary>
+        /// Rejects pending scalar changes across the entire Unit of Work. Modified values
+        /// are restored, Added entities are detached, and Deleted entities become Unchanged.
+        /// </summary>
+        /// <returns>The number of entity changes rejected.</returns>
+        int RejectAllChanges();
+
+        /// <summary>
+        /// Stops tracking every entity in the Unit of Work. CLR objects retain their current
+        /// values, but the DbContext will no longer persist changes made to them.
+        /// </summary>
+        void ClearTracking();
+
+        /// <summary>
+        /// Gets or sets whether EF Core automatically detects tracked property changes.
+        /// Prefer <see cref="WithAutoDetectChangesDisabled()"/> when disabling it temporarily.
+        /// </summary>
+        bool AutoDetectChangesEnabled { get; set; }
+
+        /// <summary>
         /// Enables or disables automatic change detection in the underlying DbContext.
         /// Set to <c>false</c> when performing bulk inserts (e.g., via <c>AddRange</c>) to improve performance.
         /// Remember to restore the original setting after doing your things.
@@ -426,13 +469,6 @@ namespace EfCore.Boost.UOW
         void DetectChanges();
 
         /// <summary>
-        /// Accepts all changes tracked by the DbContext.
-        /// Use this if you disabled automatic acceptance via <c>SaveChanges(acceptAllChangesOnSuccess: false)</c>
-        /// and want to manually finalize the changes.
-        /// </summary>
-        void AcceptAllChanges();
-
-        /// <summary>
         /// Temporarily disables automatic change detection for the current DbContext.
         /// Automatically restores the original state when the returned IDisposable is disposed.
         /// Use with a <c>using</c> block to safely wrap bulk insert operations.
@@ -441,11 +477,31 @@ namespace EfCore.Boost.UOW
         IDisposable WithAutoDetectChangesDisabled();
     }
 
-    public abstract class DbUow<TCtx>(Func<TCtx> ctxFactory) : DbReadUow<TCtx>(ctxFactory)
-        where TCtx : DbContext
+    /// <summary>
+    /// Snapshot containing counts of all pending changes in a Unit of Work.
+    /// </summary>
+    public sealed record UowChangeSummary(int Added, int Modified, int Deleted)
+    {
+        /// <summary>Total number of Added, Modified, and Deleted entities.</summary>
+        public int Count => Added + Modified + Deleted;
+
+        /// <summary>True when the snapshot contains at least one pending change.</summary>
+        public bool HasChanges => Count > 0;
+    }
+
+    /// <summary>
+    /// Describes one pending Unit-of-Work entity change and its affected scalar properties.
+    /// </summary>
+    public sealed record UowEntityChange(
+        object Entity,
+        Type EntityType,
+        EntityState State,
+        IReadOnlyList<PropertyChange> Properties);
+
+    public abstract class DbUow<TCtx>(Func<TCtx> ctxFactory) : DbReadUow<TCtx>(ctxFactory) where TCtx : DbContext
     {
         #region save changes
-        //See interface for documentation
+        // See interface for documentation
         public virtual async Task SaveChangesAsync(CancellationToken ct = default)
         {
             NormalizeDateTimeValues();
@@ -453,7 +509,7 @@ namespace EfCore.Boost.UOW
             await Ctx.SaveChangesAsync(ct);
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public virtual void SaveChangesSynchronized()
         {
             NormalizeDateTimeValues();
@@ -461,7 +517,7 @@ namespace EfCore.Boost.UOW
             Ctx.SaveChanges();
         }
 
-        //See interface for documentation
+        // See interface for documentation
         // Remarks:
         // Not valid while a transaction is active on this UOW instance.
         public async Task SaveChangesAndNewAsync(CancellationToken ct = default)
@@ -482,7 +538,7 @@ namespace EfCore.Boost.UOW
             }
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public void SaveChangesAndNewSynchronized()
         {
             if (this.CurrentTx != null)
@@ -504,17 +560,95 @@ namespace EfCore.Boost.UOW
 
         #region ChangeTracker tuning
 
-        //See interface for documentation
+        // See interface for documentation
+        public bool HasChanges()
+        {
+            Ctx.ChangeTracker.DetectChanges();
+            return Ctx.ChangeTracker.HasChanges();
+        }
+
+        // See interface for documentation
+        public UowChangeSummary ChangeSummary()
+        {
+            Ctx.ChangeTracker.DetectChanges();
+            var entries = Ctx.ChangeTracker.Entries()
+                .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted).ToList();
+            return new UowChangeSummary(
+                entries.Count(entry => entry.State == EntityState.Added),
+                entries.Count(entry => entry.State == EntityState.Modified),
+                entries.Count(entry => entry.State == EntityState.Deleted));
+        }
+
+        // See interface for documentation
+        public IReadOnlyList<UowEntityChange> Changes()
+        {
+            Ctx.ChangeTracker.DetectChanges();
+            return Ctx.ChangeTracker.Entries()
+                .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+                .Select(entry => new UowEntityChange(
+                    entry.Entity,
+                    entry.Metadata.ClrType,
+                    entry.State,
+                    entry.Properties
+                        .Where(property => entry.State != EntityState.Modified || property.IsModified)
+                        .Select(property => new PropertyChange(
+                            property.Metadata.Name,
+                            property.OriginalValue,
+                            property.CurrentValue))
+                        .ToList()))
+                .ToList();
+        }
+
+        // See interface for documentation
+        public IReadOnlyList<object> TrackedEntities() => Ctx.ChangeTracker.Entries()
+            .Where(entry => entry.State != EntityState.Detached)
+            .Select(entry => entry.Entity).ToList();
+
+        // See interface for documentation
+        public int RejectAllChanges()
+        {
+            Ctx.ChangeTracker.DetectChanges();
+            // Detaching Added entries mutates the tracker, so materialize before changing states.
+            var entries = Ctx.ChangeTracker.Entries()
+                .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted).ToList();
+            foreach (var entry in entries)
+            {
+                switch (entry.State)
+                {
+                    case EntityState.Modified:
+                        entry.CurrentValues.SetValues(entry.OriginalValues);
+                        entry.State = EntityState.Unchanged;
+                        break;
+                    case EntityState.Added:
+                        entry.State = EntityState.Detached;
+                        break;
+                    case EntityState.Deleted:
+                        entry.CurrentValues.SetValues(entry.OriginalValues);
+                        entry.State = EntityState.Unchanged;
+                        break;
+                }
+            }
+            return entries.Count;
+        }
+
+        // See interface for documentation
+        public void ClearTracking() => Ctx.ChangeTracker.Clear();
+
+        // See interface for documentation
+        public bool AutoDetectChangesEnabled
+        {
+            get => Ctx.ChangeTracker.AutoDetectChangesEnabled;
+            set => Ctx.ChangeTracker.AutoDetectChangesEnabled = value;
+        }
+
+        // See interface for documentation
         public void SetAutoDetectChanges(bool enable) => Ctx.ChangeTracker.AutoDetectChangesEnabled = enable;
 
-        //See interface for documentation
+        // See interface for documentation
         public bool IsAutoDetectChangesEnabled() => Ctx.ChangeTracker.AutoDetectChangesEnabled;
 
-        //See interface for documentation
+        // See interface for documentation
         public void DetectChanges() => Ctx.ChangeTracker.DetectChanges();
-
-        //See interface for documentation
-        public void AcceptAllChanges() => Ctx.ChangeTracker.AcceptAllChanges();
 
         /// <summary>
         /// Internal disposable helper for restoring a setting when disposed.
@@ -536,7 +670,7 @@ namespace EfCore.Boost.UOW
             public void Dispose() => _onDispose();
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public IDisposable WithAutoDetectChangesDisabled()
         {
             var original = Ctx.ChangeTracker.AutoDetectChangesEnabled;
@@ -582,7 +716,7 @@ namespace EfCore.Boost.UOW
             DbType = DetectDbType(Ctx);
         }
 
-        ///See interface for documentation
+        /// See interface for documentation
         public DbContext GetDbContext()
         {
             if (!AllowDbContextAccess)
@@ -637,19 +771,19 @@ namespace EfCore.Boost.UOW
             return DatabaseType.Unknown;
         }
 
-        ///See interface for documentation
+        /// See interface for documentation
         public void SetCommandTimeout(int seconds)
         {
             this.Ctx.Database.SetCommandTimeout(seconds);
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public string Metadata(Action<ODataConventionModelBuilder>? configure = null)
         {
             return SerializeEdmModelXml(GetModel(configure));
         }
 
-        ///See interface for documentation
+        /// See interface for documentation
         public IEdmModel GetModel(Action<ODataConventionModelBuilder>? configure = null)
         {
             if (configure == null && this._cachedEdmModel != null) return this._cachedEdmModel;
@@ -795,7 +929,7 @@ namespace EfCore.Boost.UOW
 
         #region command execution
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<int> RunRoutineNonQueryAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             parameters ??= [];
@@ -808,7 +942,7 @@ namespace EfCore.Boost.UOW
             return await oc.Cmd.ExecuteNonQueryAsync(ct);
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<int> ExecuteNonQueryAsync(string sql, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             await using var oc = await CmdHelper.OpenCmdAsync(Ctx, ct);
@@ -818,7 +952,7 @@ namespace EfCore.Boost.UOW
             return await oc.Cmd.ExecuteNonQueryAsync(ct);
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public int RunRoutineNonQuerySynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
         {
             parameters ??= [];
@@ -831,7 +965,7 @@ namespace EfCore.Boost.UOW
             return oc.Cmd.ExecuteNonQuery();
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public int ExecuteNonQuerySynchronized(string sql, List<DbParmInfo>? parameters = null)
         {
             using var oc = CmdHelper.OpenCmdSynchronized(Ctx);
@@ -841,7 +975,7 @@ namespace EfCore.Boost.UOW
             return oc.Cmd.ExecuteNonQuery();
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<int> ExecuteAdminDbSqlScriptAsync(string scriptContent, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(scriptContent))
@@ -864,7 +998,7 @@ namespace EfCore.Boost.UOW
             return totalAffected;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public int ExecuteAdminDbSqlScriptSynchronized(string scriptContent, List<DbParmInfo>? parameters = null)
         {
             if (string.IsNullOrWhiteSpace(scriptContent))
@@ -891,7 +1025,7 @@ namespace EfCore.Boost.UOW
 
         #region Routine execution
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<long?> RunRoutineLongAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             parameters ??= [];
@@ -905,7 +1039,7 @@ namespace EfCore.Boost.UOW
             return result != null && result != DBNull.Value ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : null;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public long? RunRoutineLongSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
         {
             parameters ??= [];
@@ -919,7 +1053,7 @@ namespace EfCore.Boost.UOW
             return result != null && result != DBNull.Value ? Convert.ToInt64(result, CultureInfo.InvariantCulture) : null;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<int?> RunRoutineIntAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             parameters ??= [];
@@ -933,7 +1067,7 @@ namespace EfCore.Boost.UOW
             return result != null && result != DBNull.Value ? Convert.ToInt32(result, CultureInfo.InvariantCulture) : null;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public int? RunRoutineIntSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
         {
             parameters ??= [];
@@ -947,7 +1081,7 @@ namespace EfCore.Boost.UOW
             return result != null && result != DBNull.Value ? Convert.ToInt32(result, CultureInfo.InvariantCulture) : null;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<string?> RunRoutineStringAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             parameters ??= [];
@@ -961,7 +1095,7 @@ namespace EfCore.Boost.UOW
             return result != null && result != DBNull.Value ? Convert.ToString(result, CultureInfo.InvariantCulture) : null;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public string? RunRoutineStringSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
         {
             parameters ??= [];
@@ -976,7 +1110,7 @@ namespace EfCore.Boost.UOW
         }
 
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<decimal?> RunRoutineDecimalAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             parameters ??= [];
@@ -990,7 +1124,7 @@ namespace EfCore.Boost.UOW
             return result != null && result != DBNull.Value ? Convert.ToDecimal(result, CultureInfo.InvariantCulture) : null;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public decimal? RunRoutineDecimalSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
         {
             parameters ??= [];
@@ -1004,7 +1138,7 @@ namespace EfCore.Boost.UOW
             return result != null && result != DBNull.Value ? Convert.ToDecimal(result, CultureInfo.InvariantCulture) : null;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<DateTime?> RunRoutineDateTimeAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             parameters ??= [];
@@ -1018,7 +1152,7 @@ namespace EfCore.Boost.UOW
             return ToDateTimeOrNull(result);
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public DateTime? RunRoutineDateTimeSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
         {
             parameters ??= [];
@@ -1031,7 +1165,7 @@ namespace EfCore.Boost.UOW
             return ToDateTimeOrNull(oc.Cmd.ExecuteScalar());
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<DateTimeOffset?> RunRoutineDateTimeOffsetAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             parameters ??= [];
@@ -1045,7 +1179,7 @@ namespace EfCore.Boost.UOW
             return ToDateTimeOffsetOrNull(result);
          }
 
-        //See interface for documentation
+        // See interface for documentation
         public DateTimeOffset? RunRoutineDateTimeOffsetSynchronized(string schema, string routineName,
             List<DbParmInfo>? parameters = null)
         {
@@ -1094,7 +1228,7 @@ namespace EfCore.Boost.UOW
             };
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<List<long>> RunRoutineLongListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             parameters ??= [];
@@ -1114,7 +1248,7 @@ namespace EfCore.Boost.UOW
             return list;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public List<long> RunRoutineLongListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
         {
             parameters ??= [];
@@ -1134,7 +1268,7 @@ namespace EfCore.Boost.UOW
             return list;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<List<int>> RunRoutineIntListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             parameters ??= [];
@@ -1154,7 +1288,7 @@ namespace EfCore.Boost.UOW
             return list;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public List<int> RunRoutineIntListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
         {
             parameters ??= [];
@@ -1174,7 +1308,7 @@ namespace EfCore.Boost.UOW
             return list;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public async Task<List<string>> RunRoutineStringListAsync(string schema, string routineName, List<DbParmInfo>? parameters = null, CancellationToken ct = default)
         {
             parameters ??= [];
@@ -1194,7 +1328,7 @@ namespace EfCore.Boost.UOW
             return list;
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public List<string> RunRoutineStringListSynchronized(string schema, string routineName, List<DbParmInfo>? parameters = null)
         {
             parameters ??= [];
@@ -1219,7 +1353,7 @@ namespace EfCore.Boost.UOW
         #endregion
 
         #region Transactions
-        //See interface for documentation
+        // See interface for documentation
         private async Task RunInTransactionAsync(Func<DbTransaction, CancellationToken, Task> work, IsolationLevel iso = IsolationLevel.ReadCommitted, CancellationToken ct = default)
         {
             if (work == null) throw new ArgumentNullException(nameof(work));
@@ -1248,11 +1382,11 @@ namespace EfCore.Boost.UOW
             });
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public Task RunInTransactionAsync(Func<CancellationToken, Task> work, IsolationLevel iso = IsolationLevel.ReadCommitted, CancellationToken ct = default)
                 => RunInTransactionAsync(async (_, c) => await work(c), iso, ct);
 
-        //See interface for documentation
+        // See interface for documentation
         public void RunInTransactionSynchronized(Action work, IsolationLevel iso = IsolationLevel.ReadCommitted)
         {
             if (work == null) throw new ArgumentNullException(nameof(work));
@@ -1290,7 +1424,7 @@ namespace EfCore.Boost.UOW
         #endregion
 
         #region SQL in transactions
-        //See interface for documentation
+        // See interface for documentation
         public async Task ExecSqlScriptAsync(string scriptContent, bool useTransaction = false, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(scriptContent)) return;
@@ -1309,7 +1443,7 @@ namespace EfCore.Boost.UOW
             }, IsolationLevel.ReadCommitted, ct);
         }
 
-        //See interface for documentation
+        // See interface for documentation
         public void ExecSqlScriptSynchronized(string scriptContent, bool useTransaction = false)
         {
             if (string.IsNullOrWhiteSpace(scriptContent)) return;
