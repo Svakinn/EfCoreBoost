@@ -1,5 +1,4 @@
 ﻿using TestDb;
-using EfCore.Boost;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Extensions;
@@ -7,12 +6,6 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static TestDb.DbTest;
 
 namespace BoostTest.Helpers
 {
@@ -64,7 +57,7 @@ namespace BoostTest.Helpers
 
             if (string.IsNullOrWhiteSpace(queryString)) queryString = "";
             if (!queryString.StartsWith('?')) queryString = "?" + queryString;
-            while (queryString.StartsWith("??", StringComparison.Ordinal)) queryString = queryString[1..];
+            while (queryString.StartsWith("??", StringComparison.Ordinal)) queryString = queryString.Substring(1);
             request.QueryString = new QueryString(queryString);
 
             var set = FindEntitySetFor<TEntity>(model);
