@@ -49,7 +49,7 @@ namespace BoostX.Test.Helpers
             request.Method = HttpMethods.Get;
             if (string.IsNullOrWhiteSpace(queryString)) queryString = "";
             if (!queryString.StartsWith('?')) queryString = "?" + queryString;
-            while (queryString.StartsWith("??", StringComparison.Ordinal)) queryString = queryString[1..];
+            while (queryString.StartsWith("??", StringComparison.Ordinal)) queryString = queryString.Substring(1);
             request.QueryString = new QueryString(queryString);
             var set = FindEntitySetFor<TEntity>(model);
             var path = new ODataPath(new EntitySetSegment(set));
