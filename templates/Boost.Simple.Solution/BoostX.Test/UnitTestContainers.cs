@@ -9,7 +9,6 @@
 //
 // Deployment SQL is borrowed from the BoostX.Migrate project
 //
-using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -101,7 +100,7 @@ namespace BoostX.Test
         static async Task ImportAsync(BoostXUow uow)
         {
             Console.WriteLine("--- Starting Import ---");
-            await uow.RunInTransactionAsync(async (ct) =>
+            await uow.RunInTransactionAsync(async (_) =>
             {
                 Console.WriteLine("Importing core data...");
                 // Manual check for IpInfo (programmer decides how to check existence)

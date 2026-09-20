@@ -30,7 +30,7 @@
     <!-- Prevent the SDK from trying to compile the template source files -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <NoWarn>$(NoWarn);NU5110;NU5111;NU5128</NoWarn>
-    <Version>9.0.4</Version>
+    <Version>9.0.5</Version>
   </PropertyGroup>
   <ItemGroup>
       <None Include="LICENSE" Pack="true" PackagePath="" />
