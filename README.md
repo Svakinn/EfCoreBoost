@@ -233,11 +233,11 @@ Choose the package version that matches your target framework and EF Core versio
 Example:
 
 ```bash
-dotnet add package EfCore.Boost --version 8.0.4
+dotnet add package EfCore.Boost --version 8.0.5
 or
-dotnet add package EfCore.Boost --version 9.0.4
+dotnet add package EfCore.Boost --version 9.0.5
 or
-dotnet add package EfCore.Boost --version 10.0.4
+dotnet add package EfCore.Boost --version 10.0.5
 ```
 
 ---
