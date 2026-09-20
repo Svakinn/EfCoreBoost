@@ -20,9 +20,9 @@
     <RepositoryUrl>https://github.com/Svakinn/EfCoreBoost/tree/main/templates/Boost.Simple</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>
-        Update to EfCore.Boost 9.0.4
+        Update to EfCore.Boost 9.0.5
     </PackageReleaseNotes>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <ContentTargetFolders>content</ContentTargetFolders>

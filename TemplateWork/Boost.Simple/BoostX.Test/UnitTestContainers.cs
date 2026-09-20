@@ -164,7 +164,7 @@ namespace BoostX.Test
             const string connName = "BoostXAzure";
             var cc = new ConfigurationBuilder().SetBasePath(AppDomain.CurrentDomain.BaseDirectory).AddJsonFile("AppSettings.json", optional: false, reloadOnChange: false).Build();
             var dbTestCfg = DbConnectionCfg.Get(cc, connName);
-            if (dbTestCfg == null || dbTestCfg.UseAzure == false || dbTestCfg.AzureClientSecret.Length < 2 || dbTestCfg.AzureClientSecret[..1] == "<")
+            if (dbTestCfg == null || dbTestCfg.UseAzure == false || dbTestCfg.AzureClientSecret.Length < 2 || dbTestCfg.AzureClientSecret.Substring(0,1) == "<")
                 return null; //Skip test if not properly configured, no error thrown
             if (dbTestCfg.ConnectionString.IndexOf(dbName, StringComparison.OrdinalIgnoreCase) < 0)
                 throw new Exception($"Azure test DB connection string must contain database name '{dbName}'");
