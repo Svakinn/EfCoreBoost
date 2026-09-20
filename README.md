@@ -249,10 +249,10 @@ dotnet add package EfCore.Boost --version 10.0.5
 The easiest way to get started with EfCore.Boost is to use the solution template:
 
 ```bash
-dotnet new install EfCore.Boost.Template.Simple.Solution@8.0.4
+dotnet new install EfCore.Boost.Template.Simple.Solution@8.0.5
 dotnet new boostsimplesolution -n YourProjectName
 ```
-for .net 8 projects, or replace with @9.0.4 or @10.0.4 for .net 9 or 10 projects.
+for .net 8 projects, or replace with @9.0.5 or @10.0.5 for .net 9 or 10 projects.
 
 Specify **--Schema** or **--Context** f you want to customize the default schema name or your db context name.
 
