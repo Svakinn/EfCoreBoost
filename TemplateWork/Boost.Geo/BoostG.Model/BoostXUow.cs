@@ -1,10 +1,9 @@
 using EfCore.Boost.DbRepo;
 using EfCore.Boost.UOW;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using static BoostX.Model.BoostCTX;
+using static BoostG.Model.BoostCTX;
 
-namespace BoostX.Model;
+namespace BoostG.Model;
 
 /// <summary>
 /// Unit of Work for the BoostX application, providing access to repositories and routines.
@@ -12,6 +11,10 @@ namespace BoostX.Model;
 /// </summary>
 public class BoostXUow(IConfiguration cfg, string connectionName) : UowFactory<BoostCTX>(cfg, connectionName)
 {
+    //In case swe rould want to allow access to the dbcontext via:
+    //var direct = await uow.GetDbContext()
+    //We have to override the setting that disables it by default
+    //protected override bool AllowDbContextAccess => true;
 
     #region dbsets
 

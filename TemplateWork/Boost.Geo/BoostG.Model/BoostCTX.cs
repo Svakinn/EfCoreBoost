@@ -2,13 +2,12 @@ using EfCore.Boost.Model;
 using EfCore.Boost.Model.Attributes;
 using Microsoft.EntityFrameworkCore;
 
-namespace BoostX.Model;
+namespace BoostG.Model;
 
 /// <summary>
 /// The primary database context for the BoostX application.
 /// Defines the data model and configures EF Core conventions.
 /// </summary>
-public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(options)
 public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(options)
 {
     /// <summary>
@@ -40,15 +39,6 @@ public partial class BoostCTX(DbContextOptions<BoostCTX> options) : DbContext(op
         // Note: EFCore.Boost defaults to no cascade deletes, so you typically need none or far fewer
         // fluent foreign key configurations here.
         modelBuilder.ApplyEfBoostConventions(this, DefaultSchemaName);
-
-        // Optional: add small seed data for a few basic tables.
-        // Be aware this increases the size of the DbContext assembly.
-        // Recommended seeding approaches:
-        // - HasData: (like we demonstrate here) for small, static lookup data (migration-based)
-        // - Runtime seeding: for flexible or environment-dependent data
-        // - Migration SQL: for controlled, versioned data inserts
-        // - EFCore.Boost based bulk import project: for larger datasets (e.g., CSV)
-        OnModelData(modelBuilder); //Run our has-data migration
     }
 
     #endregion

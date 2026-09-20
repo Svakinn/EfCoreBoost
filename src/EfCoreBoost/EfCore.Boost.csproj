@@ -18,8 +18,11 @@
         Designed for consistent cross-database behavior (SQL Server/Azure, PostgreSQL, MySQL) using conventions and explicit safety boundaries.    
     </Description>
     <PackageReleaseNotes>
-        First non-preview release for .NET 10.
-        MySQL support is provided through the Microting fork of Pomelo, as an EF Core 10 compatible release was not yet available from the official Pomelo project.
+Better support for change tracking. 
+HasChanges() method on the UOW and the Ropositories.
+ChangeSummary() method on the UOW to get detailed information on all changes trackeed.
+ClearTracking() and RejectAllChanges() on UOW and each Repository.
+On Repository we now have methods like DetailedChanges(), Changes(), LoadedEntities() and TrackedEntities(), Detach(T), ReloadAsync() etc.
     </PackageReleaseNotes>
     <PackageTags>efcore;ef-core;repository;uow;database;cross-database;cross-platform;multi-database;portable;cross-platform;provider-agnostic;odata;bulk-operations;mysql;postgres;sql-server;azure-sql;entity-framework;dotnet;ef-core-migrations;EntityFrameworkCore</PackageTags>
     <Copyright>© 2026 Sveinn S. Erlendsson</Copyright>  
